@@ -11,6 +11,8 @@ import '../../data/models/drug_model.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/ad_carousel.dart';
 import '../../shared/widgets/compact_app_header.dart';
+import '../../shared/widgets/rating_modal.dart';
+import '../../services/rating_service.dart';
 import '../profile/profile_screen.dart';
 import '../../shared/widgets/notification_bell_widget.dart';
 import 'widgets/search_bar_widget.dart';
@@ -21,11 +23,31 @@ const _priceGuideColor = Color(0xFFF59E0B);
 // ── Bottom-nav selected index ─────────────────────────────────────────────────
 final _bottomIndexProvider = StateProvider<int>((ref) => 2); // 2 = home
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _scheduleRatingCheck();
+  }
+
+  void _scheduleRatingCheck() {
+    Future.delayed(const Duration(seconds: 5), () async {
+      if (!mounted) return;
+      final config = await RatingService.instance.shouldShow();
+      if (!mounted || config == null) return;
+      await RatingModal.show(context, config: config);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final idx = ref.watch(_bottomIndexProvider);
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -36,12 +58,11 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      body: _bodyForIndex(idx, ref),
+      body: _bodyForIndex(idx),
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: idx,
         onTap: (i) {
           if (i == 2) {
-            // Home — clear search & filters
             ref.read(searchQueryProvider.notifier).state = '';
             ref.read(activeFiltersProvider.notifier).state = {};
           }
@@ -51,18 +72,13 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _bodyForIndex(int idx, WidgetRef ref) {
+  Widget _bodyForIndex(int idx) {
     switch (idx) {
-      case 0: // المفضلة
-        return const _FavoritesBody();
-      case 1: // الأدوات
-        return _ToolsBody();
-      case 3: // بحث
-        return _SearchBody();
-      case 4: // حسابي
-        return const ProfileScreen();
-      default: // 2 = الرئيسية
-        return _HomeBody();
+      case 0: return const _FavoritesBody();
+      case 1: return _ToolsBody();
+      case 3: return _SearchBody();
+      case 4: return const ProfileScreen();
+      default: return _HomeBody();
     }
   }
 }
