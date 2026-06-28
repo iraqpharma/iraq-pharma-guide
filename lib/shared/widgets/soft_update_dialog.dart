@@ -18,7 +18,7 @@ class SoftUpdateDialog {
   }) {
     return showDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       builder: (_) => _SoftUpdateWidget(
         updateMessage: updateMessage,
         latestVersion: latestVersion,
@@ -43,7 +43,9 @@ class _SoftUpdateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
+    return PopScope(
+      canPop: false,
+      child: Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Directionality(
         textDirection: TextDirection.rtl,
@@ -130,21 +132,10 @@ class _SoftUpdateWidget extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              // زر "لاحقاً"
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'لاحقاً',
-                  style: GoogleFonts.ibmPlexSansArabic(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
             ],
           ),
         ),
       ),
-    );
+    ));
   }
 }
