@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
-import '../../services/auth_service.dart';
-import '../../services/session_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -78,38 +76,6 @@ class AppDrawer extends StatelessWidget {
                   title: 'دليل الأسعار التجاري',
                   subtitle: 'تكلفة وبيع وهامش الربح',
                   onTap: () { Navigator.pop(context); context.push('/price-guide'); },
-                ),
-
-                // ── عام ───────────────────────────────────────────────
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 6),
-                  child: _SectionLabel('عام'),
-                ),
-                _DrawerTile(
-                  icon: Icons.person_outline_rounded,
-                  color: AppColors.primary,
-                  title: 'حسابي',
-                  subtitle: 'الملف الشخصي والإعدادات',
-                  onTap: () { Navigator.pop(context); context.push('/profile'); },
-                ),
-                _DrawerTile(
-                  icon: Icons.settings_outlined,
-                  color: AppColors.textSecondary,
-                  title: 'الإعدادات',
-                  subtitle: 'اللغة والمظهر',
-                  onTap: () { Navigator.pop(context); context.push('/settings'); },
-                ),
-                _DrawerTile(
-                  icon: Icons.logout_rounded,
-                  color: Colors.red.shade400,
-                  title: 'تسجيل الخروج',
-                  subtitle: 'الخروج من الحساب',
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await AuthService.instance.signOut();
-                    await SessionService.instance.clear();
-                    if (context.mounted) context.go('/login');
-                  },
                 ),
               ],
             ),
@@ -224,8 +190,7 @@ class _DrawerTile extends StatelessWidget {
           style: GoogleFonts.ibmPlexSansArabic(
               fontSize: 12, color: AppColors.textSecondary)),
       onTap: onTap,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
@@ -236,14 +201,50 @@ class _DrawerFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom + 14,
-          top: 8),
+    final bottom = MediaQuery.of(context).padding.bottom;
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottom + 16),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey.shade100)),
+      ),
+      child: Column(
+        children: [
+          // Legal links
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 4,
+            children: [
+              _legalLink(context, 'سياسة الخصوصية', '/legal/privacy'),
+              Text('·', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+              _legalLink(context, 'شروط الاستخدام', '/legal/terms'),
+              Text('·', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+              _legalLink(context, 'إخلاء المسؤولية', '/legal/disclaimer'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // App name + version
+          Text(
+            'Iraq Pharma Guide ® 2026',
+            style: GoogleFonts.ibmPlexSansArabic(
+                color: AppColors.textSecondary, fontSize: 11),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legalLink(BuildContext context, String label, String route) {
+    return GestureDetector(
+      onTap: () { Navigator.pop(context); context.push(route); },
       child: Text(
-        'Iraq Pharma Guide — v2.0',
+        label,
         style: GoogleFonts.ibmPlexSansArabic(
-            color: AppColors.textSecondary, fontSize: 11),
+          fontSize: 11,
+          color: AppColors.primary,
+          decoration: TextDecoration.underline,
+          decorationColor: AppColors.primary,
+        ),
       ),
     );
   }

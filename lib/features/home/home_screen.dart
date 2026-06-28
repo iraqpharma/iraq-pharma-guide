@@ -10,6 +10,7 @@ import '../../providers/favorites_provider.dart';
 import '../../data/models/drug_model.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/ad_carousel.dart';
+import '../../shared/widgets/compact_app_header.dart';
 import '../profile/profile_screen.dart';
 import '../../shared/widgets/notification_bell_widget.dart';
 import 'widgets/search_bar_widget.dart';
@@ -671,26 +672,16 @@ class _SearchBody extends ConsumerWidget {
 
     return Column(
       children: [
-        // ── Teal header + search bar ───────────────────────────────────────
+        // ── Compact header + search bar ────────────────────────────────────
         Container(
           color: AppColors.primary,
-          padding: EdgeInsets.fromLTRB(
-              16, MediaQuery.of(context).padding.top + 16, 16, 16),
           child: Column(
             children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text('بحث عن دواء',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ],
+              const CompactAppHeader(title: 'بحث عن دواء'),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
+                child: PharmaSearchBar(),
               ),
-              const SizedBox(height: 12),
-              const PharmaSearchBar(),
             ],
           ),
         ),
@@ -884,21 +875,7 @@ class _ToolsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // ── Teal header ────────────────────────────────────────────────────
-        Container(
-          color: AppColors.primary,
-          padding: EdgeInsets.fromLTRB(
-              16, MediaQuery.of(context).padding.top + 16, 16, 20),
-          child: Row(
-            children: [
-              Text('الأدوات السريرية',
-                  style: GoogleFonts.cairo(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
+        const CompactAppHeader(title: 'الأدوات السريرية'),
         // ── Scrollable content ─────────────────────────────────────────────
         Expanded(
           child: ListView(
@@ -1255,24 +1232,37 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
               }),
             ),
           ] else ...[
-            // ── وضع العرض العادي ──────────────────────────────────────
-            const Icon(Icons.bookmark_rounded,
-                color: Colors.white, size: 22),
+            // ── وضع العرض العادي — compact header style ───────────────
+            Builder(
+              builder: (ctx) => GestureDetector(
+                onTap: () => Scaffold.of(ctx).openDrawer(),
+                child: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.menu_rounded, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text('المفضلة',
                   style: GoogleFonts.cairo(
                       color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center),
             ),
-            // زر "تحديد" صغير — يدخل وضع التحديد فقط
             if (drugs.isNotEmpty)
               _HeaderChip(
                 label: 'تحديد',
                 icon: Icons.checklist_rounded,
                 onTap: _enterSelectMode,
-              ),
+              )
+            else
+              const SizedBox(width: 40),
           ],
         ],
       ),
