@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,11 +25,15 @@ class RatingService {
   /// Returns [RatingConfig] if the modal should be shown, null otherwise.
   Future<RatingConfig?> shouldShow() async {
     try {
-      // 1. Check remote config
+      // 1. Detect platform
+      final platform = Platform.isIOS ? 'ios' : 'android';
+
+      // 2. Check remote config for this platform
       final row = await _client
           .from('app_notifications')
           .select('message_text, rating_link, is_active')
           .eq('is_active', true)
+          .eq('platform', platform)
           .limit(1)
           .maybeSingle();
 
