@@ -294,6 +294,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool           _userEditedUsername = false;
   UsernameStatus _usernameStatus     = UsernameStatus.idle;
   Timer?         _debounce;
+  bool           _agreedToTerms      = false;
 
   static const _roles = [
     'مدير صيدلية', 'صيدلاني متدرب', 'معاون صيدلي',
@@ -371,6 +372,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedRole == null) { setState(() => _error = 'يرجى اختيار المهنة'); return; }
     if (_usernameStatus == UsernameStatus.taken) { setState(() => _error = 'اسم المستخدم مستخدم بالفعل'); return; }
+    if (!_agreedToTerms) { setState(() => _error = 'يجب الموافقة على الشروط وسياسة الخصوصية للمتابعة'); return; }
     if (_usernameStatus == UsernameStatus.checking) { setState(() => _error = 'جارٍ التحقق من اسم المستخدم…'); return; }
 
     setState(() { _loading = true; _error = null; });
@@ -563,6 +565,56 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                   onChanged: (v) => setState(() => _selectedRole = v),
                   validator: (v) => v == null ? 'اختر مهنتك' : null,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Terms agreement
+                InkWell(
+                  onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                        activeColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Wrap(
+                          children: [
+                            Text('أوافق على ',
+                                style: GoogleFonts.ibmPlexSansArabic(
+                                    fontSize: 13, color: AppColors.textSecondary)),
+                            GestureDetector(
+                              onTap: () => context.push('/legal/terms'),
+                              child: Text('شروط الاستخدام',
+                                  style: GoogleFonts.ibmPlexSansArabic(
+                                      fontSize: 13, color: AppColors.primary,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: AppColors.primary)),
+                            ),
+                            Text(' و',
+                                style: GoogleFonts.ibmPlexSansArabic(
+                                    fontSize: 13, color: AppColors.textSecondary)),
+                            GestureDetector(
+                              onTap: () => context.push('/legal/privacy'),
+                              child: Text('سياسة الخصوصية',
+                                  style: GoogleFonts.ibmPlexSansArabic(
+                                      fontSize: 13, color: AppColors.primary,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: AppColors.primary)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
                 if (_error != null) ...[const SizedBox(height: 10), _ErrorBanner(_error!)],
