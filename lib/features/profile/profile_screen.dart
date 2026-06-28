@@ -193,10 +193,21 @@ class _ProfileScreenState extends State<ProfileScreen>
                     onTap: () => context.push('/suggestion'),
                   ),
                 ]),
-                const SizedBox(height: 12),
-                // Legal links
-                _buildLegalCard(),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
+                // Legal links row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _legalLink('سياسة الخصوصية', '/legal/privacy'),
+                    Text(' · ', style: GoogleFonts.ibmPlexSansArabic(
+                        color: AppColors.textSecondary, fontSize: 13)),
+                    _legalLink('شروط الاستخدام', '/legal/terms'),
+                    Text(' · ', style: GoogleFonts.ibmPlexSansArabic(
+                        color: AppColors.textSecondary, fontSize: 13)),
+                    _legalLink('إخلاء المسؤولية', '/legal/disclaimer'),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _buildLogoutCard(),
                 const SizedBox(height: 28),
                 _buildFooter(),
@@ -426,28 +437,17 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildLegalCard() => _buildCard(children: [
-    _buildNavTile(
-      icon: Icons.privacy_tip_outlined,
-      color: AppColors.primary,
-      title: 'سياسة الخصوصية',
-      onTap: () => context.push('/legal/privacy'),
+  Widget _legalLink(String label, String route) => GestureDetector(
+    onTap: () => context.push(route),
+    child: Text(label,
+      style: GoogleFonts.ibmPlexSansArabic(
+        fontSize: 13,
+        color: AppColors.textSecondary,
+        decoration: TextDecoration.underline,
+        decorationColor: AppColors.textSecondary,
+      ),
     ),
-    _divider(),
-    _buildNavTile(
-      icon: Icons.gavel_rounded,
-      color: const Color(0xFF5C6BC0),
-      title: 'شروط الاستخدام',
-      onTap: () => context.push('/legal/terms'),
-    ),
-    _divider(),
-    _buildNavTile(
-      icon: Icons.warning_amber_rounded,
-      color: const Color(0xFFF57C00),
-      title: 'إخلاء المسؤولية',
-      onTap: () => context.push('/legal/disclaimer'),
-    ),
-  ]);
+  );
 
   Widget _buildLogoutCard() => Material(
     color: Colors.transparent,
