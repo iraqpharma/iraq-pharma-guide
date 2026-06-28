@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../services/session_service.dart';
 import '../../services/version_checker_service.dart';
 import '../../shared/widgets/force_update_dialog.dart';
+import '../../shared/widgets/soft_update_dialog.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,13 +46,11 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (versionResult.forceUpdate) {
-      // Show non-dismissible dialog — execution halts here until user updates
       await ForceUpdateDialog.show(
         context,
         currentVersion: versionResult.currentVersion,
         minVersion:     versionResult.minVersion,
       );
-      // If somehow dismissed (shouldn't happen), just show it again
       return _init();
     }
 
@@ -68,6 +67,18 @@ class _SplashScreenState extends State<SplashScreen>
       }
     } else {
       context.go('/login');
+    }
+
+    // ── 3. Soft update dialog (after navigation, if applicable) ─────────────
+    if (versionResult.showUpdateDialog && mounted) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted) {
+        await SoftUpdateDialog.show(
+          context,
+          updateMessage: versionResult.updateMessage,
+          latestVersion: versionResult.latestVersion,
+        );
+      }
     }
   }
 

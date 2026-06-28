@@ -1,23 +1,30 @@
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Result of a version check.
 class VersionCheckResult {
   final bool forceUpdate;
+  final bool showUpdateDialog;
   final String minVersion;
+  final String latestVersion;
   final String currentVersion;
+  final String updateMessage;
 
   const VersionCheckResult({
     required this.forceUpdate,
+    required this.showUpdateDialog,
     required this.minVersion,
+    required this.latestVersion,
     required this.currentVersion,
+    required this.updateMessage,
   });
 
-  /// Graceful default when Supabase is unreachable — never block the user.
   factory VersionCheckResult.passthrough() => const VersionCheckResult(
         forceUpdate: false,
+        showUpdateDialog: false,
         minVersion: '0.0.0',
+        latestVersion: '0.0.0',
         currentVersion: '0.0.0',
+        updateMessage: '',
       );
 }
 
@@ -29,38 +36,43 @@ class VersionCheckerService {
 
   Future<VersionCheckResult> check() async {
     try {
-      // 1. Get current installed version
       final info = await PackageInfo.fromPlatform();
-      final current = info.version; // e.g. "2.1.0"
+      final current = info.version;
 
-      // 2. Fetch remote config
       final row = await _client
           .from('app_config')
-          .select('min_version, is_force_update')
+          .select('min_version, is_force_update, latest_version, update_message, show_update_dialog')
           .limit(1)
           .maybeSingle();
 
       if (row == null) return VersionCheckResult.passthrough();
 
-      final minVersion    = row['min_version']    as String? ?? '0.0.0';
-      final isForceUpdate = row['is_force_update'] as bool?   ?? false;
+      final minVersion       = row['min_version']        as String? ?? '0.0.0';
+      final isForceUpdate    = row['is_force_update']    as bool?   ?? false;
+      final latestVersion    = row['latest_version']     as String? ?? '0.0.0';
+      final updateMessage    = row['update_message']     as String? ?? '';
+      final showUpdateDialog = row['show_update_dialog'] as bool?   ?? false;
 
-      // 3. Compare
-      final needsUpdate = isForceUpdate && _isLower(current, minVersion);
+      final forceUpdate = isForceUpdate && _isLower(current, minVersion);
+      // Show soft-update dialog only if enabled AND user hasn't updated yet
+      final showSoft = showUpdateDialog &&
+          !forceUpdate &&
+          _isLower(current, latestVersion) &&
+          updateMessage.isNotEmpty;
 
       return VersionCheckResult(
-        forceUpdate:    needsUpdate,
-        minVersion:     minVersion,
-        currentVersion: current,
+        forceUpdate:      forceUpdate,
+        showUpdateDialog: showSoft,
+        minVersion:       minVersion,
+        latestVersion:    latestVersion,
+        currentVersion:   current,
+        updateMessage:    updateMessage,
       );
     } catch (_) {
-      // Network error, Supabase down, etc. → never block the user
       return VersionCheckResult.passthrough();
     }
   }
 
-  /// Returns true if [current] is strictly older than [minimum].
-  /// Compares semantic version strings: "major.minor.patch".
   bool _isLower(String current, String minimum) {
     final cur = _parse(current);
     final min = _parse(minimum);
@@ -68,7 +80,7 @@ class VersionCheckerService {
       if (cur[i] < min[i]) return true;
       if (cur[i] > min[i]) return false;
     }
-    return false; // equal → no force update
+    return false;
   }
 
   List<int> _parse(String version) {
