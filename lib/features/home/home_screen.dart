@@ -9,6 +9,9 @@ import '../../providers/filter_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../data/models/drug_model.dart';
 import '../../shared/widgets/app_drawer.dart';
+import '../../shared/widgets/ad_carousel.dart';
+import '../profile/profile_screen.dart';
+import '../../shared/widgets/notification_bell_widget.dart';
 import 'widgets/search_bar_widget.dart';
 import '../drug_list/drug_list_screen.dart' show categoryClassMap, categoryLabelMap;
 
@@ -32,7 +35,6 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      endDrawer: const _NotificationsDrawer(),
       body: _bodyForIndex(idx, ref),
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: idx,
@@ -57,11 +59,7 @@ class HomeScreen extends ConsumerWidget {
       case 3: // بحث
         return _SearchBody();
       case 4: // حسابي
-        return const _PlaceholderBody(
-          icon: Icons.person_outline_rounded,
-          title: 'حسابي',
-          subtitle: 'إعدادات الحساب والتفضيلات',
-        );
+        return const ProfileScreen();
       default: // 2 = الرئيسية
         return _HomeBody();
     }
@@ -77,11 +75,19 @@ class _HomeBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        // ── Teal Header ───────────────────────────────────────────────────
-        SliverToBoxAdapter(child: _TealHeader()),
+        // ── Teal Header (pinned — يثبت عند التمرير) ──────────────────────
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _TealHeaderDelegate(),
+        ),
 
-        // ── Ad Banner ─────────────────────────────────────────────────────
-        const SliverToBoxAdapter(child: _AdBanner()),
+        // ── Ad Carousel (Supabase Realtime) ──────────────────────────────
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(0, 14, 0, 4),
+            child: AdCarousel(),
+          ),
+        ),
 
         // ── Categories Section ────────────────────────────────────────────
         SliverToBoxAdapter(
@@ -141,6 +147,31 @@ class _HomeBody extends StatelessWidget {
       ],
     );
   }
+}
+
+// ── SliverPersistentHeader delegate for TealHeader ───────────────────────────
+class _TealHeaderDelegate extends SliverPersistentHeaderDelegate {
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return _TealHeader();
+  }
+
+  @override
+  double get maxExtent => _kHeaderHeight;
+
+  @override
+  double get minExtent => _kHeaderHeight;
+
+  @override
+  bool shouldRebuild(_TealHeaderDelegate old) => false;
+}
+
+// ارتفاع الهيدر الثابت
+double get _kHeaderHeight {
+  // top padding (status bar) + padding داخلي + Row height + bottom padding
+  // نستخدم قيمة ثابتة معقولة — MediaQuery غير متاح هنا
+  return 100;
 }
 
 // ── Full-width price guide banner ─────────────────────────────────────────────
@@ -233,7 +264,7 @@ class _TealHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
     return Container(
-      padding: EdgeInsets.fromLTRB(20, top + 16, 20, 28),
+      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 16),
       decoration: const BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.only(
@@ -276,12 +307,10 @@ class _TealHeader extends StatelessWidget {
             ],
           ),
 
-          // ── End: Bell (RTL → LEFT side) — no badge until real notifs ──
+          // ── End: Bell with live unread badge ─────────────────────────
           Builder(
-            builder: (ctx) => _HeaderIconBtn(
-              icon: Icons.notifications_outlined,
-              onTap: () => Scaffold.of(ctx).openEndDrawer(),
-              badge: false,
+            builder: (ctx) => NotificationBellWidget(
+              onTap: () => context.push('/notifications'),
             ),
           ),
         ],
@@ -839,12 +868,16 @@ class _ToolsBody extends StatelessWidget {
     _NavToolItem('حاسبة CrCl', 'تصفية الكرياتينين — معادلة Cockcroft-Gault',
         Icons.monitor_heart_outlined, Color(0xFF0097A7), '/renal-calc'),
   ];
-  // Square-grid tools (bottom 2)
+  // Square-grid tools
   static const _gridTools = [
     _NavToolItem('فاحص التفاعلات', 'Drug Interactions',
         Icons.science_outlined, Color(0xFFE65100), '/interactions'),
     _NavToolItem('دفتر الصيدلاني', 'Missing Drugs',
         Icons.edit_note_outlined, Color(0xFF2E7D32), '/notebook'),
+    _NavToolItem('حاسبة التسعير', 'Smart Pricing Calculator',
+        Icons.price_change_outlined, Color(0xFF6A1B9A), '/pricing-calc'),
+    _NavToolItem('الباحث عن البدائل', 'Smart Substitution',
+        Icons.swap_horiz_rounded, Color(0xFF0097A7), '/substitution'),
   ];
 
   @override

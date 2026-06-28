@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iraq Pharma Guide – دليل الصيدلة العراقي</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+    .link-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .link-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+    .link-card .icon { font-size: 2.2rem; margin-bottom: 12px; }
+    .link-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .link-card p  { font-size: .83rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="active">الرئيسية</a>
+    <a href="privacy-policy.html">سياسة الخصوصية</a>
+    <a href="terms.html">شروط الاستخدام</a>
+    <a href="disclaimer.html">إخلاء المسؤولية</a>
+    <span class="brand">🏥 Iraq Pharma Guide</span>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-icon">🏥</div>
+    <h1>Iraq Pharma Guide</h1>
+    <p>دليل الصيدلة العراقي – المرجع المهني للصيادلة</p>
+  </div>
+
+  <div class="container">
+    <div class="card" style="text-align:center; padding: 32px;">
+      <h2 style="font-size:1.2rem; margin-bottom:10px;">الوثائق القانونية</h2>
+      <p style="color: var(--muted); font-size:.9rem;">اطّلع على سياساتنا وشروطنا المتعلقة باستخدام التطبيق</p>
+      <div class="links-grid">
+        <a class="link-card" href="privacy-policy.html">
+          <div class="icon">🔒</div>
+          <h3>سياسة الخصوصية</h3>
+          <p>كيف نجمع ونحمي بياناتك الشخصية</p>
+        </a>
+        <a class="link-card" href="terms.html">
+          <div class="icon">📋</div>
+          <h3>شروط الاستخدام</h3>
+          <p>الأحكام والشروط الخاصة باستخدام التطبيق</p>
+        </a>
+        <a class="link-card" href="disclaimer.html">
+          <div class="icon">⚠️</div>
+          <h3>إخلاء المسؤولية</h3>
+          <p>حدود مسؤوليتنا القانونية والطبية</p>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 Iraq Pharma Guide · جميع الحقوق محفوظة</p>
+    <div style="margin-top:8px;">
+      <a href="privacy-policy.html">سياسة الخصوصية</a> ·
+      <a href="terms.html">شروط الاستخدام</a> ·
+      <a href="disclaimer.html">إخلاء المسؤولية</a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -210,7 +210,10 @@ class _PharmaSearchBarState extends ConsumerState<PharmaSearchBar> {
                   hintText: 'ابحث عن دواء... (عربي أو إنجليزي)',
                   hintStyle: GoogleFonts.cairo(
                       color: AppColors.textSecondary, fontSize: 13.5),
-                  border: InputBorder.none,
+                  border:        InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder:   InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
                 ),

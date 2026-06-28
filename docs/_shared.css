@@ -1,0 +1,145 @@
+/* Iraq Pharma Guide – Legal Pages Shared Styles */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary:  #00897B;
+  --navy:     #0D2137;
+  --text:     #1A2332;
+  --muted:    #6B7C93;
+  --bg:       #F0F4F8;
+  --card:     #FFFFFF;
+  --border:   #E8EDF2;
+  --radius:   14px;
+}
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  direction: rtl;
+  line-height: 1.8;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.hero {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--primary) 100%);
+  color: #fff;
+  padding: 48px 24px 56px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -24px; left: 0; right: 0;
+  height: 48px;
+  background: var(--bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.hero-icon {
+  width: 72px; height: 72px;
+  background: rgba(255,255,255,.18);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+  font-size: 36px;
+}
+.hero h1 { font-size: 1.9rem; font-weight: 700; margin-bottom: 6px; }
+.hero p  { font-size: .95rem; opacity: .8; }
+
+/* ── Nav bar ── */
+nav {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .85rem;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+nav a {
+  color: var(--primary);
+  text-decoration: none;
+  padding: 14px 8px;
+  border-bottom: 3px solid transparent;
+  transition: border-color .2s;
+}
+nav a.active, nav a:hover { border-color: var(--primary); }
+nav .brand { font-weight: 700; color: var(--navy); margin-left: auto; font-size: .9rem; }
+
+/* ── Content ── */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+  border: 1px solid var(--border);
+}
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 20px;
+  background: var(--accent, var(--primary));
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.card p, .card li { font-size: .93rem; color: #4A5568; line-height: 1.85; }
+.card ul { padding-right: 20px; }
+.card ul li { margin-bottom: 4px; }
+
+/* ── Warning card ── */
+.warning-card {
+  background: #FFF8E1;
+  border-color: #FFE082;
+}
+.warning-card .card-title { color: #E65100; }
+.warning-card .card-title::before { background: #FF9800; }
+
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--muted);
+  font-size: .82rem;
+  border-top: 1px solid var(--border);
+  background: #fff;
+}
+footer a { color: var(--primary); text-decoration: none; margin: 0 8px; }
+
+/* ── Last updated badge ── */
+.updated-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary);
+  color: #fff;
+  font-size: .75rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.5rem; }
+  nav { flex-wrap: wrap; padding: 8px 12px; }
+}

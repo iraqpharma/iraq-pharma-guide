@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/auth_service.dart';
+import '../../services/session_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -17,86 +19,96 @@ class AppDrawer extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                _DrawerTile(
-                  icon: Icons.home_outlined,
-                  color: AppColors.primary,
-                  title: 'الرئيسية',
-                  subtitle: 'العودة للصفحة الرئيسية',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.go('/home');
-                  },
-                ),
+                // ── الأدوات السريرية ──────────────────────────────────
                 const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 6),
+                  padding: EdgeInsets.fromLTRB(20, 10, 20, 6),
                   child: _SectionLabel('الأدوات السريرية'),
                 ),
                 _DrawerTile(
                   icon: Icons.calculate_outlined,
-                  color: const Color(0xFF5C6BC0),
+                  color: Color(0xFF5C6BC0),
                   title: 'حاسبة الجرعة',
                   subtitle: 'للأطفال والبالغين',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/calc');
-                  },
+                  onTap: () { Navigator.pop(context); context.push('/calc'); },
                 ),
                 _DrawerTile(
                   icon: Icons.monitor_heart_outlined,
-                  color: const Color(0xFF0097A7),
+                  color: Color(0xFF0097A7),
                   title: 'حاسبة CrCl',
                   subtitle: 'Cockcroft-Gault',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/renal-calc');
-                  },
+                  onTap: () { Navigator.pop(context); context.push('/renal-calc'); },
                 ),
                 _DrawerTile(
                   icon: Icons.science_outlined,
-                  color: const Color(0xFFE65100),
+                  color: Color(0xFFE65100),
                   title: 'فاحص التفاعلات',
                   subtitle: 'تفاعلات الأدوية المتعددة',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/interactions');
-                  },
+                  onTap: () { Navigator.pop(context); context.push('/interactions'); },
                 ),
                 _DrawerTile(
                   icon: Icons.edit_note_outlined,
-                  color: const Color(0xFF2E7D32),
+                  color: Color(0xFF2E7D32),
                   title: 'دفتر الصيدلاني',
                   subtitle: 'الأدوية المفقودة والملاحظات',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/notebook');
-                  },
+                  onTap: () { Navigator.pop(context); context.push('/notebook'); },
                 ),
+                _DrawerTile(
+                  icon: Icons.price_change_outlined,
+                  color: Color(0xFF6A1B9A),
+                  title: 'حاسبة التسعير الذكي',
+                  subtitle: 'تكلفة الوحدة وسعر البيع',
+                  onTap: () { Navigator.pop(context); context.push('/pricing-calc'); },
+                ),
+                _DrawerTile(
+                  icon: Icons.swap_horiz_rounded,
+                  color: Color(0xFF0097A7),
+                  title: 'الباحث عن البدائل',
+                  subtitle: 'البدائل المباشرة والعلاجية',
+                  onTap: () { Navigator.pop(context); context.push('/substitution'); },
+                ),
+
+                // ── دليل الأسعار ──────────────────────────────────────
                 const Padding(
                   padding: EdgeInsets.fromLTRB(20, 16, 20, 6),
-                  child: _SectionLabel('الأدوات الإدارية'),
+                  child: _SectionLabel('الأسعار'),
                 ),
                 _DrawerTile(
                   icon: Icons.price_check_outlined,
                   color: Color(0xFFF59E0B),
                   title: 'دليل الأسعار التجاري',
                   subtitle: 'تكلفة وبيع وهامش الربح',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/price-guide');
-                  },
+                  onTap: () { Navigator.pop(context); context.push('/price-guide'); },
                 ),
+
+                // ── عام ───────────────────────────────────────────────
                 const Padding(
                   padding: EdgeInsets.fromLTRB(20, 16, 20, 6),
                   child: _SectionLabel('عام'),
+                ),
+                _DrawerTile(
+                  icon: Icons.person_outline_rounded,
+                  color: AppColors.primary,
+                  title: 'حسابي',
+                  subtitle: 'الملف الشخصي والإعدادات',
+                  onTap: () { Navigator.pop(context); context.push('/profile'); },
                 ),
                 _DrawerTile(
                   icon: Icons.settings_outlined,
                   color: AppColors.textSecondary,
                   title: 'الإعدادات',
                   subtitle: 'اللغة والمظهر',
-                  onTap: () {
+                  onTap: () { Navigator.pop(context); context.push('/settings'); },
+                ),
+                _DrawerTile(
+                  icon: Icons.logout_rounded,
+                  color: Colors.red.shade400,
+                  title: 'تسجيل الخروج',
+                  subtitle: 'الخروج من الحساب',
+                  onTap: () async {
                     Navigator.pop(context);
-                    context.push('/settings');
+                    await AuthService.instance.signOut();
+                    await SessionService.instance.clear();
+                    if (context.mounted) context.go('/login');
                   },
                 ),
               ],
