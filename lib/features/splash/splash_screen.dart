@@ -145,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen>
       final valid = await SessionService.instance.isSessionStillValid();
       if (!mounted) return;
       if (valid) {
-        context.go('/notification-permission');
+        context.go('/home');
       } else {
         await AuthService.instance.signOut();
         await SessionService.instance.clear();

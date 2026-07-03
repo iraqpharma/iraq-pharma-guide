@@ -61,12 +61,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   Future<void> _pickAvatar() async {
     setState(() => _uploadingAvatar = true);
-    final url = await AvatarService.instance.pickAndUpload();
+    final result = await AvatarService.instance.pickAndUpload();
     if (!mounted) return;
-    setState(() {
-      _uploadingAvatar = false;
-      if (url != null) _avatarUrl = url;
-    });
+    setState(() => _uploadingAvatar = false);
+
+    switch (result.status) {
+      case AvatarResult.success:
+        setState(() => _avatarUrl = result.url);
+      case AvatarResult.permissionDenied:
+        _showSnack('لم يتم منح إذن الوصول إلى الصور');
+      case AvatarResult.permissionPermanentlyDenied:
+        _showSnack('يرجى السماح بالوصول إلى الصور من إعدادات التطبيق');
+      case AvatarResult.cancelled:
+        break; // المستخدم أغلق المعرض بنفسه
+      case AvatarResult.error:
+        _showSnack(result.errorMessage ?? 'فشل رفع الصورة');
+    }
+  }
+
+  void _showSnack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
   }
 
   @override

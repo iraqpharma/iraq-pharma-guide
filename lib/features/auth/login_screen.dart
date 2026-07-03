@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_permission_service.dart';
 import '../../services/session_service.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -109,12 +110,17 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showLoginSuccess() {
-    showDialog(
+  Future<void> _showLoginSuccess() async {
+    await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => const _LoginSuccessDialog(),
-    ).then((_) { if (mounted) context.go('/notification-permission'); });
+    );
+    if (!mounted) return;
+    // طلب إذن الإشعارات مرة واحدة فقط بعد أول تسجيل دخول
+    final shouldAsk = await NotificationPermissionService.instance.shouldShowScreen();
+    if (!mounted) return;
+    context.go(shouldAsk ? '/notification-permission' : '/home');
   }
 
   @override
