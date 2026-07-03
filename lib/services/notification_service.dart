@@ -54,15 +54,10 @@ class NotificationService {
 
   // ── FCM ────────────────────────────────────────────────────────────────────
   Future<void> _setupFCM() async {
-    // 1. Request permission
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    if (settings.authorizationStatus == AuthorizationStatus.denied) return;
+    // لا نطلب إذن الإشعارات هنا — يُطلب فقط بعد تسجيل الدخول
+    // عبر NotificationPermissionService في شاشة notification_permission_screen
 
-    // 2. Background handler (top-level)
+    // 1. Background handler (top-level)
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     // 3. Foreground handler — show local notification

@@ -36,12 +36,7 @@ class AvatarService {
     if (uid == null) return AvatarUploadResult.error('المستخدم غير مسجّل');
 
     // ── 1. طلب الإذن أولاً ────────────────────────────────────────────────
-    final permission = Platform.isAndroid
-        ? (await _androidPhotoPermission())
-        : Permission.photos;
-
-    final status = await permission.request();
-
+    final status = await _requestPhotoPermission();
     if (status.isPermanentlyDenied) {
       return AvatarUploadResult.permissionPermanent();
     }
@@ -90,16 +85,17 @@ class AvatarService {
     }
   }
 
-  /// على Android 13+ نحتاج READ_MEDIA_IMAGES، وإلا READ_EXTERNAL_STORAGE
-  Future<Permission> _androidPhotoPermission() async {
-    if (Platform.isAndroid) {
-      // Android 13+ (API 33)
-      if (await Permission.photos.status != PermissionStatus.denied ||
-          await Permission.photos.isGranted) {
-        return Permission.photos;
-      }
-      return Permission.storage;
+  /// يطلب إذن الصور بشكل صحيح على Android 13+ وما قبله
+  Future<PermissionStatus> _requestPhotoPermission() async {
+    if (!Platform.isAndroid) {
+      return Permission.photos.request();
     }
-    return Permission.photos;
+    // جرّب Permission.photos أولاً (Android 13+ / READ_MEDIA_IMAGES)
+    var status = await Permission.photos.request();
+    // إذا لم يظهر dialog وعاد denied مباشرة → جهاز قديم، جرّب storage
+    if (status.isDenied) {
+      status = await Permission.storage.request();
+    }
+    return status;
   }
 }
