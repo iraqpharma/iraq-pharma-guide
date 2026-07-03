@@ -7,7 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Handles FCM background messages — must be a top-level function.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Firebase is already initialized by the time this is called.
+  // يُستدعى عند وصول رسالة data-only والتطبيق في الخلفية أو مغلق
+  // رسائل notification تُعرضها Android تلقائياً بدون هذا الكود
   debugPrint('FCM background: ${message.messageId}');
 }
 

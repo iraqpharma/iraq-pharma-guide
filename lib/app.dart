@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
+import 'services/connectivity_service.dart';
 import 'shared/router/app_router.dart';
 
 class IraqPharmaApp extends ConsumerWidget {
@@ -33,7 +34,7 @@ class IraqPharmaApp extends ConsumerWidget {
       // always sufficient when widgets use hardcoded Row children ordering.
       builder: (context, child) => Directionality(
         textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
-        child: child!,
+        child: ConnectivityListener(child: child!),
       ),
       routerConfig: appRouter,
     );

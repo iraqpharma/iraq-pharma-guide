@@ -93,7 +93,7 @@ class SupportScreen extends StatelessWidget {
             icon: Icons.email_outlined,
             color: AppColors.primary,
             title: context.s.emailLabel,
-            subtitle: 'urmuqa@gmail.com',
+            subtitle: 'info@iraqpharmaguide.com',
           ),
           const SizedBox(height: 32),
         ],

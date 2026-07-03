@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/database/database_helper.dart';
 
 class AdminStatisticsScreen extends StatefulWidget {
   const AdminStatisticsScreen({super.key});
@@ -145,6 +146,12 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
               color: const Color(0xFF8B5CF6),
             )),
           ]),
+
+          // ── أدوية حسب القسم ────────────────────────────────────────
+          const SizedBox(height: 24),
+          _SectionHeader(title: 'الأدوية حسب القسم', icon: Icons.category_rounded),
+          const SizedBox(height: 10),
+          _DrugCategoryStats(),
 
           if (topDrugs.isNotEmpty) ...[
             const SizedBox(height: 24),
@@ -334,4 +341,115 @@ class _ErrorState extends StatelessWidget {
       ]),
     ),
   );
+}
+
+// ── Drug count per category ───────────────────────────────────────────────────
+class _DrugCategoryStats extends StatefulWidget {
+  const _DrugCategoryStats();
+  @override
+  State<_DrugCategoryStats> createState() => _DrugCategoryStatsState();
+}
+
+class _DrugCategoryStatsState extends State<_DrugCategoryStats> {
+  List<Map<String, dynamic>> _rows = [];
+  bool _loading = true;
+
+  static const _categories = [
+    ('cardiovascular',      'القلب والأوعية',       Icons.favorite_rounded,         Color(0xFFEF4444)),
+    ('antibiotics',         'المضادات الحيوية',     Icons.science_rounded,          Color(0xFF10B981)),
+    ('cns_psychiatry',      'الجهاز العصبي',        Icons.psychology_rounded,       Color(0xFF6366F1)),
+    ('diabetes_endocrine',  'السكري والهرمونات',    Icons.bloodtype_rounded,        Color(0xFFF59E0B)),
+    ('respiratory_allergy', 'الجهاز التنفسي',       Icons.air_rounded,              Color(0xFF0EA5E9)),
+    ('gastroenterology',    'الجهاز الهضمي',        Icons.local_dining_rounded,     Color(0xFFF97316)),
+    ('pain_fever',          'الألم والحمى',         Icons.thermostat_rounded,       Color(0xFFEC4899)),
+    ('dermatology',         'الأمراض الجلدية',      Icons.healing_rounded,          Color(0xFF14B8A6)),
+    ('ophthalmology',       'طب العيون',            Icons.remove_red_eye_rounded,   Color(0xFF8B5CF6)),
+    ('vitamins_minerals',   'الفيتامينات',          Icons.spa_rounded,              Color(0xFF22C55E)),
+    ('cosmetics',           'مستحضرات التجميل',     Icons.face_retouching_natural,  Color(0xFFF472B6)),
+    ('other',               'أخرى',                 Icons.more_horiz_rounded,       Color(0xFF94A3B8)),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final db = await DatabaseHelper.instance.database;
+    final results = <Map<String, dynamic>>[];
+    for (final cat in _categories) {
+      final rows = await db.rawQuery(
+        'SELECT COUNT(*) as cnt FROM drugs WHERE app_category = ?', [cat.$1]);
+      results.add({'key': cat.$1, 'label': cat.$2, 'icon': cat.$3,
+                   'color': cat.$4, 'count': rows.first['cnt'] as int? ?? 0});
+    }
+    if (mounted) setState(() { _rows = results; _loading = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Column(
+        children: _rows.asMap().entries.map((e) {
+          final i   = e.key;
+          final row = e.value;
+          final count = row['count'] as int;
+          final total = _rows.fold<int>(0, (s, r) => s + (r['count'] as int));
+          final pct = total > 0 ? count / total : 0.0;
+          return Column(children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(children: [
+                Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: (row['color'] as Color).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(row['icon'] as IconData,
+                      color: row['color'] as Color, size: 16),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Expanded(child: Text(row['label'] as String,
+                          style: GoogleFonts.ibmPlexSansArabic(
+                              fontSize: 13, fontWeight: FontWeight.w600,
+                              color: cs.onSurface))),
+                      Text('$count دواء',
+                          style: GoogleFonts.ibmPlexSansArabic(
+                              fontSize: 12, fontWeight: FontWeight.bold,
+                              color: row['color'] as Color)),
+                    ]),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: pct,
+                        minHeight: 4,
+                        backgroundColor: cs.surfaceVariant,
+                        color: row['color'] as Color,
+                      ),
+                    ),
+                  ],
+                )),
+              ]),
+            ),
+            if (i < _rows.length - 1)
+              Divider(height: 1, color: cs.outlineVariant),
+          ]);
+        }).toList(),
+      ),
+    );
+  }
 }
