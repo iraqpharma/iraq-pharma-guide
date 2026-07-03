@@ -141,24 +141,8 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
                       .toLowerCase()
                       .compareTo(b.genericName.toLowerCase()));
 
-                // Count label
                 return Column(
                   children: [
-                    // Count bar
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      color: AppColors.primaryLight,
-                      child: Text(
-                        context.s.drugCount(filtered.length),
-                        style: TextStyle(
-                          color: AppColors.primaryBlue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                     Expanded(
                       child: ListView.separated(
                         padding: const EdgeInsets.symmetric(vertical: 8),

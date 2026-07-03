@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NotificationPermissionService {
   NotificationPermissionService._();
@@ -42,13 +44,9 @@ class NotificationPermissionService {
       granted = true;
     }
 
-    // Fetch FCM token if granted
+    // حفظ FCM Token في Supabase حتى نتمكن من إرسال إشعارات للجهاز
     if (granted) {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        // Token is ready — can be sent to Supabase profiles if needed
-        debugPrintToken(token);
-      }
+      await _saveFcmToken();
     }
 
     await _markAsked();
@@ -63,8 +61,38 @@ class NotificationPermissionService {
     await prefs.setBool(_askedKey, true);
   }
 
-  void debugPrintToken(String token) {
-    // ignore: avoid_print
-    print('[FCM Token] $token');
+  /// حفظ FCM Token في جدول profiles لإرسال الإشعارات لهذا الجهاز
+  Future<void> _saveFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) return;
+      debugPrint('[FCM Token] $token');
+      final uid = Supabase.instance.client.auth.currentUser?.id;
+      if (uid == null) return;
+      await Supabase.instance.client
+          .from('profiles')
+          .update({'fcm_token': token})
+          .eq('id', uid);
+    } catch (e) {
+      debugPrint('[FCM] Failed to save token: $e');
+    }
   }
+
+  /// حذف FCM Token عند إيقاف الإشعارات
+  Future<void> disableNotifications() async {
+    try {
+      await FirebaseMessaging.instance.deleteToken();
+      final uid = Supabase.instance.client.auth.currentUser?.id;
+      if (uid == null) return;
+      await Supabase.instance.client
+          .from('profiles')
+          .update({'fcm_token': null})
+          .eq('id', uid);
+    } catch (e) {
+      debugPrint('[FCM] Failed to delete token: $e');
+    }
+  }
+
+  /// إعادة تفعيل الإشعارات
+  Future<void> enableNotifications() async => _saveFcmToken();
 }

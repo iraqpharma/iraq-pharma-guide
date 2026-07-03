@@ -389,7 +389,7 @@ class _DosageFormCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF1976D2).withOpacity(0.3)),
       ),
@@ -441,7 +441,7 @@ class _AvailableDosesCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E5F5),
+        color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF7B1FA2).withOpacity(0.3)),
       ),

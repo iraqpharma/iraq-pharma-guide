@@ -10,6 +10,8 @@ import '../../providers/theme_provider.dart';
 import '../../services/admin_access_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/avatar_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/notification_permission_service.dart';
 import '../../services/session_service.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/compact_app_header.dart';
@@ -29,7 +31,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool    _loading         = true;
   bool    _uploadingAvatar = false;
   String? _avatarUrl;
-  bool    _isSuperAdmin    = false;
+  bool    _isSuperAdmin       = false;
+  bool    _notificationsOn    = true;
 
   late final AnimationController _avatarCtrl;
   late final Animation<double>   _avatarScale;
@@ -41,6 +44,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _avatarScale = CurvedAnimation(parent: _avatarCtrl, curve: Curves.elasticOut);
     _loadProfile();
     _loadAdminAccess();
+    _loadNotificationState();
   }
 
   Future<void> _loadProfile() async {
@@ -57,6 +61,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Future<void> _loadAdminAccess() async {
     final access = await AdminAccessService.instance.hasAccess();
     if (mounted) setState(() => _isSuperAdmin = access);
+  }
+
+  Future<void> _loadNotificationState() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() => _notificationsOn = prefs.getBool('notifications_enabled') ?? true);
+    }
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+    if (value) {
+      await NotificationPermissionService.instance.enableNotifications();
+    } else {
+      await NotificationPermissionService.instance.disableNotifications();
+    }
+    if (mounted) setState(() => _notificationsOn = value);
   }
 
   Future<void> _pickAvatar() async {
@@ -261,6 +283,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       onTap: () => _showLangDialog(ctx, ref, isArabic),
                     );
                   }),
+                  _divider(cs),
+                  // ── Notifications toggle ─────────────────────────────
+                  _buildNotificationToggleRow(cs),
                   _divider(cs),
                   // ── Dark mode toggle ─────────────────────────────────
                   _buildThemeToggleRow(cs, isDark),
@@ -496,6 +521,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   // ── Sun / Moon animated theme toggle ─────────────────────────────────────
+  Widget _buildNotificationToggleRow(ColorScheme cs) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(children: [
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: (_notificationsOn ? AppColors.primary : cs.onSurface).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            _notificationsOn ? Icons.notifications_active_outlined : Icons.notifications_off_outlined,
+            color: _notificationsOn ? AppColors.primary : cs.onSurfaceVariant,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('الإشعارات',
+                  style: GoogleFonts.ibmPlexSansArabic(
+                      fontSize: 14, fontWeight: FontWeight.w600,
+                      color: cs.onSurface)),
+              Text(_notificationsOn ? 'مفعّلة' : 'موقوفة',
+                  style: GoogleFonts.ibmPlexSansArabic(
+                      fontSize: 11, color: cs.onSurfaceVariant)),
+            ],
+          ),
+        ),
+        Switch.adaptive(
+          value: _notificationsOn,
+          onChanged: _toggleNotifications,
+          activeColor: AppColors.primary,
+        ),
+      ]),
+    );
+  }
+
   Widget _buildThemeToggleRow(ColorScheme cs, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
