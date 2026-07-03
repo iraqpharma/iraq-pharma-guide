@@ -4,6 +4,7 @@ import '../data/database/database_helper.dart';
 import '../data/models/drug_model.dart';
 import '../data/models/suggestion_item.dart';
 import '../data/repositories/drug_repository.dart';
+import '../services/auth_service.dart';
 
 export '../data/models/suggestion_item.dart';
 
@@ -41,6 +42,8 @@ final searchResultsProvider = FutureProvider<List<Drug>>((ref) async {
   final qAsync = ref.watch(_debouncedQueryProvider);
   final q = qAsync.valueOrNull ?? '';
   if (q.trim().length < 2) return [];
+  // عدّ كل بحث فعلي
+  AuthService.instance.incrementDrugSearch();
   return ref.read(drugRepositoryProvider).search(q);
 });
 

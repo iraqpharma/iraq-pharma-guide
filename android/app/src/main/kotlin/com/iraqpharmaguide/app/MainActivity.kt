@@ -1,4 +1,4 @@
-package com.iraqpharma.iraq_pharma_guide
+package com.iraqpharmaguide.app
 
 import io.flutter.embedding.android.FlutterActivity
 

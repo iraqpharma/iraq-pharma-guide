@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ── Input limits ──────────────────────────────────────────────────────────────
 const int kMaxEmailLen    = 254;
@@ -25,12 +26,22 @@ class AuthService {
   static const _keyPendingProfile = 'pending_profile_v1';
 
   // ── Sign Up ───────────────────────────────────────────────────────────────
+  //
+  // SUPABASE DASHBOARD — disable all verification (do this once):
+  // 1. Authentication → Providers → Email
+  //    → Turn OFF "Confirm email"  (so users log in immediately after sign-up)
+  //    → Turn OFF "Secure email change"
+  // 2. Authentication → Providers → Phone (if phone auth used)
+  //    → Turn OFF "Enable phone confirmations"
+  // 3. Authentication → Rate Limits → raise limits if needed for testing
+  //
   Future<AuthResult> signUp({
     required String email,
     required String password,
     required String fullName,
     required String username,
     required String role,
+    String phone = '',
     required String birthDate,
     required String address,
   }) async {
@@ -39,15 +50,17 @@ class AuthService {
     fullName = _clamp(_sanitizeText(fullName), kMaxNameLen);
     username = _clamp(_sanitizeUsername(username), kMaxUsernameLen);
     address  = _clamp(_sanitizeText(address), kMaxAddressLen);
+    phone    = _clamp(phone.trim().replaceAll(RegExp(r'\s'), ''), 15);
 
-    // Profile data without id (id added at flush time after OTP)
-    final pendingProfile = {
-      'email':      email,
-      'full_name':  fullName,
-      'username':   username,
-      'role':       role,
-      'birth_date': birthDate.isEmpty ? null : birthDate,
-      'address':    address,
+    // Only columns that exist in the profiles table
+    final pendingProfile = <String, dynamic>{
+      'email':     email,
+      'full_name': fullName,
+      'username':  username,
+      'role':      role,
+      // phone column does NOT exist in profiles table — omitted
+      if (birthDate.isNotEmpty) 'birth_date': birthDate,
+      if (address.isNotEmpty) 'address': address,
     };
 
     try {
@@ -57,12 +70,21 @@ class AuthService {
 
       final profileData = {'id': user.id, ...pendingProfile};
 
-      // Insert profile (email confirmation disabled → session is active immediately)
-      try {
-        await _client.from('profiles').upsert(profileData);
-      } catch (_) {}
-
-      return AuthResult.success(email: email);
+      if (res.session != null) {
+        // Email confirmation DISABLED → active session → insert profile immediately
+        try {
+          await _client.from('profiles').upsert(profileData);
+        } catch (e) {
+          // Surface the real error so we can debug it
+          return AuthResult.failure('تم إنشاء الحساب لكن فشل حفظ البيانات: ${e.toString().split('\n').first}');
+        }
+        return AuthResult.success(email: email);
+      } else {
+        // Email confirmation ENABLED → save pending, flush after OTP
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_keyPendingProfile, jsonEncode(profileData));
+        return AuthResult.success(email: email);
+      }
     } on AuthException catch (e) {
       return AuthResult.failure(_translateAuthError(e.message));
     } catch (e) {
@@ -88,12 +110,18 @@ class AuthService {
     } catch (_) {}
   }
 
-  // ── Sign In (email or username + password) ───────────────────────────────
+  // ── Sign In (email / phone / username + password) ────────────────────────
   Future<AuthResult> signIn({required String emailOrUsername, required String password}) async {
     password = _clamp(password, kMaxPasswordLen);
+    final input = emailOrUsername.trim();
+
+    // Phone number (starts with + or 07xx / 009647xx patterns)
+    if (_isPhone(input)) {
+      return _signInWithPhone(input, password);
+    }
 
     // Resolve username → email if needed
-    String email = emailOrUsername.trim().toLowerCase();
+    String email = input.toLowerCase();
     if (!email.contains('@')) {
       final resolved = await _resolveEmailFromUsername(email);
       if (resolved == null) return AuthResult.failure('اسم المستخدم غير موجود');
@@ -111,10 +139,59 @@ class AuthService {
     }
   }
 
-  Future<String?> _resolveEmailFromUsername(String username) async {
+  // Detects if the input looks like a phone number
+  bool _isPhone(String v) {
+    final stripped = v.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (stripped.startsWith('+')) {
+      final digits = stripped.substring(1);
+      return digits.length >= 10 && RegExp(r'^\d+$').hasMatch(digits);
+    }
+    // Iraqi numbers: 07xxxxxxxxx (11 digits) or 009647xxxxxxxxx
+    if (RegExp(r'^(07\d{9}|009647\d{9})$').hasMatch(stripped)) return true;
+    return false;
+  }
+
+  // Normalizes Iraqi phone to E.164 (+964...) and signs in
+  Future<AuthResult> _signInWithPhone(String phone, String password) async {
+    final stripped = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    String normalized;
+    if (stripped.startsWith('+')) {
+      normalized = stripped;
+    } else if (stripped.startsWith('009647')) {
+      normalized = '+${stripped.substring(2)}';
+    } else if (stripped.startsWith('07')) {
+      normalized = '+964${stripped.substring(1)}';
+    } else {
+      normalized = '+964$stripped';
+    }
+
     try {
+      await _client.auth.signInWithPassword(phone: normalized, password: password);
+      return AuthResult.success();
+    } on AuthException catch (e) {
+      return AuthResult.failure(_translateAuthError(e.message));
+    } catch (_) {
+      return AuthResult.failure('تحقق من اتصالك بالإنترنت');
+    }
+  }
+
+  Future<String?> _resolveEmailFromUsername(String username) async {
+    final clean = _sanitizeUsername(username);
+    try {
+      // Try profiles.email column first (if it exists)
+      final row = await _client
+          .from('profiles')
+          .select('email')
+          .eq('username', clean)
+          .maybeSingle();
+      final email = row?['email'] as String?;
+      if (email != null && email.isNotEmpty) return email;
+    } catch (_) {}
+
+    try {
+      // Fallback: RPC (if get_email_by_username function exists in Supabase)
       final result = await _client
-          .rpc('get_email_by_username', params: {'uname': _sanitizeUsername(username)});
+          .rpc('get_email_by_username', params: {'uname': clean});
       return result as String?;
     } catch (_) {
       return null;
@@ -164,9 +241,28 @@ class AuthService {
   }
 
   // ── Google Sign-In ────────────────────────────────────────────────────────
+  //
+  // SETUP CHECKLIST (do this once before releasing):
+  // 1. Google Cloud Console → APIs & Services → Credentials
+  //    → Create OAuth 2.0 Client ID → Web application
+  //    → Copy the generated client ID (ends in .apps.googleusercontent.com)
+  //    → Paste it below as kGoogleWebClientId
+  // 2. Google Cloud Console → same page → Create OAuth 2.0 Client ID → Android
+  //    → Package: com.iraqpharmaguide.app
+  //    → SHA-1: run `cd android && ./gradlew signingReport` → copy SHA-1
+  // 3. Firebase Console → Project Settings → Add your Android app SHA-1 fingerprint
+  //    → Download the updated google-services.json and replace the existing one
+  // 4. Supabase Dashboard → Authentication → Providers → Google
+  //    → Enable Google, paste the Web Client ID and Client Secret from step 1
+  // 5. Supabase Dashboard → Authentication → URL Configuration
+  //    → Add  com.iraqpharmaguide.app://*  to Redirect URLs
+  //
+  static const _kGoogleWebClientId =
+      '1411929971-4gvbfippaoi1r1puva3gqrbjc2p8ptid.apps.googleusercontent.com';
+
   Future<AuthResult> signInWithGoogle() async {
     try {
-      final googleSignIn = GoogleSignIn();
+      final googleSignIn = GoogleSignIn(serverClientId: _kGoogleWebClientId);
       final googleUser   = await googleSignIn.signIn();
       if (googleUser == null) return AuthResult.failure('تم إلغاء تسجيل الدخول');
 
@@ -202,6 +298,15 @@ class AuthService {
     }
   }
 
+  // ── Facebook OAuth ────────────────────────────────────────────────────────
+  Future<void> signInWithFacebook() async {
+    await _client.auth.signInWithOAuth(
+      OAuthProvider.facebook,
+      redirectTo: 'com.iraqpharmaguide.app://login-callback/',
+      authScreenLaunchMode: LaunchMode.externalApplication,
+    );
+  }
+
   // ── Forgot Password ───────────────────────────────────────────────────────
   Future<AuthResult> resetPassword(String email) async {
     email = _clamp(email.trim().toLowerCase(), kMaxEmailLen);
@@ -222,6 +327,9 @@ class AuthService {
   Future<Map<String, dynamic>?> getProfile() async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return null;
+    final data = await _client.from('profiles').select().eq('id', uid).maybeSingle();
+    // If profile row is missing (signup insert failed), try to flush pending data
+    if (data == null) await _flushPendingProfile();
     return _client.from('profiles').select().eq('id', uid).maybeSingle();
   }
 

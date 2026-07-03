@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../data/models/app_notification.dart';
 import '../../providers/notification_provider.dart';
 
@@ -36,12 +37,12 @@ class NotificationsScreen extends ConsumerWidget {
     final svc         = ref.watch(notificationActionsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text('الإشعارات',
+        title: Text(context.s.notifications_,
             style: GoogleFonts.cairo(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -66,7 +67,7 @@ class NotificationsScreen extends ConsumerWidget {
                   itemCount: _countItems(grouped),
                   itemBuilder: (ctx, i) {
                     final item = _itemAt(grouped, i);
-                    if (item is String) return _DateHeader(label: item);
+                    if (item is String) return _DateHeader(label: context.s.notifGroupLabel(item));
                     final notif = item as AppNotification;
                     return _NotificationTile(
                       notif: notif,
@@ -91,18 +92,18 @@ class NotificationsScreen extends ConsumerWidget {
     final today   = DateTime(now.year, now.month, now.day);
     final weekAgo = today.subtract(const Duration(days: 7));
     final groups  = <String, List<AppNotification>>{
-      'اليوم': [],
-      'هذا الأسبوع': [],
-      'أقدم': [],
+      'today': [],
+      'thisWeek': [],
+      'older': [],
     };
     for (final n in list) {
       final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
       if (d == today) {
-        groups['اليوم']!.add(n);
+        groups['today']!.add(n);
       } else if (d.isAfter(weekAgo)) {
-        groups['هذا الأسبوع']!.add(n);
+        groups['thisWeek']!.add(n);
       } else {
-        groups['أقدم']!.add(n);
+        groups['older']!.add(n);
       }
     }
     groups.removeWhere((_, v) => v.isEmpty);
@@ -150,9 +151,9 @@ class _DateHeader extends StatelessWidget {
               style: GoogleFonts.cairo(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary)),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(width: 8),
-          Expanded(child: Divider(color: AppColors.divider, height: 1)),
+          Expanded(child: Divider(color: Theme.of(context).dividerColor, height: 1)),
         ],
       ),
     );
@@ -170,15 +171,15 @@ class _MarkAllBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.divider)),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         children: [
-          Icon(Icons.done_all_rounded, size: 15, color: AppColors.textSecondary),
+          Icon(Icons.done_all_rounded, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 7),
-          Text('اضغط على الإشعار لفتحه وتعيينه كمقروء',
-              style: GoogleFonts.cairo(fontSize: 11, color: AppColors.textSecondary)),
+          Text(context.s.tapNotifToRead,
+              style: GoogleFonts.cairo(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const Spacer(),
           GestureDetector(
             onTap: onTap,
@@ -193,7 +194,7 @@ class _MarkAllBanner extends StatelessWidget {
                 children: [
                   const Icon(Icons.done_all_rounded, size: 13, color: Colors.white),
                   const SizedBox(width: 5),
-                  Text('تعيين الكل',
+                  Text(context.s.markAll,
                       style: GoogleFonts.cairo(
                           fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
                 ],
@@ -255,13 +256,13 @@ class _NotificationTile extends StatelessWidget {
                                 fontWeight: notif.isRead
                                     ? FontWeight.w500
                                     : FontWeight.bold,
-                                color: AppColors.textPrimary)),
+                                color: Theme.of(context).colorScheme.onSurface)),
                       ),
                       const SizedBox(width: 8),
-                      Text(_formatTime(notif.createdAt),
+                      Text(_formatTime(notif.createdAt, context.s),
                           style: GoogleFonts.cairo(
                               fontSize: 10,
-                              color: AppColors.textSecondary.withOpacity(0.65))),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.65))),
                       if (!notif.isRead) ...[
                         const SizedBox(width: 5),
                         Container(
@@ -280,7 +281,7 @@ class _NotificationTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.cairo(
-                          fontSize: 12, color: AppColors.textSecondary, height: 1.4)),
+                          fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4)),
 
                   const SizedBox(height: 7),
 
@@ -319,7 +320,7 @@ class _NotificationTile extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12, right: 4),
               child: Icon(Icons.chevron_left_rounded,
                   size: 16,
-                  color: AppColors.textSecondary.withOpacity(0.35)),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.35)),
             ),
           ],
         ),
@@ -327,16 +328,16 @@ class _NotificationTile extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime dt) {
+  String _formatTime(DateTime dt, AppStrings s) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60)  return 'الآن';
-    if (diff.inMinutes < 60)  return 'منذ ${diff.inMinutes} دقيقة';
-    if (diff.inHours < 24)    return 'منذ ${diff.inHours} ساعة';
-    if (diff.inDays == 1)     return 'منذ يوم';
-    if (diff.inDays < 7)      return 'منذ ${diff.inDays} أيام';
-    if (diff.inDays < 30)     return 'منذ ${(diff.inDays / 7).floor()} أسبوع';
-    if (diff.inDays < 365)    return 'منذ ${(diff.inDays / 30).floor()} شهر';
-    return 'منذ ${(diff.inDays / 365).floor()} سنة';
+    if (diff.inSeconds < 60)  return s.justNow;
+    if (diff.inMinutes < 60)  return s.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24)    return s.hoursAgo(diff.inHours);
+    if (diff.inDays == 1)     return s.yesterdayLabel;
+    if (diff.inDays < 7)      return s.daysAgo(diff.inDays);
+    if (diff.inDays < 30)     return s.weeksAgo((diff.inDays / 7).floor());
+    if (diff.inDays < 365)    return s.monthsAgo_((diff.inDays / 30).floor());
+    return s.yearsAgo((diff.inDays / 365).floor());
   }
 }
 
@@ -360,7 +361,7 @@ class _NotificationDetailDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 60),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
@@ -422,7 +423,7 @@ class _NotificationDetailDialog extends StatelessWidget {
                             style: GoogleFonts.cairo(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary)),
+                                color: Theme.of(context).colorScheme.onSurface)),
                       ],
                     ),
                   ),
@@ -434,8 +435,8 @@ class _NotificationDetailDialog extends StatelessWidget {
                         color: Colors.black.withOpacity(0.06),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.close_rounded,
-                          size: 16, color: AppColors.textSecondary),
+                      child: Icon(Icons.close_rounded,
+                          size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],
@@ -452,7 +453,7 @@ class _NotificationDetailDialog extends StatelessWidget {
                 child: Text(notif.body,
                     style: GoogleFonts.cairo(
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         height: 1.7)),
               ),
             ),
@@ -485,7 +486,7 @@ class _NotificationDetailDialog extends StatelessWidget {
                     label: Text(
                         notif.actionLabel?.isNotEmpty == true
                             ? notif.actionLabel!
-                            : 'اضغط للتفاصيل',
+                            : context.s.tapForDetails,
                         style: GoogleFonts.cairo(
                             fontSize: 14, fontWeight: FontWeight.bold)),
                   ),
@@ -499,27 +500,27 @@ class _NotificationDetailDialog extends StatelessWidget {
                 children: [
                   Icon(Icons.access_time_rounded,
                       size: 13,
-                      color: AppColors.textSecondary.withOpacity(0.6)),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6)),
                   const SizedBox(width: 5),
-                  Text(_fullDate(notif.createdAt),
+                  Text(_fullDate(notif.createdAt, context.s),
                       style: GoogleFonts.cairo(
                           fontSize: 11,
-                          color: AppColors.textSecondary.withOpacity(0.7))),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7))),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: Theme.of(context).colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppColors.divider),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Text(
                       '#${notif.id.substring(0, 4).toUpperCase()}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 10,
                           fontFamily: 'monospace',
-                          color: AppColors.textSecondary),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],
@@ -531,14 +532,10 @@ class _NotificationDetailDialog extends StatelessWidget {
     );
   }
 
-  String _fullDate(DateTime dt) {
-    const months = [
-      '', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-    ];
+  String _fullDate(DateTime dt, AppStrings s) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${months[dt.month]} ${dt.year}  $h:$m';
+    return '${dt.day} ${s.monthName(dt.month)} ${dt.year}  $h:$m';
   }
 }
 
@@ -554,20 +551,20 @@ class _EmptyState extends StatelessWidget {
           Container(
             width: 90, height: 90,
             decoration: const BoxDecoration(
-                color: AppColors.primaryLight, shape: BoxShape.circle),
+                color: AppColors.primaryLight, shape: BoxShape.circle), // intentional brand color
             child: const Icon(Icons.notifications_off_outlined,
                 color: AppColors.primary, size: 40),
           ),
           const SizedBox(height: 20),
-          Text('لا توجد إشعارات',
+          Text(context.s.noNotifications,
               style: GoogleFonts.cairo(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 6),
-          Text('ستظهر هنا الإشعارات الجديدة عند وصولها',
+          Text(context.s.noNotificationsHint,
               style: GoogleFonts.cairo(
-                  fontSize: 13, color: AppColors.textSecondary)),
+                  fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       ),
     );
@@ -584,13 +581,13 @@ class _ErrorState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.cloud_off_outlined,
-              size: 60, color: AppColors.textSecondary.withOpacity(0.4)),
+              size: 60, color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4)),
           const SizedBox(height: 14),
-          Text('تعذّر تحميل الإشعارات',
+          Text(context.s.failedToLoadNotifs,
               style: GoogleFonts.cairo(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary)),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       ),
     );

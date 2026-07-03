@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -36,19 +37,19 @@ class SupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: Text('قسم الدعم',
+        title: Text(context.s.supportTitle,
             style: GoogleFonts.ibmPlexSansArabic(
-                fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -67,11 +68,11 @@ class SupportScreen extends StatelessWidget {
               const Icon(Icons.support_agent_rounded, color: Colors.white, size: 36),
               const SizedBox(width: 14),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('مركز المساعدة',
+                Text(context.s.helpCenter,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 const SizedBox(height: 4),
-                Text('إجابات على الأسئلة الشائعة وطرق التواصل',
+                Text(context.s.helpCenterSub,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 12, color: Colors.white.withOpacity(0.85))),
               ])),
@@ -80,18 +81,18 @@ class SupportScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           // FAQ section
-          _label('الأسئلة الشائعة', Icons.quiz_outlined),
+          _label(context.s.faqSection, Icons.quiz_outlined),
           const SizedBox(height: 10),
           ..._faqs.map((faq) => _FaqTile(q: faq.q, a: faq.a)),
           const SizedBox(height: 20),
 
           // Contact section
-          _label('تواصل معنا', Icons.contact_support_outlined),
+          _label(context.s.contactUs_, Icons.contact_support_outlined),
           const SizedBox(height: 10),
           _ContactCard(
             icon: Icons.email_outlined,
             color: AppColors.primary,
-            title: 'البريد الإلكتروني',
+            title: context.s.emailLabel,
             subtitle: 'urmuqa@gmail.com',
           ),
           const SizedBox(height: 32),
@@ -100,13 +101,13 @@ class SupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _label(String text, IconData icon) => Row(children: [
+  Widget _label(String text, IconData icon) => Builder(builder: (context) => Row(children: [
     Icon(icon, size: 18, color: AppColors.primary),
     const SizedBox(width: 8),
     Text(text,
         style: GoogleFonts.ibmPlexSansArabic(
-            fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-  ]);
+            fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+  ]));
 }
 
 class _FaqTile extends StatefulWidget {
@@ -123,7 +124,7 @@ class _FaqTileState extends State<_FaqTile> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3))],
       ),
@@ -142,7 +143,7 @@ class _FaqTileState extends State<_FaqTile> {
                 const SizedBox(width: 10),
                 Expanded(child: Text(widget.q,
                     style: GoogleFonts.ibmPlexSansArabic(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
+                        fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface))),
               ]),
               if (_expanded) ...[
                 const SizedBox(height: 10),
@@ -150,7 +151,7 @@ class _FaqTileState extends State<_FaqTile> {
                   padding: const EdgeInsets.only(right: 30),
                   child: Text(widget.a,
                       style: GoogleFonts.ibmPlexSansArabic(
-                          fontSize: 13, color: AppColors.textSecondary, height: 1.6)),
+                          fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6)),
                 ),
               ],
             ]),
@@ -169,7 +170,7 @@ class _ContactCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(14),
       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3))],
     ),
@@ -181,8 +182,8 @@ class _ContactCard extends StatelessWidget {
       ),
       const SizedBox(width: 14),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.ibmPlexSansArabic(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-        Text(subtitle, style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: AppColors.textSecondary)),
+        Text(title, style: GoogleFonts.ibmPlexSansArabic(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+        Text(subtitle, style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ]),
     ]),
   );

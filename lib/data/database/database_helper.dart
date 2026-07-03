@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:io';
 import '../models/drug_model.dart';
@@ -10,19 +11,32 @@ class DatabaseHelper {
   static DatabaseHelper? _instance;
   static Database? _db;
 
+  // Increment this whenever assets/database/drugs.db is updated
+  static const int _kAssetDbVersion = 6;
+
   DatabaseHelper._();
   static DatabaseHelper get instance => _instance ??= DatabaseHelper._();
 
-  Future<Database> get database async => _db ??= await _initDb();
+  Future<Database> get database async {
+    if (_db != null && _db!.isOpen) return _db!;
+    _db = await _initDb();
+    return _db!;
+  }
 
   Future<Database> _initDb() async {
     final dir = await getApplicationDocumentsDirectory();
     final dbPath = join(dir.path, 'drugs.db');
+    final dbFile = File(dbPath);
+    final prefs = await SharedPreferences.getInstance();
+    final storedVersion = prefs.getInt('db_asset_version') ?? 0;
 
-    // Always overwrite to pick up updated drug data
-    final data = await rootBundle.load('assets/database/drugs.db');
-    final bytes = data.buffer.asUint8List();
-    await File(dbPath).writeAsBytes(bytes, flush: true);
+    // Re-copy from assets if never copied before OR if asset DB was updated
+    if (!dbFile.existsSync() || storedVersion < _kAssetDbVersion) {
+      final assetData = await rootBundle.load('assets/database/drugs.db');
+      final assetBytes = assetData.buffer.asUint8List();
+      await dbFile.writeAsBytes(assetBytes, flush: true);
+      await prefs.setInt('db_asset_version', _kAssetDbVersion);
+    }
 
     return openDatabase(dbPath);
   }
@@ -46,9 +60,9 @@ class DatabaseHelper {
     // Fallback LIKE search
     final rows = await db.rawQuery(
       '''SELECT * FROM drugs
-         WHERE generic_name LIKE ? OR trade_names LIKE ?
+         WHERE generic_name LIKE ? OR generic_name_ar LIKE ? OR trade_names LIKE ?
          LIMIT 50''',
-      ['%$q%', '%$q%'],
+      ['%$q%', '%$q%', '%$q%'],
     );
     return rows.map(Drug.fromMap).toList();
   }
@@ -60,9 +74,9 @@ class DatabaseHelper {
     final q = query.trim();
     final rows = await db.rawQuery(
       '''SELECT generic_name FROM drugs
-         WHERE generic_name LIKE ? OR trade_names LIKE ?
+         WHERE generic_name LIKE ? OR generic_name_ar LIKE ? OR trade_names LIKE ?
          ORDER BY generic_name LIMIT ?''',
-      ['%$q%', '%$q%', limit],
+      ['%$q%', '%$q%', '%$q%', limit],
     );
     return rows.map((r) => r['generic_name'] as String).toSet().toList();
   }
@@ -75,12 +89,12 @@ class DatabaseHelper {
     final q = query.trim();
     final pattern = '%$q%';
 
-    // Generic name matches
+    // Generic name matches (English or Arabic)
     final genericRows = await db.rawQuery(
       '''SELECT generic_name FROM drugs
-         WHERE generic_name LIKE ?
+         WHERE generic_name LIKE ? OR generic_name_ar LIKE ?
          ORDER BY length(generic_name) LIMIT ?''',
-      [pattern, limit],
+      [pattern, pattern, limit],
     );
 
     // Trade name matches — extract individual names from JSON array string
@@ -161,6 +175,15 @@ class DatabaseHelper {
     return rows.map(Drug.fromMap).toList();
   }
 
+  Future<List<Drug>> getByAppCategory(String category) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT * FROM drugs WHERE app_category = ? ORDER BY pharmacological_class, generic_name',
+      [category],
+    );
+    return rows.map(Drug.fromMap).toList();
+  }
+
   Future<List<Drug>> getByPharmClass(String pharmClass) async {
     final db = await database;
     final rows = await db.query('drugs',
@@ -189,6 +212,10 @@ class DatabaseHelper {
           conditions.add(
             "(renal_adjustment LIKE '%avoid%' OR renal_adjustment LIKE '%تجنب%' OR renal_adjustment LIKE '%AVOID%')",
           );
+        case 'otc':
+          conditions.add("rx_otc LIKE '%OTC%'");
+        case 'high_alert':
+          conditions.add("is_lasa = 1");
       }
     }
 
@@ -199,5 +226,38 @@ class DatabaseHelper {
       args,
     );
     return rows.map(Drug.fromMap).toList();
+  }
+
+  // ── Admin CRUD ──────────────────────────────────────────────────────────
+
+  Future<List<Drug>> getAllDrugs({String query = ''}) async {
+    final db = await database;
+    if (query.trim().isEmpty) {
+      final rows = await db.query('drugs', orderBy: 'generic_name');
+      return rows.map(Drug.fromMap).toList();
+    }
+    final pattern = '%${query.trim()}%';
+    final rows = await db.rawQuery(
+      '''SELECT * FROM drugs
+         WHERE generic_name LIKE ? OR generic_name_ar LIKE ?
+         ORDER BY generic_name''',
+      [pattern, pattern],
+    );
+    return rows.map(Drug.fromMap).toList();
+  }
+
+  Future<int> insertDrug(Map<String, dynamic> data) async {
+    final db = await database;
+    return db.insert('drugs', data);
+  }
+
+  Future<int> updateDrug(int id, Map<String, dynamic> data) async {
+    final db = await database;
+    return db.update('drugs', data, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteDrug(int id) async {
+    final db = await database;
+    return db.delete('drugs', where: 'id = ?', whereArgs: [id]);
   }
 }

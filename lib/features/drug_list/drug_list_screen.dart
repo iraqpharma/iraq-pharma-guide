@@ -4,208 +4,276 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
 import '../../providers/drug_provider.dart';
+import '../../core/l10n/app_strings.dart';
 
-const categoryClassMap = {
-  'antibiotics': [
-    'Penicillins', 'Cephalosporins', 'Macrolides', 'Quinolones',
-    'Carbapenems', 'Glycopeptides', 'Sulfonamides', 'Tetracyclines',
-    'Antiprotozoals',
-  ],
-  'cardiovascular': [
-    'ACE inhibitors', 'Angiotensin II receptor antagonists', 'Beta-blockers',
-    'Calcium channel blockers', 'Diuretics', 'Statins', 'Nitrates',
-    'Antiplatelet drugs', 'Anticoagulants', 'Miscellaneous cardiovascular',
-  ],
-  'diabetes': ['Oral antidiabetics', 'Insulin'],
-  'analgesics': ['NSAIDs', 'Analgesics', 'Opioid analgesics'],
-  'neurology': [
-    'Benzodiazepines', 'Antipsychotics', 'SSRIs',
-    'Tricyclic antidepressants', 'Antiepileptics',
-  ],
-  'gastrointestinal': [
-    'Proton pump inhibitors', 'H2 receptor antagonists', 'Laxatives',
-    'Antidiarrhoeals', 'Antiemetics', 'Antispasmodics',
-  ],
-  'respiratory': [
-    'Beta2 agonists', 'Inhaled corticosteroids', 'Antihistamines',
-    'Anticholinergic bronchodilators', 'Leukotriene antagonists', 'Xanthines',
-  ],
-  'endocrine': ['Thyroid drugs', 'Corticosteroids'],
-  'vitamins': [
-    'Vitamins', 'Vitamin supplements', 'Multivitamins',
-    'Iron preparations', 'Iron supplements', 'Calcium supplements',
-    'Dietary supplements', 'Nutritional supplements',
-    'Minerals', 'Electrolytes', 'Folic acid', 'Vitamin D',
-    'Vitamin B12', 'Zinc supplements',
-  ],
-  'cosmetic': [
-    'Dermatologicals', 'Topical agents', 'Topical corticosteroids',
-    'Antifungal topical', 'Emollients', 'Skin preparations',
-    'Cosmeceuticals', 'Keratolytics', 'Topical antibiotics',
-    'Retinoids', 'Sunscreens', 'Hair preparations',
-    'Wound care', 'Topical antifungals',
-  ],
+// ── Junk class names that should not be shown as section headers ───────────────
+const _junkClasses = {
+  'specialty drug', 'cardiovascular drug', 'cns/psychiatry drug',
+  'diabetes/endocrine', 'respiratory/allergy drug', 'antibiotic drug',
+  'gastro drug', 'endocrine drug', 'other drug', 'drug',
 };
 
-const categoryLabelMap = {
-  'antibiotics': 'مضادات حيوية',
-  'cardiovascular': 'قلب وأوعية',
-  'diabetes': 'سكري',
-  'analgesics': 'مسكنات وألم',
-  'neurology': 'أعصاب ونفسية',
-  'gastrointestinal': 'جهاز هضمي',
-  'respiratory': 'جهاز تنفسي',
-  'endocrine': 'غدد صماء',
-  'vitamins': 'فيتامينات ومقويات',
-  'cosmetic': 'كوزمتك وجلدية',
-};
+bool _isUsefulClass(String cls) {
+  if (cls.isEmpty) return false;
+  final lower = cls.toLowerCase();
+  if (_junkClasses.contains(lower)) return false;
+  // Looks like a brand name list (e.g. "Xanax, Alprazolam")
+  final words = cls.split(',').map((w) => w.trim()).toList();
+  if (words.every((w) => w.isNotEmpty && w[0] == w[0].toUpperCase() && !w.contains(' '))) {
+    return false;
+  }
+  return true;
+}
 
+// ── Provider ──────────────────────────────────────────────────────────────────
 final _categoryDrugsProvider =
     FutureProvider.family<List<Drug>, String>((ref, key) async {
-  final classes = categoryClassMap[key] ?? [];
-  if (classes.isEmpty) return [];
-  return ref.read(drugRepositoryProvider).getByClasses(classes);
+  return ref.read(drugRepositoryProvider).getByAppCategory(key);
 });
 
-// Flat list item - either a header or a drug
-abstract class _ListItem {}
-
-class _HeaderItem extends _ListItem {
-  final String title;
-  final String titleAr;
-  _HeaderItem(this.title, this.titleAr);
-}
-
-class _DrugItem extends _ListItem {
-  final Drug drug;
-  _DrugItem(this.drug);
-}
-
-class DrugListScreen extends ConsumerWidget {
+// ── Screen ────────────────────────────────────────────────────────────────────
+class DrugListScreen extends ConsumerStatefulWidget {
   final String categoryKey;
   const DrugListScreen({super.key, required this.categoryKey});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final title = categoryLabelMap[categoryKey] ?? categoryKey;
-    final drugsAsync = ref.watch(_categoryDrugsProvider(categoryKey));
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
-      ),
-      body: drugsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('خطأ: $e')),
-        data: (drugs) {
-          if (drugs.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.medication_outlined, size: 56, color: AppColors.textSecondary),
-                  SizedBox(height: 12),
-                  Text('لا توجد أدوية في هذا الصنف',
-                      style: TextStyle(color: AppColors.textSecondary)),
-                ],
-              ),
-            );
-          }
-
-          // Group by pharmacological_class and build flat list
-          final grouped = <String, List<Drug>>{};
-          for (final d in drugs) {
-            grouped.putIfAbsent(d.drugClass, () => []).add(d);
-          }
-          final sections = grouped.entries.toList()
-            ..sort((a, b) => a.key.compareTo(b.key));
-
-          final items = <_ListItem>[];
-          for (final section in sections) {
-            items.add(_HeaderItem(section.key,
-                section.value.isNotEmpty ? section.value.first.drugClassAr : ''));
-            for (final d in section.value) {
-              items.add(_DrugItem(d));
-            }
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: items.length,
-            itemBuilder: (ctx, i) {
-              final item = items[i];
-              if (item is _HeaderItem) {
-                return _SectionHeader(title: item.title, titleAr: item.titleAr);
-              } else if (item is _DrugItem) {
-                return _DrugTile(drug: item.drug);
-              }
-              return const SizedBox.shrink();
-            },
-          );
-        },
-      ),
-    );
-  }
+  ConsumerState<DrugListScreen> createState() => _DrugListScreenState();
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String titleAr;
-  const _SectionHeader({required this.title, required this.titleAr});
+class _DrugListScreenState extends ConsumerState<DrugListScreen> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.lightBlue,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final title = context.s.categoryLabels[widget.categoryKey] ?? widget.categoryKey;
+    final drugsAsync = ref.watch(_categoryDrugsProvider(widget.categoryKey));
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: AppColors.primaryBlue,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Column(
         children: [
-          if (titleAr.isNotEmpty)
-            Text(titleAr,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryBlue,
-                    fontSize: 14)),
-          Text(title,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          // ── Search bar ───────────────────────────────────────────────────
+          Container(
+            color: AppColors.primaryBlue,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: '${context.s.searchInCategory} $title...',
+                hintStyle: const TextStyle(color: Colors.white60),
+                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white70),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.15),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+
+          // ── Drug list ────────────────────────────────────────────────────
+          Expanded(
+            child: drugsAsync.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (e, _) =>
+                  Center(child: Text('خطأ: $e')),
+              data: (drugs) {
+                // Filter by search query
+                final filtered = _query.isEmpty
+                    ? drugs
+                    : drugs.where((d) {
+                        return d.genericName.toLowerCase().contains(_query) ||
+                            d.genericNameAr.contains(_query) ||
+                            d.tradeNamesList.any(
+                                (t) => t.toLowerCase().contains(_query));
+                      }).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.medication_outlined,
+                            size: 56, color: Colors.grey.shade300),
+                        const SizedBox(height: 12),
+                        Text(
+                          _query.isEmpty
+                              ? context.s.noDrugsInCategory
+                              : '${context.s.noResultsPrefix}$_query${context.s.noResultsSuffix}',
+                          style: TextStyle(color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Sort alphabetically
+                final sorted = List<Drug>.from(filtered)
+                  ..sort((a, b) => a.genericName
+                      .toLowerCase()
+                      .compareTo(b.genericName.toLowerCase()));
+
+                // Count label
+                return Column(
+                  children: [
+                    // Count bar
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      color: AppColors.primaryLight,
+                      child: Text(
+                        context.s.drugCount(filtered.length),
+                        style: TextStyle(
+                          color: AppColors.primaryBlue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: sorted.length,
+                        separatorBuilder: (_, __) => const Divider(
+                            height: 1, indent: 72, endIndent: 16),
+                        itemBuilder: (ctx, i) =>
+                            _DrugTile(drug: sorted[i]),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// ─── Drug tile ─────────────────────────────────────────────────────────────────
 class _DrugTile extends StatelessWidget {
   final Drug drug;
   const _DrugTile({required this.drug});
 
   @override
   Widget build(BuildContext context) {
+    final cls = drug.drugClass;
+    final showClass = _isUsefulClass(cls);
+
     return ListTile(
-      leading: const CircleAvatar(
-        backgroundColor: AppColors.lightBlue,
-        child: Icon(Icons.medication, color: AppColors.primaryBlue, size: 20),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      leading: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.medication_rounded,
+            color: AppColors.primaryBlue, size: 22),
       ),
-      title: Text(drug.genericName,
-          style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: drug.tradeNamesList.isNotEmpty
-          ? Text(drug.tradeNamesList.take(3).join(' / '),
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))
-          : null,
-      trailing: drug.pregnancyCategory.isNotEmpty
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.lightBlue,
-                borderRadius: BorderRadius.circular(10),
+      title: Text(
+        drug.genericName,
+        style: const TextStyle(
+            fontWeight: FontWeight.w700, fontSize: 15),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (drug.tradeNamesList.isNotEmpty)
+            Text(
+              drug.tradeNamesList.take(3).join(' · '),
+              style: TextStyle(
+                  fontSize: 12, color: Colors.grey.shade600),
+            ),
+          if (showClass)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  cls,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.primaryBlue.withOpacity(0.75),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-              child: Text('فئة ${drug.pregnancyCategory}',
-                  style: const TextStyle(fontSize: 10, color: AppColors.primaryBlue)),
+            ),
+        ],
+      ),
+      trailing: drug.pregnancyCategory.isNotEmpty
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _pregColor(drug.pregnancyCategory),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    drug.pregnancyCategory,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             )
-          : null,
+          : const Icon(Icons.chevron_left_rounded,
+              color: Color(0xFFCCCCCC)),
       onTap: () => context.push('/drug/${drug.id}'),
     );
+  }
+
+  Color _pregColor(String cat) {
+    switch (cat) {
+      case 'A': return Colors.green.shade600;
+      case 'B': return Colors.lightGreen.shade600;
+      case 'C': return Colors.orange.shade600;
+      case 'D': return Colors.deepOrange.shade600;
+      case 'X': return Colors.red.shade700;
+      default:  return AppColors.primaryBlue;
+    }
   }
 }

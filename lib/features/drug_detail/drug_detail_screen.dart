@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
 import '../../providers/drug_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/interaction_provider.dart';
 import '../../providers/favorites_provider.dart';
+import '../../core/l10n/app_strings.dart';
 
 final _drugDetailProvider =
     FutureProvider.family<Drug?, int>((ref, id) async {
@@ -27,8 +29,8 @@ class DrugDetailScreen extends ConsumerWidget {
           Scaffold(body: Center(child: Text('Error: $e'))),
       data: (drug) {
         if (drug == null) {
-          return const Scaffold(
-              body: Center(child: Text('الدواء غير موجود')));
+          return Scaffold(
+              body: Center(child: Builder(builder: (ctx) => Text(ctx.s.drugNotFound))));
         }
         return Consumer(builder: (context, ref2, _) {
           final locale = ref2.watch(localeProvider);
@@ -47,14 +49,12 @@ class _DrugDetailView extends StatelessWidget {
   final bool isArabic;
   const _DrugDetailView({required this.drug, this.isArabic = true});
 
-  String get _note => isArabic && drug.counselingNoteAr.isNotEmpty
-      ? drug.counselingNoteAr
-      : drug.counselingNote;
+  String get _note => drug.counselingNote;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           // ── Custom AppBar ────────────────────────────────────────────────
@@ -72,6 +72,12 @@ class _DrugDetailView extends StatelessWidget {
                 _HeaderSection(drug: drug, isArabic: isArabic),
                 const SizedBox(height: 12),
 
+                // Dosage form & route
+                if (drug.dosageForm.isNotEmpty) _DosageFormCard(text: drug.dosageForm),
+
+                // Available doses
+                if (drug.availableDoses.isNotEmpty) _AvailableDosesCard(text: drug.availableDoses),
+
                 // Pharmacist note
                 if (_note.isNotEmpty) _CounselingCard(note: _note),
 
@@ -79,62 +85,79 @@ class _DrugDetailView extends StatelessWidget {
                 _InfoTile(
                   icon: Icons.biotech_outlined,
                   color: AppColors.primary,
-                  title: 'آلية العمل',
-                  content: isArabic && drug.mechanismAr.isNotEmpty
-                      ? drug.mechanismAr : drug.mechanism,
+                  title: context.s.mechanism,
+                  content: drug.mechanism,
                 ),
                 _InfoTile(
                   icon: Icons.assignment_turned_in_outlined,
                   color: AppColors.successGreen,
-                  title: 'الاستطبابات',
-                  content: isArabic && drug.indicationsAr.isNotEmpty
-                      ? drug.indicationsAr : drug.indications,
+                  title: context.s.indications,
+                  content: drug.indications,
                 ),
                 _InfoTile(
                   icon: Icons.person_outline,
                   color: const Color(0xFF5C6BC0),
-                  title: 'جرعة البالغين',
-                  content: isArabic && drug.adultDoseAr.isNotEmpty
-                      ? drug.adultDoseAr : drug.adultDose,
+                  title: context.s.adultDose,
+                  content: drug.adultDose,
                 ),
                 _InfoTile(
                   icon: Icons.child_care_outlined,
                   color: const Color(0xFF8E44AD),
-                  title: 'جرعة الأطفال',
+                  title: context.s.pediatricDose,
                   content: drug.pediatricDose,
                 ),
                 _InfoTile(
                   icon: Icons.water_drop_outlined,
                   color: const Color(0xFF0097A7),
-                  title: 'تعديل القصور الكلوي',
+                  title: context.s.renalDose,
                   content: drug.renalDose,
                 ),
                 _InfoTile(
                   icon: Icons.local_hospital_outlined,
                   color: AppColors.warningAmber,
-                  title: 'تعديل القصور الكبدي',
+                  title: context.s.hepaticDose,
                   content: drug.hepaticDose,
                 ),
                 _InfoTile(
                   icon: Icons.block_outlined,
                   color: AppColors.errorRed,
-                  title: 'موانع الاستعمال',
+                  title: context.s.contraindications,
                   content: drug.contraindications,
                 ),
                 _InfoTile(
                   icon: Icons.sick_outlined,
                   color: const Color(0xFFE65100),
-                  title: 'الأعراض الجانبية',
-                  content: isArabic && drug.sideEffectsAr.isNotEmpty
-                      ? drug.sideEffectsAr : drug.sideEffects,
+                  title: context.s.sideEffects,
+                  content: drug.sideEffects,
                 ),
                 _InfoTile(
                   icon: Icons.warning_amber_rounded,
                   color: AppColors.errorRed,
-                  title: 'التفاعلات الدوائية',
-                  content: isArabic && drug.interactionsAr.isNotEmpty
-                      ? drug.interactionsAr : drug.interactions,
+                  title: context.s.drugInteractions,
+                  content: drug.interactions,
                 ),
+
+                // Administration notes
+                if (drug.administrationNotes.isNotEmpty)
+                  _InfoTile(
+                    icon: Icons.medication_liquid_outlined,
+                    color: const Color(0xFF00897B),
+                    title: context.s.administrationTitle,
+                    content: drug.administrationNotes,
+                  ),
+
+                // Monitoring
+                if (drug.monitoringNotes.isNotEmpty)
+                  _InfoTile(
+                    icon: Icons.monitor_heart_outlined,
+                    color: const Color(0xFF5C6BC0),
+                    title: context.s.monitoringTitle,
+                    content: drug.monitoringNotes,
+                  ),
+
+                // Black box warning
+                if (drug.blackBox.isNotEmpty)
+                  _BlackBoxCard(text: drug.blackBox),
 
                 // IV Reconstitution
                 if (drug.ivReconstitution.isNotEmpty)
@@ -217,13 +240,13 @@ class _DrugAppBar extends StatelessWidget {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.ac_unit, color: Colors.white, size: 14),
-                        SizedBox(width: 4),
-                        Text('مبرد',
-                            style: TextStyle(
+                        const Icon(Icons.ac_unit, color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        Text(context.s.refrigeratedLabel,
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold)),
@@ -246,9 +269,7 @@ class _DrugAppBar extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      isArabic && drug.drugClassAr.isNotEmpty
-                          ? drug.drugClassAr
-                          : drug.drugClass,
+                      drug.drugClass,
                       style: const TextStyle(
                           color: Colors.white70, fontSize: 12),
                       maxLines: 1,
@@ -277,11 +298,11 @@ class _HeaderSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('الأسماء التجارية',
+        Text(context.s.tradeNames,
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 letterSpacing: 0.5)),
         const SizedBox(height: 8),
         Wrap(
@@ -292,15 +313,15 @@ class _HeaderSection extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.divider),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Text(name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.textPrimary)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                   ))
               .toList(),
         ),
@@ -356,6 +377,110 @@ class _LasaBanner extends StatelessWidget {
   }
 }
 
+// ─── Dosage Form Card ─────────────────────────────────────────────────────────
+
+class _DosageFormCard extends StatelessWidget {
+  final String text;
+  const _DosageFormCard({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF1976D2).withOpacity(0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34, height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1976D2).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.medication_outlined,
+                color: Color(0xFF1976D2), size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('شكل الدواء وطريقة الإعطاء',
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1976D2),
+                        fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(text,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Available Doses Card ─────────────────────────────────────────────────────
+
+class _AvailableDosesCard extends StatelessWidget {
+  final String text;
+  const _AvailableDosesCard({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3E5F5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF7B1FA2).withOpacity(0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34, height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFF7B1FA2).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.local_pharmacy_outlined,
+                color: Color(0xFF7B1FA2), size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('الجرع المتوفرة',
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF7B1FA2),
+                        fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(text,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─── Counseling Card ──────────────────────────────────────────────────────────
 
 class _CounselingCard extends StatelessWidget {
@@ -368,7 +493,7 @@ class _CounselingCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.accent.withOpacity(0.4)),
       ),
@@ -390,16 +515,16 @@ class _CounselingCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('نصيحة الصيدلاني',
+                Text(context.s.pharmacistNote,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                         fontSize: 12)),
                 const SizedBox(height: 4),
                 Text(note,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         height: 1.5)),
               ],
             ),
@@ -430,9 +555,9 @@ class _InfoTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: ExpansionTile(
         tilePadding:
@@ -446,9 +571,9 @@ class _InfoTile extends StatelessWidget {
           child: Icon(icon, color: color, size: 18),
         ),
         title: Text(title,
-            style: const TextStyle(
+            style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 14)),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
@@ -456,9 +581,9 @@ class _InfoTile extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 10),
           Text(content,
-              style: const TextStyle(
+              style: TextStyle(
                   height: 1.65,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 13)),
         ],
       ),
@@ -477,7 +602,7 @@ class _IvCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF0097A7).withOpacity(0.4)),
       ),
@@ -494,7 +619,7 @@ class _IvCard extends StatelessWidget {
           child: const Icon(Icons.vaccines,
               color: Color(0xFF0097A7), size: 18),
         ),
-        title: const Text('IV — التحضير والإعطاء',
+        title: Text(context.s.ivTitle,
             style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF0097A7),
@@ -505,9 +630,9 @@ class _IvCard extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 10),
           Text(info,
-              style: const TextStyle(
+              style: TextStyle(
                   height: 1.65,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 13)),
         ],
       ),
@@ -530,9 +655,9 @@ class _PregnancyLactationSection extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         children: [
@@ -540,18 +665,18 @@ class _PregnancyLactationSection extends StatelessWidget {
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF0F4FF),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceVariant,
               borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(12)),
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
-              children: const [
-                Icon(Icons.pregnant_woman,
+              children: [
+                const Icon(Icons.pregnant_woman,
                     color: Color(0xFF5C6BC0), size: 18),
-                SizedBox(width: 8),
-                Text('الحمل والرضاعة',
-                    style: TextStyle(
+                const SizedBox(width: 8),
+                Text(context.s.pregnancyLactation,
+                    style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF5C6BC0),
                         fontSize: 13)),
@@ -587,18 +712,18 @@ class _PregnancyBadge extends StatelessWidget {
   final String category;
   const _PregnancyBadge({required this.category});
 
-  static const _info = {
-    'A': ('آمن', AppColors.successGreen),
-    'B': ('آمن نسبياً', AppColors.accent),
-    'C': ('بحذر', AppColors.warningAmber),
-    'D': ('خطر', AppColors.errorRed),
-    'X': ('ممنوع', AppColors.errorRed),
+  Map<String, (String, Color)> _info(AppStrings s) => {
+    'A': (s.pregSafe,     AppColors.successGreen),
+    'B': (s.pregRelSafe,  AppColors.accent),
+    'C': (s.pregCaution,  AppColors.warningAmber),
+    'D': (s.pregRisk,     AppColors.errorRed),
+    'X': (s.pregContra,   AppColors.errorRed),
   };
 
   @override
   Widget build(BuildContext context) {
-    final data = _info[category.toUpperCase()] ??
-        ('غير محدد', AppColors.textSecondary);
+    final data = _info(context.s)[category.toUpperCase()] ??
+        (context.s.unknown, AppColors.textSecondary);
     final color = data.$2;
     return Container(
       padding: const EdgeInsets.all(10),
@@ -621,9 +746,9 @@ class _PregnancyBadge extends StatelessWidget {
                     fontSize: 15)),
           ),
           const SizedBox(height: 6),
-          const Text('فئة الحمل',
+          Text(context.s.pregnancyCat,
               style: TextStyle(
-                  fontSize: 10, color: AppColors.textSecondary)),
+                  fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           Text(data.$1,
               style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -646,13 +771,13 @@ class _LactationBadge extends StatelessWidget {
         _ => AppColors.errorRed,
       };
 
-  String _label(int l) => switch (l) {
-        1 => 'L1 آمن جداً',
-        2 => 'L2 آمن',
-        3 => 'L3 بحذر',
-        4 => 'L4 خطر',
-        5 => 'L5 ممنوع',
-        _ => 'غير محدد',
+  String _label(int l, AppStrings s) => switch (l) {
+        1 => s.lactL1,
+        2 => s.lactL2,
+        3 => s.lactL3,
+        4 => s.lactL4,
+        5 => s.lactL5,
+        _ => s.unknown,
       };
 
   @override
@@ -671,10 +796,10 @@ class _LactationBadge extends StatelessWidget {
         children: [
           Icon(Icons.child_friendly, color: color, size: 28),
           const SizedBox(height: 6),
-          const Text('الرضاعة (Hale)',
+          Text(context.s.lactationHale,
               style: TextStyle(
-                  fontSize: 10, color: AppColors.textSecondary)),
-          Text(_label(level),
+                  fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(_label(level, context.s),
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: color,
@@ -710,11 +835,47 @@ class _IraqNoteCard extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(note,
-                style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: 13)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Black Box Warning Card ───────────────────────────────────────────────────
+class _BlackBoxCard extends StatelessWidget {
+  final String text;
+  const _BlackBoxCard({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFB71C1C).withOpacity(0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB71C1C).withOpacity(0.5)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Row(children: [
+          const Spacer(),
+          Text(context.s.blackBoxWarning,
+              style: GoogleFonts.ibmPlexSansArabic(
+                  fontSize: 13, fontWeight: FontWeight.bold,
+                  color: const Color(0xFFB71C1C))),
+          const SizedBox(width: 8),
+          const Icon(Icons.warning_rounded,
+              color: Color(0xFFB71C1C), size: 18),
+        ]),
+        const SizedBox(height: 8),
+        Text(text,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.ibmPlexSansArabic(
+                fontSize: 13, color: const Color(0xFFB71C1C), height: 1.6)),
+      ]),
     );
   }
 }
@@ -734,9 +895,9 @@ class _BottomActions extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(
           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.divider)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         children: [
@@ -761,8 +922,8 @@ class _BottomActions extends ConsumerWidget {
                       SnackBar(
                         content: Text(
                           isFav
-                              ? 'تم الإزالة من المفضلة'
-                              : '${drug.genericName} أُضيف للمفضلة',
+                              ? context.s.removedFromFav
+                              : context.s.addedToFavMsg(drug.genericName),
                         ),
                         backgroundColor: isFav
                             ? const Color(0xFFD32F2F)
@@ -779,7 +940,7 @@ class _BottomActions extends ConsumerWidget {
                   color: isFav ? Colors.white : AppColors.primary,
                 ),
                 label: Text(
-                  'المفضلة',
+                  context.s.favorites,
                   style: TextStyle(
                     fontSize: 13,
                     color: isFav ? Colors.white : AppColors.primary,
@@ -803,8 +964,8 @@ class _BottomActions extends ConsumerWidget {
                 context.push('/interactions');
               },
               icon: const Icon(Icons.warning_amber_rounded, size: 18),
-              label: const Text('التفاعلات',
-                  style: TextStyle(fontSize: 13)),
+              label: Text(context.s.interactions,
+                  style: const TextStyle(fontSize: 13)),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

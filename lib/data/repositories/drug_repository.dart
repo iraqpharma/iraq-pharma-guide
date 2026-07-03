@@ -13,6 +13,9 @@ class DrugRepository {
   Future<List<Drug>> getByClasses(List<String> classes) =>
       _db.getByClasses(classes);
 
+  Future<List<Drug>> getByAppCategory(String category) =>
+      _db.getByAppCategory(category);
+
   Future<List<Drug>> getByPharmClass(String pharmClass) =>
       _db.getByPharmClass(pharmClass);
 }

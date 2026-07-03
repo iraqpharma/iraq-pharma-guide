@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class DosageCalculatorScreen extends StatefulWidget {
   const DosageCalculatorScreen({super.key});
@@ -17,6 +19,7 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
+    AuthService.instance.incrementToolUsage();
   }
 
   @override
@@ -28,12 +31,11 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
-        title: const Text('حاسبة الجرعة',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(context.s.doseCalc,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tabCtrl,
           indicatorColor: Colors.white,
@@ -42,9 +44,9 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen>
           unselectedLabelColor: Colors.white60,
           labelStyle:
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          tabs: const [
-            Tab(icon: Icon(Icons.child_care, size: 20), text: 'الأطفال'),
-            Tab(icon: Icon(Icons.person, size: 20), text: 'البالغون'),
+          tabs: [
+            Tab(icon: const Icon(Icons.child_care, size: 20), text: context.s.tabChildren),
+            Tab(icon: const Icon(Icons.person, size: 20), text: context.s.tabAdults),
           ],
         ),
       ),
@@ -125,8 +127,7 @@ class _PediatricTabState extends State<_PediatricTab>
           _InfoBanner(
             icon: Icons.child_care,
             color: AppColors.primaryBlue,
-            text:
-                'احسب جرعة الطفل بحسب وزنه (مغ/كغ). أدخل الجرعة القصوى لمنع التجاوز.',
+            text: context.s.pediatricBanner,
           ),
           const SizedBox(height: 16),
           Card(
@@ -140,22 +141,22 @@ class _PediatricTabState extends State<_PediatricTab>
                 children: [
                   _InputField(
                     controller: _weightCtrl,
-                    label: 'وزن الطفل',
-                    unit: 'كغ',
+                    label: context.s.childWeight,
+                    unit: context.s.kgUnit,
                     icon: Icons.monitor_weight_outlined,
                   ),
                   const SizedBox(height: 12),
                   _InputField(
                     controller: _doseCtrl,
-                    label: 'الجرعة',
-                    unit: 'مغ/كغ',
+                    label: context.s.dosePerKg,
+                    unit: context.s.mgKgUnit,
                     icon: Icons.medication_outlined,
                   ),
                   const SizedBox(height: 12),
                   _InputField(
                     controller: _maxDoseCtrl,
-                    label: 'الجرعة القصوى (اختياري)',
-                    unit: 'مغ',
+                    label: context.s.maxDoseOptional,
+                    unit: context.s.mgUnit,
                     icon: Icons.warning_amber_outlined,
                     color: AppColors.warningAmber,
                   ),
@@ -166,8 +167,8 @@ class _PediatricTabState extends State<_PediatricTab>
                         child: ElevatedButton.icon(
                           onPressed: _calculate,
                           icon: const Icon(Icons.calculate, size: 18),
-                          label: const Text('احسب',
-                              style: TextStyle(fontSize: 15)),
+                          label: Text(context.s.calculate,
+                              style: const TextStyle(fontSize: 15)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBlue,
                             foregroundColor: Colors.white,
@@ -186,7 +187,7 @@ class _PediatricTabState extends State<_PediatricTab>
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('مسح'),
+                        child: Text(context.s.reset_),
                       ),
                     ],
                   ),
@@ -197,19 +198,19 @@ class _PediatricTabState extends State<_PediatricTab>
           if (_totalDose != null) ...[
             const SizedBox(height: 16),
             _ResultCard(
-              label: _wasCapped ? 'الجرعة المحسوبة (بُقيدت عند الحد القصوى)' : 'الجرعة الكلية',
-              value: '${_totalDose!.toStringAsFixed(1)} مغ',
+              label: _wasCapped ? context.s.doseCapped : context.s.totalDose,
+              value: '${_totalDose!.toStringAsFixed(1)} ${context.s.mgUnit}',
               color: _wasCapped ? AppColors.warningAmber : AppColors.successGreen,
               icon: _wasCapped ? Icons.lock : Icons.check_circle,
               subtitle: _wasCapped
-                  ? 'تجاوزت الحد القصوى — تم تحديد الجرعة عنده'
-                  : '= ${_weightCtrl.text} كغ × ${_doseCtrl.text} مغ/كغ',
+                  ? context.s.capNote
+                  : '= ${_weightCtrl.text} ${context.s.kgUnit} × ${_doseCtrl.text} ${context.s.mgKgUnit}',
             ),
           ],
           const SizedBox(height: 16),
           _FormulaCard(
-            title: 'المعادلة',
-            formula: 'الجرعة = الوزن (كغ) × الجرعة (مغ/كغ)',
+            title: context.s.formula,
+            formula: context.s.pediatricFormula,
           ),
         ],
       ),
@@ -278,8 +279,7 @@ class _AdultTabState extends State<_AdultTab>
           _InfoBanner(
             icon: Icons.person,
             color: Colors.deepPurple,
-            text:
-                'للجرعات المعتمدة على وزن البالغ. للتعديل الكلوي استخدم حاسبة CrCl من القائمة الجانبية.',
+            text: context.s.adultBanner,
           ),
           const SizedBox(height: 16),
           Card(
@@ -293,24 +293,24 @@ class _AdultTabState extends State<_AdultTab>
                 children: [
                   _InputField(
                     controller: _weightCtrl,
-                    label: 'وزن المريض',
-                    unit: 'كغ',
+                    label: context.s.adultWeight,
+                    unit: context.s.kgUnit,
                     icon: Icons.monitor_weight_outlined,
                     color: Colors.deepPurple,
                   ),
                   const SizedBox(height: 12),
                   _InputField(
                     controller: _doseCtrl,
-                    label: 'الجرعة اليومية',
-                    unit: 'مغ/كغ/يوم',
+                    label: context.s.dailyDose,
+                    unit: '${context.s.mgKgUnit}/day',
                     icon: Icons.medication_outlined,
                     color: Colors.deepPurple,
                   ),
                   const SizedBox(height: 12),
                   _InputField(
                     controller: _freqCtrl,
-                    label: 'عدد الجرعات يومياً (اختياري)',
-                    unit: 'مرة',
+                    label: context.s.dailyFreq,
+                    unit: context.s.timesDay,
                     icon: Icons.schedule,
                     color: AppColors.accentTeal,
                     isInteger: true,
@@ -322,8 +322,8 @@ class _AdultTabState extends State<_AdultTab>
                         child: ElevatedButton.icon(
                           onPressed: _calculate,
                           icon: const Icon(Icons.calculate, size: 18),
-                          label: const Text('احسب',
-                              style: TextStyle(fontSize: 15)),
+                          label: Text(context.s.calculate,
+                              style: const TextStyle(fontSize: 15)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple,
                             foregroundColor: Colors.white,
@@ -342,7 +342,7 @@ class _AdultTabState extends State<_AdultTab>
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('مسح'),
+                        child: Text(context.s.reset_),
                       ),
                     ],
                   ),
@@ -357,41 +357,40 @@ class _AdultTabState extends State<_AdultTab>
                 children: [
                   Expanded(
                     child: _ResultCard(
-                      label: 'الجرعة اليومية',
-                      value: '${_dailyDose!.toStringAsFixed(1)} مغ/يوم',
+                      label: context.s.dailyDose,
+                      value: '${_dailyDose!.toStringAsFixed(1)} ${context.s.mgUnit}/day',
                       color: Colors.deepPurple,
                       icon: Icons.today,
                       subtitle:
-                          '${_weightCtrl.text} كغ × ${_doseCtrl.text} مغ/كغ',
+                          '${_weightCtrl.text} ${context.s.kgUnit} × ${_doseCtrl.text} ${context.s.mgKgUnit}',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _ResultCard(
-                      label: 'كل جرعة',
-                      value: '${_perDose!.toStringAsFixed(1)} مغ',
+                      label: context.s.perDose,
+                      value: '${_perDose!.toStringAsFixed(1)} ${context.s.mgUnit}',
                       color: AppColors.accentTeal,
                       icon: Icons.schedule,
-                      subtitle: '${_freqCtrl.text} مرة/يوم',
+                      subtitle: '${_freqCtrl.text} ${context.s.timesDay}',
                     ),
                   ),
                 ],
               )
             else
               _ResultCard(
-                label: 'الجرعة اليومية الكلية',
-                value: '${_dailyDose!.toStringAsFixed(1)} مغ/يوم',
+                label: context.s.dailyDose,
+                value: '${_dailyDose!.toStringAsFixed(1)} ${context.s.mgUnit}/day',
                 color: Colors.deepPurple,
                 icon: Icons.today,
                 subtitle:
-                    '= ${_weightCtrl.text} كغ × ${_doseCtrl.text} مغ/كغ/يوم',
+                    '= ${_weightCtrl.text} ${context.s.kgUnit} × ${_doseCtrl.text} ${context.s.mgKgUnit}',
               ),
           ],
           const SizedBox(height: 16),
           _FormulaCard(
-            title: 'المعادلة',
-            formula:
-                'الجرعة اليومية = الوزن (كغ) × الجرعة (مغ/كغ/يوم)\nجرعة المرة الواحدة = الجرعة اليومية ÷ عدد المرات',
+            title: context.s.formula,
+            formula: context.s.adultFormula,
           ),
         ],
       ),
@@ -478,7 +477,7 @@ class _InputField extends StatelessWidget {
           borderSide: BorderSide(color: c, width: 2),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).colorScheme.surfaceVariant,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
@@ -534,8 +533,8 @@ class _ResultCard extends StatelessWidget {
                   color: color)),
           const SizedBox(height: 4),
           Text(subtitle,
-              style: const TextStyle(
-                  fontSize: 11, color: AppColors.textSecondary)),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       ),
     );
@@ -552,18 +551,18 @@ class _FormulaCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Theme.of(context).colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
-                  color: AppColors.textSecondary)),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 6),
           Text(formula,
               style: const TextStyle(

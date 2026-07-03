@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -29,7 +31,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!mounted) return;
 
     if (result.isSuccess) {
-      setState(() { _loading = false; _sent = true; });
+      setState(() => _loading = false);
+      if (!mounted) return;
+      context.push('/otp', extra: {
+        'email':   _emailCtrl.text.trim(),
+        'type':    OtpType.recovery,
+        'isLogin': false,
+      });
     } else {
       setState(() { _loading = false; _error = result.error; });
     }
@@ -38,12 +46,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
       ),
@@ -96,15 +104,15 @@ class _FormView extends StatelessWidget {
             child: Icon(Icons.lock_reset_rounded, color: Colors.orange.shade700, size: 38),
           ),
           const SizedBox(height: 24),
-          Text('نسيت كلمة المرور؟',
+          Text(context.s.forgotPasswordTitle,
               textAlign: TextAlign.center,
               style: GoogleFonts.ibmPlexSansArabic(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 10),
-          Text('أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.',
+          Text(context.s.forgotPasswordSub,
               textAlign: TextAlign.center,
               style: GoogleFonts.ibmPlexSansArabic(
-                  fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
+                  fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6)),
           const SizedBox(height: 32),
 
           TextFormField(
@@ -114,11 +122,11 @@ class _FormView extends StatelessWidget {
             maxLength: 254,
             style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
             decoration: InputDecoration(
-              labelText: 'البريد الإلكتروني',
+              labelText: context.s.email,
               counterText: '',
-              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textSecondary, size: 20),
-              filled: true, fillColor: Colors.white,
-              labelStyle: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary, fontSize: 14),
+              prefixIcon: Icon(Icons.email_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+              filled: true, fillColor: Theme.of(context).colorScheme.surfaceVariant,
+              labelStyle: GoogleFonts.ibmPlexSansArabic(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
@@ -127,8 +135,8 @@ class _FormView extends StatelessWidget {
               focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'أدخل بريدك الإلكتروني';
-              if (!v.contains('@') || !v.contains('.')) return 'بريد إلكتروني غير صحيح';
+              if (v == null || v.trim().isEmpty) return context.s.enterEmail;
+              if (!v.contains('@') || !v.contains('.')) return context.s.invalidEmail;
               return null;
             },
           ),
@@ -168,7 +176,7 @@ class _FormView extends StatelessWidget {
               child: loading
                   ? const SizedBox(width: 22, height: 22,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                  : Text('إرسال رابط الاستعادة',
+                  : Text(context.s.sendResetLink,
                       style: GoogleFonts.ibmPlexSansArabic(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
@@ -198,16 +206,16 @@ class _SuccessView extends StatelessWidget {
           child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF4CAF50), size: 42),
         ),
         const SizedBox(height: 24),
-        Text('تم الإرسال!',
+        Text(context.s.resetLinkSent,
             textAlign: TextAlign.center,
             style: GoogleFonts.ibmPlexSansArabic(
-                fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 12),
         Text(
-          'تحقق من بريدك الإلكتروني $email\nواضغط على الرابط لإعادة تعيين كلمة المرور.',
+          '${context.s.resetLinkSentSub}\n$email',
           textAlign: TextAlign.center,
           style: GoogleFonts.ibmPlexSansArabic(
-              fontSize: 14, color: AppColors.textSecondary, height: 1.7),
+              fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.7),
         ),
         const SizedBox(height: 36),
         SizedBox(
@@ -220,7 +228,7 @@ class _SuccessView extends StatelessWidget {
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            child: Text('العودة لتسجيل الدخول',
+            child: Text(context.s.backToLogin,
                 style: GoogleFonts.ibmPlexSansArabic(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ),

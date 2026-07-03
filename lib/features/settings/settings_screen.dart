@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/locale_provider.dart';
 class SettingsScreen extends ConsumerWidget {
@@ -12,27 +14,28 @@ class SettingsScreen extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final isDark = themeMode == ThemeMode.dark;
 
+    final s = context.s;
     return Scaffold(
-      appBar: AppBar(title: const Text('الإعدادات')),
+      appBar: AppBar(title: Text(s.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SectionTitle('المظهر'),
+          _SectionTitle(s.appearance),
           Card(
             child: SwitchListTile(
-              title: const Text('الوضع الداكن'),
+              title: Text(s.darkMode),
               secondary: const Icon(Icons.dark_mode),
               value: isDark,
               onChanged: (_) => ref.read(themeProvider.notifier).toggle(),
             ),
           ),
           const SizedBox(height: 16),
-          _SectionTitle('اللغة'),
+          _SectionTitle(s.language_),
           Card(
             child: Column(
               children: [
                 RadioListTile<Locale>(
-                  title: const Text('العربية'),
+                  title: Text(s.arabicLabel),
                   value: const Locale('ar'),
                   groupValue: locale,
                   onChanged: (v) =>
@@ -49,25 +52,23 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _SectionTitle('عن التطبيق'),
+          _SectionTitle(s.aboutApp_),
           Card(
             child: ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('إخلاء مسؤولية طبية'),
+              title: Text(s.medicalDisclaimer),
               onTap: () => showDialog(
                 context: context,
                 builder: (_) => AlertDialog(
-                  title: const Text('تنبيه مهم'),
-                  content: const Text(
-                    'هذا التطبيق للأغراض التعليمية والمرجعية فقط.\n'
-                    'لا يُغني عن استشارة الطبيب أو الصيدلاني.\n'
-                    'المعلومات مستمدة من FDA وقد لا تعكس الواقع المحلي بالكامل.',
-                    style: TextStyle(height: 1.7),
+                  title: Text(s.importantNotice),
+                  content: Text(
+                    s.disclaimerContent,
+                    style: const TextStyle(height: 1.7),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('موافق'),
+                      child: Text(s.okLabel),
                     ),
                   ],
                 ),
@@ -79,7 +80,13 @@ class SettingsScreen extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.medication, color: AppColors.primaryBlue),
               title: const Text('Iraq Pharma Guide'),
-              subtitle: const Text('الإصدار 1.0.0'),
+              subtitle: Text(s.appVersion),
+              trailing: IconButton(
+                icon: Icon(Icons.admin_panel_settings_outlined,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+                tooltip: 'إدارة قاعدة البيانات',
+                onPressed: () => context.push('/admin-pin'),
+              ),
             ),
           ),
         ],
@@ -94,14 +101,16 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, right: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textSecondary,
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(bottom: 8, right: 4),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );

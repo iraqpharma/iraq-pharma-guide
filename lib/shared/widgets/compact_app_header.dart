@@ -44,7 +44,7 @@ class CompactAppHeader extends StatelessWidget implements PreferredSizeWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset('assets/images/logo.png', width: 28, height: 28,
+              Image.asset('assets/images/logo_white.png', width: 28, height: 28,
                   errorBuilder: (_, __, ___) => const Icon(
                       Icons.local_pharmacy_rounded,
                       color: Colors.white, size: 26)),

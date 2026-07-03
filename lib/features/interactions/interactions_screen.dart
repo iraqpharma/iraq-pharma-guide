@@ -5,19 +5,31 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
 import '../../providers/drug_provider.dart';
 import '../../providers/interaction_provider.dart';
+import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
-class InteractionsScreen extends ConsumerWidget {
+class InteractionsScreen extends ConsumerStatefulWidget {
   const InteractionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InteractionsScreen> createState() => _InteractionsScreenState();
+}
+
+class _InteractionsScreenState extends ConsumerState<InteractionsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.incrementToolUsage();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final drugs = ref.watch(checkerDrugsProvider);
     final interactions = findInteractions(drugs);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('فاحص التفاعلات الدوائية'),
+        title: Text(context.s.interactionChecker),
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
@@ -25,7 +37,7 @@ class InteractionsScreen extends ConsumerWidget {
             TextButton.icon(
               onPressed: () => ref.read(checkerDrugsProvider.notifier).clear(),
               icon: const Icon(Icons.delete_sweep, color: Colors.white70),
-              label: const Text('مسح الكل',
+              label: Text(context.s.clearAll,
                   style: TextStyle(color: Colors.white70, fontSize: 12)),
             ),
         ],
@@ -66,7 +78,7 @@ class _DrugPickerStrip extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('أضف الأدوية للفحص (2-8 أدوية)',
+          Text(context.s.addDrugsHint,
               style: TextStyle(color: Colors.white70, fontSize: 12)),
           const SizedBox(height: 8),
           Row(
@@ -127,7 +139,7 @@ class _SearchAddButtonState extends ConsumerState<_SearchAddButton> {
           controller: _ctrl,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
-            hintText: 'ابحث عن دواء للإضافة...',
+            hintText: context.s.searchAddDrug,
             hintStyle: const TextStyle(color: Colors.white54),
             prefixIcon:
                 const Icon(Icons.search, color: Colors.white70, size: 20),
@@ -147,10 +159,10 @@ class _SearchAddButtonState extends ConsumerState<_SearchAddButton> {
           },
         ),
         if (_results.isNotEmpty)
-          Container(
+          Builder(builder: (context) => Container(
             margin: const EdgeInsets.only(top: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
@@ -175,7 +187,7 @@ class _SearchAddButtonState extends ConsumerState<_SearchAddButton> {
                       ))
                   .toList(),
             ),
-          ),
+          )),
       ],
     );
   }
@@ -255,18 +267,18 @@ class _SummaryBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Row(
         children: [
-          _SummaryDot('خطير', major, AppColors.errorRed),
+          _SummaryDot(context.s.severityMajor, major, AppColors.errorRed),
           const SizedBox(width: 16),
-          _SummaryDot('متوسط', moderate, AppColors.warningAmber),
+          _SummaryDot(context.s.severityModerate, moderate, AppColors.warningAmber),
           const SizedBox(width: 16),
-          _SummaryDot('خفيف', minor, AppColors.accentTeal),
+          _SummaryDot(context.s.severityMinor, minor, AppColors.accentTeal),
           const Spacer(),
-          Text('${major + moderate + minor} تفاعل',
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 12)),
+          Text('${major + moderate + minor} ${context.s.interactionCount}',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
         ],
       ),
     );
@@ -308,10 +320,10 @@ class _InteractionCard extends StatelessWidget {
         InteractionSeverity.minor => AppColors.accentTeal,
       };
 
-  String get _severityLabel => switch (interaction.severity) {
-        InteractionSeverity.major => 'تفاعل خطير',
-        InteractionSeverity.moderate => 'تفاعل متوسط',
-        InteractionSeverity.minor => 'تفاعل خفيف',
+  String _severityLabel(AppStrings s) => switch (interaction.severity) {
+        InteractionSeverity.major => '${s.interactionFound} — ${s.severityMajor}',
+        InteractionSeverity.moderate => '${s.interactionFound} — ${s.severityModerate}',
+        InteractionSeverity.minor => '${s.interactionFound} — ${s.severityMinor}',
       };
 
   IconData get _icon => switch (interaction.severity) {
@@ -325,7 +337,7 @@ class _InteractionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border(left: BorderSide(color: _color, width: 4)),
         boxShadow: [
@@ -348,7 +360,7 @@ class _InteractionCard extends StatelessWidget {
           style: const TextStyle(
               fontWeight: FontWeight.bold, fontSize: 13),
         ),
-        subtitle: Text(_severityLabel,
+        subtitle: Text(_severityLabel(context.s),
             style: TextStyle(
                 color: _color,
                 fontWeight: FontWeight.w600,
@@ -358,10 +370,10 @@ class _InteractionCard extends StatelessWidget {
           Align(
             alignment: AlignmentDirectional.topStart,
             child: Text(
-              interaction.descriptionAr,
-              style: const TextStyle(
+              context.s.isAr ? interaction.descriptionAr : interaction.description,
+              style: TextStyle(
                   height: 1.6,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 13),
             ),
           ),
@@ -393,17 +405,17 @@ class _EmptyState extends StatelessWidget {
                   size: 44, color: AppColors.primaryBlue),
             ),
             const SizedBox(height: 20),
-            const Text('ابدأ بإضافة الأدوية',
+            Text(context.s.addDrug,
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 10),
-            const Text(
-              'ابحث عن الدواء في الحقل أعلاه وأضف 2 أدوية أو أكثر لفحص التفاعلات بينها.',
+            Text(
+              context.s.drugCheckerStart,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: AppColors.textSecondary, height: 1.5),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
             ),
           ],
         ),
@@ -417,15 +429,15 @@ class _OnedrugState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.add_circle_outline,
+          const Icon(Icons.add_circle_outline,
               size: 60, color: AppColors.accentTeal),
-          SizedBox(height: 16),
-          Text('أضف دواءً ثانياً على الأقل',
-              style: TextStyle(
+          const SizedBox(height: 16),
+          Text(context.s.addOneDrug,
+              style: const TextStyle(
                   fontSize: 16,
                   color: AppColors.textSecondary)),
         ],
@@ -453,17 +465,17 @@ class _NoneFound extends StatelessWidget {
                 size: 44, color: AppColors.successGreen),
           ),
           const SizedBox(height: 16),
-          const Text('لا تفاعلات معروفة',
-              style: TextStyle(
+          Text(context.s.noInteractions,
+              style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.successGreen)),
           const SizedBox(height: 8),
           Text(
-            'لم يتم العثور على تفاعلات موثقة بين الأدوية الـ$drugCount المختارة.\nهذا لا يُغني عن المراجعة السريرية.',
+            context.s.noInteractionsMsg,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-                color: AppColors.textSecondary, height: 1.5),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
           ),
         ],
       ),

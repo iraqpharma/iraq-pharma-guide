@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/drug_provider.dart';
 import '../../providers/filter_provider.dart';
@@ -16,7 +17,7 @@ import '../../services/rating_service.dart';
 import '../profile/profile_screen.dart';
 import '../../shared/widgets/notification_bell_widget.dart';
 import 'widgets/search_bar_widget.dart';
-import '../drug_list/drug_list_screen.dart' show categoryClassMap, categoryLabelMap;
+import '../../core/l10n/app_strings.dart';
 
 const _priceGuideColor = Color(0xFFF59E0B);
 
@@ -56,7 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       body: _bodyForIndex(idx),
       bottomNavigationBar: _BottomNavBar(
@@ -111,8 +111,8 @@ class _HomeBody extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
             child: _SectionHeader(
-              title: 'استعراض حسب الفصيلة',
-              actionLabel: 'عرض الكل',
+              title: context.s.browseByCategory,
+              actionLabel: context.s.viewAll,
               onAction: () {},
             ),
           ),
@@ -137,7 +137,7 @@ class _HomeBody extends StatelessWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 10),
-            child: _SectionHeader(title: 'أدوات سريعة'),
+            child: Builder(builder: (ctx) => _SectionHeader(title: ctx.s.quickTools)),
           ),
         ),
         SliverPadding(
@@ -154,6 +154,12 @@ class _HomeBody extends StatelessWidget {
               childAspectRatio: 1.1,
             ),
           ),
+        ),
+
+        // ── OTC Banner ────────────────────────────────────────────────────
+        const SliverPadding(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+          sliver: SliverToBoxAdapter(child: _OtcBanner()),
         ),
 
         // ── Commercial Price Guide Banner ─────────────────────────────────
@@ -189,6 +195,93 @@ double get _kHeaderHeight {
   // top padding (status bar) + padding داخلي + Row height + bottom padding
   // نستخدم قيمة ثابتة معقولة — MediaQuery غير متاح هنا
   return 100;
+}
+
+// ── OTC Banner ────────────────────────────────────────────────────────────────
+class _OtcBanner extends StatelessWidget {
+  const _OtcBanner();
+
+  static const _teal = Color(0xFF00897B);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/otc'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(children: [
+          // ── Icon backdrop (يسار مثل دليل الأسعار) ──────────────────
+          const SizedBox(width: 58),
+          const SizedBox(width: 16),
+          // ── Text block (وسط) ────────────────────────────────────────
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.s.otcMedicines,
+                    style: GoogleFonts.cairo(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface)),
+                const SizedBox(height: 3),
+                Text(context.s.otcSubtitle,
+                    style: GoogleFonts.cairo(
+                        fontSize: 12.5,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                const SizedBox(height: 8),
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _teal.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(context.s.otcSections,
+                        style: GoogleFonts.cairo(
+                            fontSize: 11, color: _teal,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(context.s.otcDrugs,
+                        style: GoogleFonts.cairo(
+                            fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ]),
+              ],
+            ),
+          ),
+          // ── Arrow (يمين) ────────────────────────────────────────────
+          Container(
+            width: 34, height: 34,
+            decoration: BoxDecoration(
+              color: _teal.withOpacity(0.10),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_forward_ios_rounded,
+                color: _teal, size: 15),
+          ),
+        ]),
+      ),
+    );
+  }
 }
 
 // ── Full-width price guide banner ─────────────────────────────────────────────
@@ -236,7 +329,7 @@ class _PriceGuideBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'دليل الأسعار التجاري',
+                    context.s.priceGuide,
                     style: GoogleFonts.cairo(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -245,7 +338,7 @@ class _PriceGuideBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'تكلفة • بيع • هامش الربح',
+                    context.s.priceGuideSubtitle,
                     style: GoogleFonts.cairo(
                       fontSize: 12,
                       color: Colors.white.withOpacity(0.85),
@@ -394,7 +487,7 @@ class _AdBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -414,7 +507,7 @@ class _AdBanner extends StatelessWidget {
               child: Text(
                 'إعلان',
                 style: GoogleFonts.cairo(
-                    fontSize: 10, color: AppColors.textSecondary),
+                    fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
             Center(
@@ -422,14 +515,14 @@ class _AdBanner extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.campaign_outlined,
-                      color: AppColors.textSecondary.withOpacity(0.35),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.35),
                       size: 28),
                   const SizedBox(height: 4),
                   Text(
                     'مساحة إعلانية',
                     style: GoogleFonts.cairo(
                       fontSize: 15,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -463,7 +556,7 @@ class _SectionHeader extends StatelessWidget {
           style: GoogleFonts.cairo(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const Spacer(),
@@ -520,6 +613,12 @@ const _categories = [
   // RTL index 7 → LEFT column
   _CatItem('كوزمتك وجلدية',    'Cosmetic & Dermatology',
       Icons.face_retouching_natural, AppColors.catCosmetic,   'cosmetic'),
+  // RTL index 8 → RIGHT column
+  _CatItem('أدوية مخدرة',       'Controlled & Narcotics',
+      Icons.warning_amber_rounded,   AppColors.catNarcotics,  'narcotics'),
+  // RTL index 9 → LEFT column
+  _CatItem('أخرى',              'Other',
+      Icons.category_outlined,       AppColors.catOther,      'other'),
 ];
 
 class _CategoryCard extends StatelessWidget {
@@ -532,7 +631,7 @@ class _CategoryCard extends StatelessWidget {
       onTap: () => context.push('/category/${cat.routeKey}'),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
@@ -556,24 +655,14 @@ class _CategoryCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              cat.ar,
+              context.s.isAr ? cat.ar : cat.en,
               style: GoogleFonts.cairo(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              cat.en,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w400,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -599,15 +688,15 @@ const _quickTools = [
   // RTL index 0 → RIGHT column
   _ToolItem('آمن للحمل',   'Safe for Pregnancy',
       Icons.bolt,                AppColors.toolPregnancy, QuickFilter.safePregnancy),
-  // RTL index 1 → LEFT column
-  _ToolItem('قطرات أطفال', 'Pediatric Drops',
-      Icons.wb_sunny_outlined,   AppColors.toolPediatric, QuickFilter.pediatricDrops),
+  // RTL index 1 → LEFT column (was قطرات أطفال, now مبرّد)
+  _ToolItem('مبرّد',        'Refrigerated',
+      Icons.info_outline_rounded, AppColors.toolCold,     QuickFilter.refrigerated),
   // RTL index 2 → RIGHT column
   _ToolItem('تعديل كلوي',  'Renal Adjustment',
       Icons.calculate_outlined,  AppColors.toolRenal,     QuickFilter.renalCaution),
-  // RTL index 3 → LEFT column
-  _ToolItem('مبرّد',        'Refrigerated',
-      Icons.info_outline_rounded, AppColors.toolCold,     QuickFilter.refrigerated),
+  // RTL index 3 → LEFT column (was مبرّد, now قطرات أطفال)
+  _ToolItem('قطرات أطفال', 'Pediatric Drops',
+      Icons.wb_sunny_outlined,   AppColors.toolPediatric, QuickFilter.pediatricDrops),
 ];
 
 class _QuickToolCard extends StatelessWidget {
@@ -624,7 +713,7 @@ class _QuickToolCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.transparent),
           boxShadow: const [
@@ -649,24 +738,13 @@ class _QuickToolCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              tool.ar,
+              context.s.isAr ? tool.ar : tool.en,
               style: GoogleFonts.cairo(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              tool.en,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -693,7 +771,7 @@ class _SearchBody extends ConsumerWidget {
           color: AppColors.primary,
           child: Column(
             children: [
-              const CompactAppHeader(title: 'بحث عن دواء'),
+              CompactAppHeader(title: context.s.searchDrug),
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
                 child: PharmaSearchBar(),
@@ -711,7 +789,7 @@ class _SearchBody extends ConsumerWidget {
                       child: CircularProgressIndicator(
                           color: AppColors.primary)),
                   error: (e, _) => Center(
-                      child: Text('خطأ: $e',
+                      child: Text('${context.s.error}: $e',
                           style: GoogleFonts.cairo(
                               color: AppColors.textSecondary))),
                   data: (drugs) => drugs.isEmpty
@@ -741,18 +819,18 @@ class _SearchIdleState extends StatelessWidget {
         children: [
           Icon(Icons.search_rounded,
               size: 72,
-              color: AppColors.textSecondary.withOpacity(0.25)),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.25)),
           const SizedBox(height: 14),
-          Text('ابحث عن اسم الدواء',
+          Text(context.s.searchHint,
               style: GoogleFonts.cairo(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 15,
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
-          Text('بالاسم العلمي أو التجاري أو عن طريق مسح الباركود',
+          Text(context.s.searchSubHint,
               textAlign: TextAlign.center,
               style: GoogleFonts.cairo(
-                  color: AppColors.textSecondary.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
                   fontSize: 12)),
         ],
       ),
@@ -764,6 +842,15 @@ class _SearchIdleState extends StatelessWidget {
 class _NoResultsState extends StatelessWidget {
   final String query;
   const _NoResultsState({required this.query});
+
+  void _openRequestSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _DrugRequestSheet(initialName: query),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -788,12 +875,12 @@ class _NoResultsState extends StatelessWidget {
 
             // Title
             Text(
-              'عذراً، لم نعثر على هذا الدواء',
+              context.s.noResultsTitle,
               textAlign: TextAlign.center,
               style: GoogleFonts.cairo(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary),
+                  color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 8),
 
@@ -802,9 +889,9 @@ class _NoResultsState extends StatelessWidget {
               textAlign: TextAlign.center,
               text: TextSpan(children: [
                 TextSpan(
-                    text: 'لم يتم العثور على نتائج لـ "',
+                    text: context.s.noResultsPrefix,
                     style: GoogleFonts.cairo(
-                        fontSize: 13, color: AppColors.textSecondary)),
+                        fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 TextSpan(
                     text: query,
                     style: GoogleFonts.cairo(
@@ -812,25 +899,25 @@ class _NoResultsState extends StatelessWidget {
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold)),
                 TextSpan(
-                    text: '"',
+                    text: context.s.noResultsSuffix,
                     style: GoogleFonts.cairo(
-                        fontSize: 13, color: AppColors.textSecondary)),
+                        fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ]),
             ),
             const SizedBox(height: 10),
             Text(
-              'تحقق من الإملاء أو جرب اسماً مختلفاً',
+              context.s.noResultsHint,
               style: GoogleFonts.cairo(
                   fontSize: 12,
-                  color: AppColors.textSecondary.withOpacity(0.7)),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7)),
             ),
             const SizedBox(height: 32),
 
-            // CTA button → Notebook
+            // CTA button → Request drug
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => context.push('/notebook'),
+                onPressed: () => _openRequestSheet(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -838,9 +925,9 @@ class _NoResultsState extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                icon: const Icon(Icons.add_circle_outline_rounded,
+                icon: const Icon(Icons.send_rounded,
                     color: Colors.white, size: 20),
-                label: Text('إضافته إلى النواقص',
+                label: Text(context.s.suggestDrugBtn,
                     style: GoogleFonts.cairo(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -851,7 +938,7 @@ class _NoResultsState extends StatelessWidget {
 
             // Secondary hint
             Text(
-              'سيُحفظ في دفتر الصيدلاني للمتابعة لاحقاً',
+              context.s.suggestDrugHint,
               style: GoogleFonts.cairo(
                   fontSize: 11,
                   color: AppColors.textSecondary.withOpacity(0.65)),
@@ -868,58 +955,50 @@ class _NoResultsState extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _ToolsBody extends StatelessWidget {
-  // Full-width banner tools (top 2)
-  static const _bannerTools = [
-    _NavToolItem('حاسبة الجرعة', 'احسب الجرعة للأطفال والبالغين بدقة',
-        Icons.calculate_outlined, Color(0xFF5C6BC0), '/calc'),
-    _NavToolItem('حاسبة CrCl', 'تصفية الكرياتينين — معادلة Cockcroft-Gault',
-        Icons.monitor_heart_outlined, Color(0xFF0097A7), '/renal-calc'),
+  List<_NavToolItem> _getBannerTools(BuildContext context) => [
+    _NavToolItem(context.s.doseCalc,    context.s.doseCalcSub, Icons.calculate_outlined,     const Color(0xFF5C6BC0), '/calc'),
+    _NavToolItem(context.s.crcl,        context.s.crclSub,     Icons.monitor_heart_outlined,  const Color(0xFF0097A7), '/renal-calc'),
   ];
-  // Square-grid tools
-  static const _gridTools = [
-    _NavToolItem('فاحص التفاعلات', 'Drug Interactions',
-        Icons.science_outlined, Color(0xFFE65100), '/interactions'),
-    _NavToolItem('دفتر الصيدلاني', 'Missing Drugs',
-        Icons.edit_note_outlined, Color(0xFF2E7D32), '/notebook'),
-    _NavToolItem('حاسبة التسعير', 'Smart Pricing Calculator',
-        Icons.price_change_outlined, Color(0xFF6A1B9A), '/pricing-calc'),
-    _NavToolItem('الباحث عن البدائل', 'Smart Substitution',
-        Icons.swap_horiz_rounded, Color(0xFF0097A7), '/substitution'),
+  List<_NavToolItem> _getGridTools(BuildContext context) => [
+    _NavToolItem(context.s.interactions,  context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
+    _NavToolItem(context.s.notebook,      context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
+    _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+    _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const CompactAppHeader(title: 'الأدوات السريرية'),
+        CompactAppHeader(title: context.s.clinicalTools),
         // ── Scrollable content ─────────────────────────────────────────────
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Banner cards
-              ..._bannerTools.map((t) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _BannerToolCard(tool: t),
-                  )),
-              const SizedBox(height: 4),
-              // 2-column grid for remaining tools
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.05,
+          child: Builder(builder: (ctx) {
+            final bannerTools = _getBannerTools(ctx);
+            final gridTools   = _getGridTools(ctx);
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Banner cards
+                ...bannerTools.map((t) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _BannerToolCard(tool: t),
+                    )),
+                const SizedBox(height: 4),
+                // 2-column grid for remaining tools
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, crossAxisSpacing: 12,
+                    mainAxisSpacing: 12, childAspectRatio: 1.05,
+                  ),
+                  itemCount: gridTools.length,
+                  itemBuilder: (c, i) => _NavToolCard(tool: gridTools[i]),
                 ),
-                itemCount: _gridTools.length,
-                itemBuilder: (ctx, i) =>
-                    _NavToolCard(tool: _gridTools[i]),
-              ),
-            ],
-          ),
+              ],
+            );
+          }),
         ),
       ],
     );
@@ -946,7 +1025,7 @@ class _BannerToolCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(18),
           boxShadow: const [
             BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))
@@ -974,12 +1053,12 @@ class _BannerToolCard extends StatelessWidget {
                       style: GoogleFonts.cairo(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 4),
                   Text(tool.en,
                       style: GoogleFonts.cairo(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w400),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
@@ -1016,7 +1095,7 @@ class _NavToolCard extends StatelessWidget {
       onTap: () => context.push(tool.route),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))
@@ -1039,11 +1118,11 @@ class _NavToolCard extends StatelessWidget {
                 style: GoogleFonts.cairo(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary),
+                    color: Theme.of(context).colorScheme.onSurface),
                 textAlign: TextAlign.center),
             Text(tool.en,
                 style: GoogleFonts.inter(
-                    fontSize: 10, color: AppColors.textSecondary),
+                    fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center),
           ],
         ),
@@ -1095,9 +1174,9 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
 
     final ok = await _showConfirmDialog(
       context,
-      title: 'إزالة $count ${count == 1 ? "دواء" : "أدوية"}',
-      body: 'سيتم إزالة:\n$names\nمن المفضلة. هل أنت متأكد؟',
-      confirmLabel: 'إزالة',
+      title: context.s.removeNDrugs(count),
+      body: context.s.willRemove(names),
+      confirmLabel: context.s.remove,
     );
     if (ok && context.mounted) {
       for (final id in _selected) {
@@ -1111,9 +1190,9 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
       BuildContext context, WidgetRef ref) async {
     final ok = await _showConfirmDialog(
       context,
-      title: 'إزالة الكل',
-      body: 'سيتم مسح جميع الأدوية من المفضلة. هل أنت متأكد؟',
-      confirmLabel: 'إزالة الكل',
+      title: context.s.removeAll,
+      body: context.s.removeAllConfirm,
+      confirmLabel: context.s.removeAll,
     );
     if (ok && context.mounted) {
       final ids = Set<int>.from(ref.read(favoritesProvider));
@@ -1128,9 +1207,9 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
       BuildContext context, WidgetRef ref, Drug drug) async {
     final ok = await _showConfirmDialog(
       context,
-      title: 'إزالة من المفضلة',
-      body: 'هل تريد إزالة "${drug.genericName}" من المفضلة؟',
-      confirmLabel: 'إزالة',
+      title: context.s.removeFromFav,
+      body: context.s.removeDrug(drug.genericName),
+      confirmLabel: context.s.remove,
     );
     if (ok && context.mounted) {
       await ref.read(favoritesProvider.notifier).remove(drug.id);
@@ -1153,8 +1232,8 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('إلغاء',
-                style: GoogleFonts.cairo(color: AppColors.textSecondary)),
+            child: Text(context.s.cancel,
+                style: GoogleFonts.cairo(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -1219,15 +1298,15 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
             // ── وضع التحديد ───────────────────────────────────────────
             // Cancel
             _HeaderChip(
-              label: 'إلغاء',
+              label: context.s.cancel,
               onTap: _cancelSelect,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 _selected.isEmpty
-                    ? 'اختر الأدوية'
-                    : 'تم تحديد ${_selected.length}',
+                    ? context.s.chooseDrugs
+                    : context.s.selectedCount(_selected.length),
                 style: GoogleFonts.cairo(
                     color: Colors.white,
                     fontSize: 17,
@@ -1236,7 +1315,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
             ),
             // تحديد الكل / إلغاء الكل
             _HeaderChip(
-              label: allSelected ? 'إلغاء الكل' : 'تحديد الكل',
+              label: allSelected ? context.s.deselectAll : context.s.selectAll,
               onTap: () => setState(() {
                 if (allSelected) {
                   _selected.clear();
@@ -1264,21 +1343,28 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text('المفضلة',
+              child: Text(context.s.favorites,
                   style: GoogleFonts.cairo(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center),
             ),
-            if (drugs.isNotEmpty)
-              _HeaderChip(
-                label: 'تحديد',
-                icon: Icons.checklist_rounded,
-                onTap: _enterSelectMode,
-              )
-            else
-              const SizedBox(width: 40),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (drugs.isNotEmpty)
+                  _HeaderChip(
+                    label: context.s.select,
+                    icon: Icons.checklist_rounded,
+                    onTap: _enterSelectMode,
+                  ),
+                const SizedBox(width: 6),
+                NotificationBellWidget(
+                  onTap: () => context.push('/notifications'),
+                ),
+              ],
+            ),
           ],
         ],
       ),
@@ -1287,14 +1373,9 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
 
   // ── List — grouped by therapeutic CATEGORY (سكري, قلب...) ───────────────
 
-  /// Returns the Arabic category label for a drug using categoryClassMap.
-  String _categoryLabel(Drug drug) {
-    for (final entry in categoryClassMap.entries) {
-      if (entry.value.contains(drug.drugClass)) {
-        return categoryLabelMap[entry.key] ?? entry.key;
-      }
-    }
-    return 'أخرى';
+  /// Returns the localized category label for a drug using app_category field.
+  String _categoryLabel(Drug drug, BuildContext context) {
+    return context.s.categoryLabels[drug.appCategory] ?? context.s.other;
   }
 
   Widget _buildList(
@@ -1302,7 +1383,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
     // Group by therapeutic category, preserving insertion order of categories
     final Map<String, List<Drug>> groups = {};
     for (final drug in drugs) {
-      final label = _categoryLabel(drug);
+      final label = _categoryLabel(drug, context);
       groups.putIfAbsent(label, () => []).add(drug);
     }
 
@@ -1328,7 +1409,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
               style: GoogleFonts.cairo(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 letterSpacing: 0.4,
               ),
             ),
@@ -1364,9 +1445,9 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
     return Container(
       padding: EdgeInsets.fromLTRB(
           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: const [
           BoxShadow(
               color: Colors.black12, blurRadius: 12, offset: Offset(0, -2))
         ],
@@ -1376,12 +1457,12 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
           Expanded(
             child: Text(
               count == 0
-                  ? 'لم يتم تحديد شيء'
-                  : 'تم تحديد $count ${count == 1 ? "دواء" : "أدوية"}',
+                  ? context.s.nothingSelected
+                  : context.s.selectedCount(count),
               style: GoogleFonts.cairo(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
+                  color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           const SizedBox(width: 12),
@@ -1390,7 +1471,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
                 ? null
                 : () => _confirmDeleteSelected(context, ref, all),
             icon: const Icon(Icons.delete_rounded, size: 18),
-            label: Text('إزالة المحدد',
+            label: Text(context.s.removeSelected,
                 style: GoogleFonts.cairo(fontSize: 13)),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD32F2F),
@@ -1417,17 +1498,17 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
         children: [
           Icon(Icons.bookmark_outline_rounded,
               size: 72,
-              color: AppColors.textSecondary.withOpacity(0.3)),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3)),
           const SizedBox(height: 16),
-          Text('لا توجد أدوية محفوظة',
+          Text(context.s.noFavorites,
               style: GoogleFonts.cairo(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          Text('افتح أي دواء واضغط "المفضلة" لحفظه',
+          Text(context.s.noFavoritesSub,
               style: GoogleFonts.cairo(
-                  fontSize: 13, color: AppColors.textSecondary),
+                  fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center),
         ],
       ),
@@ -1510,7 +1591,7 @@ class _FavDrugCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFFFFEBEE)
-              : AppColors.cardWhite,
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
@@ -1565,12 +1646,12 @@ class _FavDrugCard extends StatelessWidget {
                         style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: AppColors.textPrimary)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                     if (drug.genericNameAr.isNotEmpty)
                       Text(drug.genericNameAr,
                           style: GoogleFonts.cairo(
                               fontSize: 12,
-                              color: AppColors.textSecondary)),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     if (drug.drugClass.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Container(
@@ -1594,7 +1675,7 @@ class _FavDrugCard extends StatelessWidget {
 
             // ── Trailing: arrow (normal) or nothing (select mode) ────────
             if (!isSelecting) ...[
-              Container(width: 1, height: 60, color: AppColors.divider),
+              Container(width: 1, height: 60, color: Theme.of(context).dividerColor),
               IconButton(
                 onPressed: onRemove,
                 tooltip: 'إزالة من المفضلة',
@@ -1603,10 +1684,10 @@ class _FavDrugCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14),
               ),
             ] else
-              const Padding(
-                padding: EdgeInsets.only(left: 14, right: 14),
+              Padding(
+                padding: const EdgeInsets.only(left: 14, right: 14),
                 child: Icon(Icons.chevron_right,
-                    color: AppColors.textSecondary, size: 18),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
               ),
           ],
         ),
@@ -1689,7 +1770,7 @@ class _DrugListCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))
@@ -1716,12 +1797,12 @@ class _DrugListCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: AppColors.textPrimary)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   if (drug.genericNameAr.isNotEmpty)
                     Text(drug.genericNameAr,
                         style: GoogleFonts.cairo(
                             fontSize: 12,
-                            color: AppColors.textSecondary)),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   if (drug.drugClass.isNotEmpty) ...[
                     const SizedBox(height: 5),
                     Container(
@@ -1762,7 +1843,7 @@ class _NotificationsDrawer extends StatelessWidget {
     final top = MediaQuery.of(context).padding.top;
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           // ── Header ───────────────────────────────────────────────────────
@@ -1813,11 +1894,11 @@ class _NotificationsDrawer extends StatelessWidget {
                       style: GoogleFonts.cairo(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 8),
                   Text('ستظهر هنا الإشعارات والتنبيهات الجديدة',
                       style: GoogleFonts.cairo(
-                          fontSize: 13, color: AppColors.textSecondary),
+                          fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       textAlign: TextAlign.center),
                 ],
               ),
@@ -1844,9 +1925,9 @@ class _BottomNavBar extends ConsumerWidget {
 
     return Container(
       padding: EdgeInsets.only(bottom: bottomPad),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 16,
@@ -1863,7 +1944,7 @@ class _BottomNavBar extends ConsumerWidget {
             _NavItem(
               icon: Icons.bookmark_outline_rounded,
               activeIcon: Icons.bookmark_rounded,
-              label: 'المفضلة',
+              label: context.s.navFavorites,
               isActive: selectedIndex == 0,
               onTap: () => onTap(0),
             ),
@@ -1871,7 +1952,7 @@ class _BottomNavBar extends ConsumerWidget {
             _NavItem(
               icon: Icons.apps_outlined,
               activeIcon: Icons.apps_rounded,
-              label: 'الأدوات',
+              label: context.s.navTools,
               isActive: selectedIndex == 1,
               onTap: () => onTap(1),
             ),
@@ -1900,7 +1981,7 @@ class _BottomNavBar extends ConsumerWidget {
                         color: Colors.white, size: 28),
                   ),
                   const SizedBox(height: 4),
-                  Text('الرئيسية',
+                  Text(context.s.navHome,
                       style: GoogleFonts.cairo(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -1915,7 +1996,7 @@ class _BottomNavBar extends ConsumerWidget {
             _NavItem(
               icon: Icons.search_rounded,
               activeIcon: Icons.search_rounded,
-              label: 'بحث',
+              label: context.s.navSearch,
               isActive: selectedIndex == 3,
               onTap: () => onTap(3),
             ),
@@ -1923,7 +2004,7 @@ class _BottomNavBar extends ConsumerWidget {
             _NavItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
-              label: 'حسابي',
+              label: context.s.navAccount,
               isActive: selectedIndex == 4,
               onTap: () => onTap(4),
             ),
@@ -1959,7 +2040,7 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               isActive ? activeIcon : icon,
-              color: isActive ? AppColors.primary : AppColors.textSecondary,
+              color: isActive ? AppColors.primary : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -1968,12 +2049,188 @@ class _NavItem extends StatelessWidget {
               style: GoogleFonts.cairo(
                 fontSize: 10,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
+                color: isActive ? AppColors.primary : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DRUG REQUEST BOTTOM SHEET
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _DrugRequestSheet extends StatefulWidget {
+  final String initialName;
+  const _DrugRequestSheet({required this.initialName});
+
+  @override
+  State<_DrugRequestSheet> createState() => _DrugRequestSheetState();
+}
+
+class _DrugRequestSheetState extends State<_DrugRequestSheet> {
+  final _formKey    = GlobalKey<FormState>();
+  late final TextEditingController _nameCtrl;
+  String? _category;
+  bool    _sending  = false;
+  bool    _sent     = false;
+  String? _error;
+
+  List<String> _getCategories(BuildContext context) => context.s.drugCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() { _nameCtrl.dispose(); super.dispose(); }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _sending = true; _error = null; });
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      await Supabase.instance.client.from('drug_requests').insert({
+        'drug_name': _nameCtrl.text.trim(),
+        'category' : _category!,
+        'user_id'  : user?.id,
+      });
+      if (mounted) setState(() { _sent = true; _sending = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = context.s.errorRetry; _sending = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 12, 20, bottom + 24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 40, height: 4,
+            decoration: BoxDecoration(color: Theme.of(context).dividerColor,
+                borderRadius: BorderRadius.circular(2))),
+        const SizedBox(height: 20),
+
+        if (_sent) ...[
+          const Icon(Icons.check_circle_rounded,
+              color: Color(0xFF00897B), size: 64),
+          const SizedBox(height: 16),
+          Text(context.s.requestSent,
+              style: GoogleFonts.cairo(fontSize: 18,
+                  fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          const SizedBox(height: 8),
+          Text(context.s.requestSentSub,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.cairo(fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 24),
+          SizedBox(width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14))),
+              child: Text(context.s.ok, style: GoogleFonts.cairo(
+                  color: Colors.white, fontWeight: FontWeight.bold,
+                  fontSize: 15)),
+            ),
+          ),
+        ] else ...[
+          Text(context.s.suggestDrug,
+              style: GoogleFonts.cairo(fontSize: 17,
+                  fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          const SizedBox(height: 4),
+          Text(context.s.suggestDrugSub,
+              style: GoogleFonts.cairo(fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 20),
+
+          Form(key: _formKey, child: Column(children: [
+            TextFormField(
+              controller: _nameCtrl,
+              style: GoogleFonts.cairo(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: context.s.drugName,
+                labelStyle: GoogleFonts.cairo(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                        color: AppColors.primary, width: 1.5)),
+              ),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? context.s.enterDrugName : null,
+            ),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<String>(
+              value: _category,
+              isExpanded: true,
+              hint: Text(context.s.chooseCat, style: GoogleFonts.cairo(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14)),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                        color: AppColors.primary, width: 1.5)),
+              ),
+              items: _getCategories(context).map((c) => DropdownMenuItem(
+                value: c,
+                child: Text(c, style: GoogleFonts.cairo(fontSize: 14)),
+              )).toList(),
+              onChanged: (v) => setState(() => _category = v),
+              validator: (v) => v == null ? context.s.chooseCatValidate : null,
+            ),
+          ])),
+
+          if (_error != null) ...[
+            const SizedBox(height: 10),
+            Text(_error!, style: GoogleFonts.cairo(
+                color: Colors.red, fontSize: 12)),
+          ],
+
+          const SizedBox(height: 20),
+          SizedBox(width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _sending ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14))),
+              icon: _sending
+                  ? const SizedBox(width: 18, height: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.send_rounded,
+                      color: Colors.white, size: 18),
+              label: Text(_sending ? context.s.sending : context.s.sendRequest,
+                  style: GoogleFonts.cairo(color: Colors.white,
+                      fontWeight: FontWeight.bold, fontSize: 15)),
+            ),
+          ),
+        ],
+      ]),
     );
   }
 }

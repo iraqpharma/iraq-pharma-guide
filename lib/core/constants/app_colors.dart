@@ -37,10 +37,22 @@ class AppColors {
   static const catEndocrine   = Color(0xFF8D6E63);
   static const catVitamins    = Color(0xFFFFB300);   // amber-gold
   static const catCosmetic    = Color(0xFFEC407A);   // rose-pink
+  static const catNarcotics   = Color(0xFF6D4C41);   // dark brown
+  static const catOther       = Color(0xFF78909C);   // blue-grey
 
   // ── Quick tool colors ─────────────────────────────────────────────────────
   static const toolPregnancy = Color(0xFF7C3AED);
   static const toolPediatric = Color(0xFFF97316);
   static const toolCold      = Color(0xFF3B82F6);
   static const toolRenal     = Color(0xFF10B981);
+
+  // ── Dark mode surfaces ────────────────────────────────────────────────────
+  static const darkBg           = Color(0xFF0F172A); // very dark navy — scaffold
+  static const darkSurface      = Color(0xFF1E293B); // dark slate — drawer / sheets
+  static const darkCard         = Color(0xFF243146); // slightly lighter — cards
+  static const darkElevated     = Color(0xFF2D3D56); // elevated cards / dialogs
+  static const darkText         = Color(0xFFF1F5F9); // near-white — primary text
+  static const darkTextMuted    = Color(0xFF94A3B8); // muted slate — secondary text
+  static const darkDivider      = Color(0xFF2D3F55); // subtle separator
+  static const darkInputFill    = Color(0xFF1E293B); // text field fill
 }

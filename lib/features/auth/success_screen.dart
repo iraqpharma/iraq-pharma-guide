@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class RegistrationSuccessScreen extends StatefulWidget {
   const RegistrationSuccessScreen({super.key});
@@ -46,7 +47,7 @@ class _RegistrationSuccessScreenState extends State<RegistrationSuccessScreen>
             children: [
               const Spacer(flex: 2),
 
-              // Animated checkmark card
+              // Animated email icon card
               ScaleTransition(
                 scale: _scale,
                 child: Container(
@@ -59,31 +60,14 @@ class _RegistrationSuccessScreenState extends State<RegistrationSuccessScreen>
                           blurRadius: 30, offset: const Offset(0, 12)),
                     ],
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Big checkmark circle
-                      Container(
-                        width: 100, height: 100,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary, shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.check_rounded, color: Colors.white, size: 56),
+                  child: Center(
+                    child: Container(
+                      width: 100, height: 100,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary, shape: BoxShape.circle,
                       ),
-                      // Small pharmacy badge top-right
-                      Positioned(
-                        top: 14, right: 14,
-                        child: Container(
-                          width: 36, height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.local_pharmacy_outlined,
-                              color: AppColors.primary, size: 20),
-                        ),
-                      ),
-                    ],
+                      child: const Icon(Icons.mark_email_read_rounded, color: Colors.white, size: 52),
+                    ),
                   ),
                 ),
               ),
@@ -96,17 +80,24 @@ class _RegistrationSuccessScreenState extends State<RegistrationSuccessScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Column(
                     children: [
-                      Text('تم إنشاء الحساب بنجاح!',
+                      Text(context.s.verifyEmailTitle,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 26, fontWeight: FontWeight.bold,
                               color: const Color(0xFF1A3A38))),
                       const SizedBox(height: 14),
                       Text(
-                        'أهلاً بك في مجتمع الصيادلة في العراق.\nيمكنك الآن البدء باستكشاف دليل الأدوية والأدوات السريرية.',
+                        context.s.verifyEmailSub,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 15, color: const Color(0xFF4A7070), height: 1.7),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        context.s.didntReceiveEmail,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ibmPlexSansArabic(
+                            fontSize: 13, color: const Color(0xFF4A7070).withOpacity(0.7)),
                       ),
                     ],
                   ),
@@ -123,17 +114,9 @@ class _RegistrationSuccessScreenState extends State<RegistrationSuccessScreen>
                   child: SizedBox(
                     width: double.infinity, height: 58,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-              // If user is logged in (auto-confirmed) → notification permission → home
-              // Otherwise → login screen
-              if (AuthService.instance.isLoggedIn) {
-                context.go('/notification-permission');
-              } else {
-                context.go('/login');
-              }
-            },
-                      icon: const Icon(Icons.arrow_back_rounded, size: 20),
-                      label: Text('ابدأ الآن',
+                      onPressed: () => context.go('/login'),
+                      icon: const Icon(Icons.login_rounded, size: 20),
+                      label: Text(context.s.goToLogin,
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 17, fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(

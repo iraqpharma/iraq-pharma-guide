@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/notebook_provider.dart';
+import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class NotebookScreen extends ConsumerStatefulWidget {
   const NotebookScreen({super.key});
@@ -14,6 +16,12 @@ class NotebookScreen extends ConsumerStatefulWidget {
 class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   final _ctrl = TextEditingController();
   final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.incrementToolUsage();
+  }
 
   void _add() {
     final text = _ctrl.text.trim();
@@ -29,8 +37,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     if (pending.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('لا توجد عناصر غير مكتملة للإرسال')),
+          SnackBar(
+              content: Text(context.s.noPendingItems)),
         );
       }
       return;
@@ -53,8 +61,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('تعذّر فتح واتساب. تأكد من تثبيته.')),
+          SnackBar(
+              content: Text(context.s.whatsappError)),
         );
       }
     }
@@ -67,9 +75,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     final doneCount = entries.where((e) => e.isDone).length;
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('دفتر الصيدلاني'),
+        title: Text(context.s.notebook),
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
@@ -80,8 +87,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   .clearDone(),
               icon: const Icon(Icons.done_all,
                   color: Colors.white70, size: 18),
-              label: const Text('مسح المكتملة',
-                  style: TextStyle(
+              label: Text(context.s.clearDone,
+                  style: const TextStyle(
                       color: Colors.white70, fontSize: 12)),
             ),
         ],
@@ -117,7 +124,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               backgroundColor: const Color(0xFF25D366),
               icon: const Icon(Icons.send, color: Colors.white),
               label: Text(
-                'إرسال ($pendingCount) عبر واتساب',
+                '${context.s.sendWhatsApp} ($pendingCount)',
                 style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold),
               ),
@@ -150,15 +157,15 @@ class _StatsHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
       child: Row(
         children: [
-          _StatChip(label: 'الكل', value: total, color: Colors.white),
+          _StatChip(label: context.s.all_, value: total, color: Colors.white),
           const SizedBox(width: 10),
           _StatChip(
-              label: 'مفقود',
+              label: context.s.missing,
               value: pending,
               color: const Color(0xFFFFE082)),
           const SizedBox(width: 10),
           _StatChip(
-              label: 'تم',
+              label: context.s.doneLabel,
               value: done,
               color: const Color(0xFF80CBC4)),
         ],
@@ -208,7 +215,7 @@ class _InputBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Row(
         children: [
@@ -219,11 +226,11 @@ class _InputBar extends StatelessWidget {
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => onAdd(),
               decoration: InputDecoration(
-                hintText: 'اسم الدواء المفقود...',
+                hintText: context.s.addDrugHint,
                 hintStyle: const TextStyle(
                     color: AppColors.textSecondary),
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -246,7 +253,7 @@ class _InputBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 14, vertical: 11),
             ),
-            child: const Text('إضافة',
+            child: Text(context.s.addLabel,
                 style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
@@ -281,7 +288,7 @@ class _NoteCard extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: entry.isDone
@@ -330,14 +337,14 @@ class _NoteCard extends ConsumerWidget {
                   ? TextDecoration.lineThrough
                   : TextDecoration.none,
               color: entry.isDone
-                  ? AppColors.textSecondary
-                  : AppColors.textPrimary,
+                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           subtitle: Text(
             _timeAgo(entry.createdAt),
-            style: const TextStyle(
-                fontSize: 11, color: AppColors.textSecondary),
+            style: TextStyle(
+                fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           trailing: entry.isDone
               ? const Icon(Icons.check_circle,
@@ -380,17 +387,17 @@ class _EmptyState extends StatelessWidget {
                 size: 44, color: AppColors.primaryBlue),
           ),
           const SizedBox(height: 20),
-          const Text('الدفتر فارغ',
+          Text('الدفتر فارغ',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'أضف أسماء الأدوية المفقودة\nثم أرسلها مباشرة عبر واتساب',
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: AppColors.textSecondary, height: 1.5),
+                color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
           ),
         ],
       ),

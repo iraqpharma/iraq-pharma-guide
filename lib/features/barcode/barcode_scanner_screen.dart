@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 class BarcodeScannerScreen extends StatefulWidget {
   const BarcodeScannerScreen({super.key});
@@ -139,7 +140,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Text(
-                    'وجّه الكاميرا نحو باركود البكج',
+                    context.s.barcodeScanHint,
                     style: GoogleFonts.cairo(
                         color: Colors.white,
                         fontSize: 13,
@@ -329,7 +330,7 @@ class _TopBar extends StatelessWidget {
           // Title (centered)
           const Spacer(),
           Text(
-            'مسح الباركود',
+            context.s.barcodeTitle,
             style: GoogleFonts.cairo(
                 color: Colors.white,
                 fontSize: 17,
@@ -343,7 +344,7 @@ class _TopBar extends StatelessWidget {
             builder: (_, state, __) {
               final isOn = state.torchState == TorchState.on;
               return IconButton(
-                tooltip: isOn ? 'إطفاء الفلاش' : 'تشغيل الفلاش',
+                tooltip: isOn ? context.s.flashOff_ : context.s.flashOn_,
                 icon: Icon(
                   isOn
                       ? Icons.flash_on_rounded

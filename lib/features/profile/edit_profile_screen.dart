@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,11 +15,14 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   // Profile form
-  final _profileFormKey  = GlobalKey<FormState>();
-  final _nameCtrl        = TextEditingController();
-  final _usernameCtrl    = TextEditingController();
-  final _dateCtrl        = TextEditingController();
+  final _profileFormKey    = GlobalKey<FormState>();
+  final _firstNameCtrl     = TextEditingController();
+  final _middleNameCtrl    = TextEditingController();
+  final _lastNameCtrl      = TextEditingController();
+  final _usernameCtrl      = TextEditingController();
+  final _dateCtrl          = TextEditingController();
 
+  String?        _originalUsername;
   String?        _selectedRole;
   String?        _selectedGovernorate;
   DateTime?      _birthDate;
@@ -58,7 +62,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _debounce?.cancel();
     _usernameCtrl.removeListener(_onUsernameEdited);
-    for (final c in [_nameCtrl, _usernameCtrl, _dateCtrl,
+    for (final c in [_firstNameCtrl, _middleNameCtrl, _lastNameCtrl,
+                     _usernameCtrl, _dateCtrl,
                      _currPassCtrl, _newPassCtrl, _confPassCtrl]) {
       c.dispose();
     }
@@ -71,8 +76,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() {
       _profileLoading = false;
       if (data != null) {
-        _nameCtrl.text     = data['full_name'] as String? ?? '';
-        _usernameCtrl.text = data['username']  as String? ?? '';
+        final fullName = data['full_name'] as String? ?? '';
+        final parts = fullName.trim().split(RegExp(r'\s+'));
+        _firstNameCtrl.text  = parts.isNotEmpty ? parts[0] : '';
+        _middleNameCtrl.text = parts.length > 2 ? parts[1] : '';
+        _lastNameCtrl.text   = parts.length >= 2 ? parts.last : '';
+        final uname = data['username'] as String? ?? '';
+        _originalUsername  = uname;
+        _usernameCtrl.text = uname;
         _selectedRole      = _roles.contains(data['role']) ? data['role'] as String? : null;
         _selectedGovernorate = _governorates.contains(data['address']) ? data['address'] as String? : null;
         final bd = data['birth_date'] as String?;
@@ -95,11 +106,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _debounce?.cancel();
     final clean = value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '');
     if (clean.length < 4) { setState(() => _usernameStatus = UsernameStatus.tooShort); return; }
+    // نفس اليوزرنيم الأصلي — لا داعي للفحص
+    if (clean == _originalUsername) {
+      setState(() => _usernameStatus = UsernameStatus.available);
+      return;
+    }
     setState(() => _usernameStatus = UsernameStatus.checking);
     _debounce = Timer(const Duration(milliseconds: 600), () async {
       final status = await AuthService.instance.checkUsername(clean);
       if (!mounted) return;
-      // If it's the same as current, treat as available
       setState(() => _usernameStatus = status);
     });
   }
@@ -127,14 +142,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _saveProfile() async {
     if (!_profileFormKey.currentState!.validate()) return;
-    if (_selectedRole == null) { setState(() => _profileError = 'اختر المهنة'); return; }
+    if (_selectedRole == null) { setState(() => _profileError = context.s.chooseProfessionErr); return; }
     setState(() { _saving = true; _profileError = null; });
 
     final birthStr = _birthDate == null ? '' :
         '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}';
 
+    final middle = _middleNameCtrl.text.trim();
+    final fullName = [
+      _firstNameCtrl.text.trim(),
+      if (middle.isNotEmpty) middle,
+      _lastNameCtrl.text.trim(),
+    ].join(' ');
+
     final result = await AuthService.instance.updateProfile({
-      'full_name':  _nameCtrl.text.trim(),
+      'full_name':  fullName,
       'username':   _usernameCtrl.text.trim().toLowerCase(),
       'role':       _selectedRole,
       'address':    _selectedGovernorate ?? '',
@@ -145,7 +167,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _saving = false);
     if (result.isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('تم حفظ البيانات بنجاح',
+        content: Text(context.s.profileSavedSuccess,
             style: GoogleFonts.ibmPlexSansArabic()),
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
@@ -169,7 +191,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() {
       _passLoading = false;
       if (result.isSuccess) {
-        _passSuccess = 'تم تغيير كلمة المرور بنجاح';
+        _passSuccess = context.s.passwordChangedSuccess;
         _currPassCtrl.clear();
         _newPassCtrl.clear();
         _confPassCtrl.clear();
@@ -192,7 +214,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: Text('تعديل البيانات الشخصية',
+        title: Text(context.s.editProfile,
             style: GoogleFonts.ibmPlexSansArabic(
                 fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
       ),
@@ -203,29 +225,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 children: [
                   // ── Change Password ──────────────────────────────────────
-                  _sectionLabel('تغيير كلمة المرور', Icons.lock_outline),
+                  _sectionLabel(context.s.changePassword, Icons.lock_outline),
                   const SizedBox(height: 10),
                   _card(
                     child: Form(
                       key: _passFormKey,
                       child: Column(children: [
-                        _passField(ctrl: _currPassCtrl, label: 'كلمة المرور الحالية',
+                        _passField(ctrl: _currPassCtrl, label: context.s.currentPassword,
                             obscure: _obscureCurr, onToggle: () => setState(() => _obscureCurr = !_obscureCurr),
-                            validator: (v) => (v == null || v.isEmpty) ? 'أدخل كلمة المرور الحالية' : null),
+                            validator: (v) => (v == null || v.isEmpty) ? context.s.enterCurrentPassword : null),
                         const SizedBox(height: 12),
-                        _passField(ctrl: _newPassCtrl, label: 'كلمة المرور الجديدة',
+                        _passField(ctrl: _newPassCtrl, label: context.s.newPassword,
                             obscure: _obscureNew, onToggle: () => setState(() => _obscureNew = !_obscureNew),
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'أدخل كلمة المرور الجديدة';
-                              if (v.length < 6) return '6 أحرف على الأقل';
+                              if (v == null || v.isEmpty) return context.s.enterNewPassword;
+                              if (v.length < 6) return context.s.passwordTooShort;
                               return null;
                             }),
                         const SizedBox(height: 12),
-                        _passField(ctrl: _confPassCtrl, label: 'تأكيد كلمة المرور الجديدة',
+                        _passField(ctrl: _confPassCtrl, label: context.s.confirmNewPassword,
                             obscure: _obscureConf, onToggle: () => setState(() => _obscureConf = !_obscureConf),
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'أعد إدخال كلمة المرور';
-                              if (v != _newPassCtrl.text) return 'كلمتا المرور غير متطابقتين';
+                              if (v == null || v.isEmpty) return context.s.reEnterPassword;
+                              if (v != _newPassCtrl.text) return context.s.passwordMismatch;
                               return null;
                             }),
                         if (_passError != null) ...[
@@ -249,7 +271,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: _passLoading
                                 ? const SizedBox(width: 20, height: 20,
                                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : Text('تغيير كلمة المرور',
+                                : Text(context.s.changePassword,
                                     style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600, fontSize: 15)),
                           ),
                         ),
@@ -259,20 +281,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 20),
 
                   // ── Profile Data ─────────────────────────────────────────
-                  _sectionLabel('البيانات الشخصية', Icons.person_outline),
+                  _sectionLabel(context.s.personalData, Icons.person_outline),
                   const SizedBox(height: 10),
                   _card(
                     child: Form(
                       key: _profileFormKey,
                       child: Column(children: [
-                        // Full name
-                        _textField(ctrl: _nameCtrl, label: 'الاسم الكامل', icon: Icons.person_outline,
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'أدخل اسمك الكامل';
-                              if (v.trim().split(' ').where((s) => s.isNotEmpty).length < 2)
-                                return 'أدخل الاسم الأول والأخير';
-                              return null;
-                            }),
+                        // First name
+                        _textField(ctrl: _firstNameCtrl, label: context.s.firstName, icon: Icons.person_outline,
+                            validator: (v) => (v == null || v.trim().isEmpty) ? context.s.enterFirstName : null),
+                        const SizedBox(height: 12),
+                        // Middle name (optional)
+                        _textField(ctrl: _middleNameCtrl, label: context.s.middleName, icon: Icons.person_outline,
+                            validator: (_) => null),
+                        const SizedBox(height: 12),
+                        // Last name
+                        _textField(ctrl: _lastNameCtrl, label: context.s.lastName, icon: Icons.person_outline,
+                            validator: (v) => (v == null || v.trim().isEmpty) ? context.s.enterLastName : null),
                         const SizedBox(height: 12),
 
                         // Username
@@ -282,11 +307,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         // Role
                         DropdownButtonFormField<String>(
                           value: _selectedRole,
-                          decoration: _deco(label: 'المهنة', icon: Icons.work_outline),
+                          decoration: _deco(label: context.s.profession, icon: Icons.work_outline),
                           style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: AppColors.textPrimary),
                           items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                           onChanged: (v) => setState(() => _selectedRole = v),
-                          validator: (v) => v == null ? 'اختر مهنتك' : null,
+                          validator: (v) => v == null ? context.s.chooseProfession : null,
                         ),
                         const SizedBox(height: 12),
 
@@ -294,7 +319,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         DropdownButtonFormField<String>(
                           value: _selectedGovernorate,
                           isExpanded: true,
-                          decoration: _deco(label: 'المحافظة', icon: Icons.location_on_outlined),
+                          decoration: _deco(label: context.s.governorate, icon: Icons.location_on_outlined),
                           style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: AppColors.textPrimary),
                           items: _governorates.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                           onChanged: (v) => setState(() => _selectedGovernorate = v),
@@ -310,8 +335,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               readOnly: true,
                               textAlign: TextAlign.right,
                               style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
-                              decoration: _deco(label: 'تاريخ الميلاد (اختياري)', icon: Icons.calendar_today_outlined,
-                                  hint: 'مثال: 1995/06/15').copyWith(
+                              decoration: _deco(label: context.s.birthDateOptional, icon: Icons.calendar_today_outlined,
+                                  hint: context.s.birthDateHint).copyWith(
                                 suffixIcon: _birthDate != null
                                     ? IconButton(
                                         icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
@@ -341,7 +366,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: _saving
                                 ? const SizedBox(width: 20, height: 20,
                                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : Text('حفظ التغييرات',
+                                : Text(context.s.saveChanges,
                                     style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600, fontSize: 15)),
                           ),
                         ),
@@ -380,14 +405,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         LengthLimitingTextInputFormatter(30),
       ],
       style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
-      decoration: _deco(label: 'اسم المستخدم', icon: Icons.alternate_email_rounded).copyWith(
+      decoration: _deco(label: context.s.username, icon: Icons.alternate_email_rounded).copyWith(
         counterText: '',
         suffixIcon: Padding(padding: const EdgeInsets.all(12), child: indicator()),
       ),
       validator: (v) {
-        if (v == null || v.trim().isEmpty) return 'أدخل اسم المستخدم';
-        if (v.trim().length < 4) return '4 أحرف على الأقل';
-        if (_usernameStatus == UsernameStatus.taken) return 'اسم المستخدم مستخدم';
+        if (v == null || v.trim().isEmpty) return context.s.enterUsername;
+        if (v.trim().length < 4) return context.s.usernameTooShort;
+        if (_usernameStatus == UsernameStatus.taken) return context.s.usernameTakenErr;
         return null;
       },
     );

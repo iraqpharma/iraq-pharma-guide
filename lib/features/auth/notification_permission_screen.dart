@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/notification_permission_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class NotificationPermissionScreen extends StatefulWidget {
   const NotificationPermissionScreen({super.key});
@@ -120,7 +121,7 @@ class _NotificationPermissionScreenState
                     child: Column(
                       children: [
                         Text(
-                          'تفعيل التنبيهات',
+                          context.s.notifPermTitle,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 28,
@@ -131,7 +132,7 @@ class _NotificationPermissionScreenState
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          'كن أول من يعلم بآخر تحديثات الأدوية،\nتغييرات الأسعار، والتنبيهات الطبية الهامة.',
+                          context.s.notifPermSub,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 15,
@@ -167,7 +168,7 @@ class _NotificationPermissionScreenState
                                       color: Colors.white, strokeWidth: 2.5))
                               : const Icon(Icons.check_rounded, size: 20),
                           label: Text(
-                            _loading ? 'جارٍ التفعيل…' : 'تفعيل الآن',
+                            _loading ? context.s.enabling : context.s.enableNow,
                             style: GoogleFonts.ibmPlexSansArabic(
                                 fontSize: 17, fontWeight: FontWeight.w600),
                           ),
@@ -188,7 +189,7 @@ class _NotificationPermissionScreenState
                         onTap: _loading ? null : _onSkip,
                         child: Center(
                           child: Text(
-                            'ليس الآن',
+                            context.s.notNow,
                             style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,

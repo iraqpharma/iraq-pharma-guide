@@ -37,6 +37,15 @@ class Drug {
   final String lactationSafety;
   final String imageAsset;
 
+  // ── Extended fields (from 1040-drug DB) ───────────────────────────────────
+  final String administrationNotes;
+  final String monitoringNotes;
+  final String blackBox;
+  final String rxOtc;
+  final String appCategory;
+  final String dosageForm;
+  final String availableDoses;
+
   const Drug({
     required this.id,
     required this.genericName,
@@ -72,6 +81,13 @@ class Drug {
     this.ivReconstitution = '',
     this.lactationSafety = '',
     this.imageAsset = '',
+    this.administrationNotes = '',
+    this.monitoringNotes = '',
+    this.blackBox = '',
+    this.rxOtc = 'Rx',
+    this.appCategory = 'other',
+    this.dosageForm = '',
+    this.availableDoses = '',
   });
 
   List<String> get tradeNamesList {
@@ -125,5 +141,12 @@ class Drug {
         ivReconstitution: m['iv_reconstitution'] as String? ?? '',
         lactationSafety: m['lactation_safety'] as String? ?? '',
         imageAsset: m['image_asset'] as String? ?? '',
+        administrationNotes: m['administration_notes'] as String? ?? '',
+        monitoringNotes: m['monitoring_notes'] as String? ?? '',
+        blackBox: m['black_box'] as String? ?? '',
+        rxOtc: m['rx_otc'] as String? ?? 'Rx',
+        appCategory: m['app_category'] as String? ?? 'other',
+        dosageForm: m['dosage_form_ar'] as String? ?? '',
+        availableDoses: m['available_doses'] as String? ?? '',
       );
 }

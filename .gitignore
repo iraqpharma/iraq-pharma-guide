@@ -60,7 +60,6 @@ GoogleService-Info.plist
 *.keystore
 key.properties
 **/android/key.properties
-lib/core/config/supabase_config.dart
 
 # ── Symbolication / Obfuscation ───────────────────────────────────────────────
 app.*.symbols

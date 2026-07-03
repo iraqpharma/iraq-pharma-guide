@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 // ── Legal page types ──────────────────────────────────────────────────────────
 enum LegalType { privacy, terms, disclaimer }
@@ -11,10 +12,10 @@ class LegalScreen extends StatelessWidget {
   const LegalScreen({super.key, required this.type});
 
   // ── Content definitions ────────────────────────────────────────────────────
-  String get _title => switch (type) {
-        LegalType.privacy    => 'سياسة الخصوصية',
-        LegalType.terms      => 'شروط الاستخدام',
-        LegalType.disclaimer => 'إخلاء المسؤولية',
+  String _titleStr(BuildContext context) => switch (type) {
+        LegalType.privacy    => context.s.privacyPolicy,
+        LegalType.terms      => context.s.termsOfUse,
+        LegalType.disclaimer => context.s.disclaimer_,
       };
 
   IconData get _icon => switch (type) {
@@ -118,7 +119,7 @@ class LegalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           // ── Header ────────────────────────────────────────────────────
@@ -132,12 +133,6 @@ class LegalScreen extends StatelessWidget {
                   color: Colors.white, size: 20),
               onPressed: () => context.pop(),
             ),
-            title: Text(_title,
-                style: GoogleFonts.ibmPlexSansArabic(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
-            centerTitle: true,
             expandedHeight: 160,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -162,7 +157,7 @@ class LegalScreen extends StatelessWidget {
                         child: Icon(_icon, color: Colors.white, size: 28),
                       ),
                       const SizedBox(height: 10),
-                      Text(_title,
+                      Text(_titleStr(context),
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -212,7 +207,7 @@ class _SectionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -238,14 +233,14 @@ class _SectionCard extends StatelessWidget {
                   style: GoogleFonts.ibmPlexSansArabic(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary)),
+                      color: Theme.of(context).colorScheme.onSurface)),
             ),
           ]),
           const SizedBox(height: 10),
           Text(section.body,
               style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: 13.5,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.8)),
         ]),
       ),

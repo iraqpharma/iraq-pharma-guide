@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/database/substitution_database.dart';
+import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class SubstitutionScreen extends StatefulWidget {
   const SubstitutionScreen({super.key});
@@ -20,6 +22,12 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
   bool  _loading = false;
   bool  _searched = false;
   Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.incrementToolUsage();
+  }
 
   @override
   void dispose() {
@@ -55,7 +63,6 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
     final top = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Column(
         children: [
           // ── هيدر + شريط البحث ────────────────────────────────────────────
@@ -77,12 +84,12 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('الباحث عن البدائل الذكي',
+                          Text(context.s.substitutionTitle,
                               style: GoogleFonts.cairo(
                                   color: Colors.white,
                                   fontSize: 17,
                                   fontWeight: FontWeight.bold)),
-                          Text('ابحث باسم الدواء أو المادة الفعالة',
+                          Text(context.s.substitutionSub2,
                               style: GoogleFonts.cairo(
                                   color: Colors.white60, fontSize: 11)),
                         ],
@@ -101,7 +108,7 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
                           const Icon(Icons.wifi_off_rounded,
                               color: Colors.white70, size: 12),
                           const SizedBox(width: 4),
-                          Text('يعمل بدون إنترنت',
+                          Text(context.s.offlineMode,
                               style: GoogleFonts.cairo(
                                   color: Colors.white70, fontSize: 10)),
                         ],
@@ -129,7 +136,7 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
                     textAlign:  TextAlign.right,
                     style: GoogleFonts.cairo(fontSize: 15),
                     decoration: InputDecoration(
-                      hintText: 'مثال: Zofran  أو  Ondansetron  أو  Nexium',
+                      hintText: context.s.subSearchHint,
                       hintStyle: GoogleFonts.cairo(
                           color: AppColors.textSecondary.withOpacity(0.5),
                           fontSize: 13),
@@ -193,8 +200,8 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
         // ── البدائل المباشرة ─────────────────────────────────────────────
         if (_result!.directAlternatives.isNotEmpty) ...[
           _SectionHeader(
-            title: 'البدائل المباشرة',
-            subtitle: 'نفس المادة الفعالة • ${_result!.activeIngredient}',
+            title: context.s.directAlternatives,
+            subtitle: '${context.s.sameActiveIngredient} • ${_result!.activeIngredient}',
             icon: Icons.swap_horiz_rounded,
             color: AppColors.primary,
             count: _result!.directAlternatives.length,
@@ -209,7 +216,7 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
         // ── البدائل العلاجية ─────────────────────────────────────────────
         if (_result!.therapeuticGroups.isNotEmpty) ...[
           _SectionHeader(
-            title: 'بدائل من نفس العائلة',
+            title: context.s.sameFamily,
             subtitle: _result!.drugClass,
             icon: Icons.account_tree_outlined,
             color: const Color(0xFF6A1B9A),
@@ -291,10 +298,10 @@ class _InfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           _InfoRow(Icons.science_outlined,
-              'المادة الفعالة', result.activeIngredient),
+              context.s.activeIngredientLabel, result.activeIngredient),
           const SizedBox(height: 4),
           _InfoRow(Icons.category_outlined,
-              'العائلة الدوائية', result.drugClass),
+              context.s.drugClassLabel, result.drugClass),
         ],
       ),
     );
@@ -366,7 +373,7 @@ class _SectionHeader extends StatelessWidget {
                       style: GoogleFonts.cairo(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -387,7 +394,7 @@ class _SectionHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.cairo(
-                      fontSize: 11, color: AppColors.textSecondary)),
+                      fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
@@ -408,7 +415,7 @@ class _BrandCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.15)),
         boxShadow: const [
@@ -434,12 +441,12 @@ class _BrandCard extends StatelessWidget {
                     style: GoogleFonts.cairo(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary)),
+                        color: Theme.of(context).colorScheme.onSurface)),
                 if (brand.company.isNotEmpty)
                   Text(brand.company,
                       style: GoogleFonts.cairo(
                           fontSize: 11,
-                          color: AppColors.textSecondary)),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ],
             ),
           ),
@@ -474,16 +481,16 @@ class _WelcomeState extends StatelessWidget {
                 color: AppColors.primary, size: 40),
           ),
           const SizedBox(height: 16),
-          Text('ابحث عن أي دواء',
+          Text(context.s.searchAnyDrug,
               style: GoogleFonts.cairo(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 6),
-          Text('سيعرض لك البدائل المباشرة وبدائل من نفس العائلة الدوائية',
+          Text(context.s.subWelcomeSub,
               textAlign: TextAlign.center,
               style: GoogleFonts.cairo(
-                  fontSize: 12, color: AppColors.textSecondary)),
+                  fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 24),
           Wrap(
             spacing: 8,
@@ -518,7 +525,7 @@ class _ExampleChip extends StatelessWidget {
         padding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.primary.withOpacity(0.3)),
         ),
@@ -554,12 +561,12 @@ class _EmptyState extends StatelessWidget {
                 style: GoogleFonts.cairo(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 8),
             Text('جرّب البحث باسم تجاري آخر أو بالاسم العلمي',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cairo(
-                    fontSize: 12, color: AppColors.textSecondary)),
+                    fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),

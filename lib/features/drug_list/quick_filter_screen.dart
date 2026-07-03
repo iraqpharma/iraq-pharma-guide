@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../data/database/database_helper.dart';
 import '../../data/models/drug_model.dart';
 import '../../providers/drug_provider.dart';
@@ -11,49 +12,72 @@ import '../../providers/drug_provider.dart';
 
 class _FilterMeta {
   final String titleAr;
+  final String titleEn;
   final String subtitleAr;
+  final String subtitleEn;
   final IconData icon;
   final Color color;
   final bool showSearch;
   final String? bannerText;
+  final String? bannerTextEn;
   const _FilterMeta({
     required this.titleAr,
+    required this.titleEn,
     required this.subtitleAr,
+    required this.subtitleEn,
     required this.icon,
     required this.color,
     this.showSearch = false,
     this.bannerText,
+    this.bannerTextEn,
   });
+  String title(bool isAr) => isAr ? titleAr : titleEn;
+  String subtitle(bool isAr) => isAr ? subtitleAr : subtitleEn;
+  String? banner(bool isAr) => isAr ? bannerText : bannerTextEn;
 }
 
 const _metaMap = <String, _FilterMeta>{
   'pregnancy': _FilterMeta(
     titleAr: 'آمن للحمل',
+    titleEn: 'Safe in Pregnancy',
     subtitleAr: 'أدوية فئة A و B',
+    subtitleEn: 'Category A & B drugs',
     icon: Icons.bolt,
     color: Color(0xFF7C3AED),
+    showSearch: true,
   ),
   'drops': _FilterMeta(
     titleAr: 'قطرات أطفال',
+    titleEn: 'Pediatric Drops',
     subtitleAr: 'أدوية بجرعة قطرات للأطفال',
+    subtitleEn: 'Drugs dosed as drops for children',
     icon: Icons.wb_sunny_outlined,
     color: Color(0xFFF97316),
+    showSearch: true,
   ),
   'cold': _FilterMeta(
     titleAr: 'أدوية تحتاج تبريداً',
+    titleEn: 'Refrigerated Drugs',
     subtitleAr: 'يجب حفظها في البراد',
+    subtitleEn: 'Must be stored refrigerated',
     icon: Icons.ac_unit_rounded,
     color: Color(0xFF3B82F6),
     showSearch: true,
     bannerText:
         '❄️  تنبيه: جميع الأدوية أدناه تحتاج إلى حفظها في الثلاجة بين 2–8 °C. '
         'يُرجى التحقق دائماً قبل الصرف.',
+    bannerTextEn:
+        '❄️  Warning: All drugs below require refrigeration at 2–8 °C. '
+        'Always verify before dispensing.',
   ),
   'renal': _FilterMeta(
     titleAr: 'تعديل كلوي',
+    titleEn: 'Renal Dose Adjustment',
     subtitleAr: 'أدوية تستلزم تعديل الجرعة في القصور الكلوي',
+    subtitleEn: 'Drugs requiring dose adjustment in renal impairment',
     icon: Icons.calculate_outlined,
     color: Color(0xFF10B981),
+    showSearch: true,
   ),
 };
 
@@ -93,7 +117,9 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
     final meta = _metaMap[widget.filterKey] ??
         const _FilterMeta(
           titleAr: 'فلتر',
+          titleEn: 'Filter',
           subtitleAr: '',
+          subtitleEn: '',
           icon: Icons.filter_list,
           color: AppColors.primary,
         );
@@ -101,7 +127,7 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
     final searchQ = ref.watch(_refrigSearchProvider).toLowerCase().trim();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           // ── Custom header ───────────────────────────────────────────────
@@ -134,7 +160,7 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
                           Icon(meta.icon,
                               color: Colors.white, size: 14),
                           const SizedBox(width: 5),
-                          Text(meta.subtitleAr,
+                          Text(meta.subtitle(context.s.isAr),
                               style: GoogleFonts.cairo(
                                   color: Colors.white,
                                   fontSize: 11)),
@@ -146,7 +172,7 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 0, 0),
                   child: Text(
-                    meta.titleAr,
+                    meta.title(context.s.isAr),
                     style: GoogleFonts.cairo(
                         color: Colors.white,
                         fontSize: 22,
@@ -171,7 +197,7 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
           ),
 
           // ── Instruction banner ─────────────────────────────────────────
-          if (meta.bannerText != null)
+          if (meta.banner(context.s.isAr) != null)
             Container(
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -190,7 +216,7 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      meta.bannerText!,
+                      meta.banner(context.s.isAr)!,
                       style: GoogleFonts.cairo(
                           fontSize: 12,
                           color: const Color(0xFF1565C0),
@@ -207,7 +233,7 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
-                  Center(child: Text('خطأ: $e')),
+                  Center(child: Text('${context.s.error}: $e')),
               data: (drugs) {
                 // Apply search filter for refrigerated
                 final filtered = searchQ.isEmpty
@@ -229,16 +255,16 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
                       children: [
                         Icon(Icons.medication_outlined,
                             size: 60,
-                            color: AppColors.textSecondary
+                            color: Theme.of(context).colorScheme.onSurfaceVariant
                                 .withOpacity(0.35)),
                         const SizedBox(height: 14),
                         Text(
                           searchQ.isNotEmpty
-                              ? 'لا توجد نتائج'
-                              : 'لا توجد أدوية في هذا القسم',
+                              ? context.s.noResults
+                              : context.s.noDrugsInCategory,
                           style: GoogleFonts.cairo(
                               fontSize: 15,
-                              color: AppColors.textSecondary),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -274,7 +300,7 @@ class _SearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
@@ -283,15 +309,15 @@ class _SearchField extends StatelessWidget {
         textDirection: TextDirection.rtl,
         style: GoogleFonts.cairo(fontSize: 14),
         decoration: InputDecoration(
-          hintText: 'ابحث عن اسم الدواء...',
+          hintText: context.s.drugSearchHint,
           hintStyle: GoogleFonts.cairo(
-              color: AppColors.textSecondary, fontSize: 14),
+              color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
           prefixIcon: const Icon(Icons.search_rounded,
               color: AppColors.primary),
           suffixIcon: controller.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close,
-                      color: AppColors.textSecondary, size: 18),
+                  icon: Icon(Icons.close,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
                   onPressed: () {
                     controller.clear();
                     onChanged('');
@@ -321,7 +347,7 @@ class _DrugCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
@@ -351,19 +377,19 @@ class _DrugCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: AppColors.textPrimary)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   if (drug.genericNameAr.isNotEmpty)
                     Text(drug.genericNameAr,
                         style: GoogleFonts.cairo(
                             fontSize: 12,
-                            color: AppColors.textSecondary)),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   if (drug.tradeNamesList.isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Text(
                       drug.tradeNamesList.take(3).join(' · '),
                       style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: AppColors.textSecondary),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -372,7 +398,7 @@ class _DrugCard extends StatelessWidget {
               ),
             ),
             Icon(Icons.chevron_right,
-                color: AppColors.textSecondary, size: 20),
+                color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
           ],
         ),
       ),

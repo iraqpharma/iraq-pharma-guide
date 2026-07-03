@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../services/session_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  LOGIN SCREEN
@@ -22,14 +25,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl  = TextEditingController();
   bool    _loading    = false;
+  bool    _fbLoading  = false;
   bool    _obscure    = true;
   bool    _rememberMe = false;
   String? _error;
+  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
     super.initState();
     _loadSavedEmail();
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (!mounted) return;
+      if (data.event == AuthChangeEvent.signedIn && _fbLoading) {
+        setState(() => _fbLoading = false);
+        _showLoginSuccess();
+      }
+    });
   }
 
   Future<void> _loadSavedEmail() async {
@@ -41,7 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  void dispose() { _emailCtrl.dispose(); _passCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _authSub?.cancel();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -79,6 +96,19 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _facebookSignIn() async {
+    setState(() { _fbLoading = true; _error = null; });
+    try {
+      await AuthService.instance.signInWithFacebook();
+      // Result handled by _authSub listener; if browser closed without login, reset after 2 min
+      Future.delayed(const Duration(minutes: 2), () {
+        if (mounted && _fbLoading) setState(() => _fbLoading = false);
+      });
+    } catch (e) {
+      if (mounted) setState(() { _fbLoading = false; _error = 'فشل تسجيل الدخول بـ Facebook'; });
+    }
+  }
+
   void _showLoginSuccess() {
     showDialog(
       context: context,
@@ -89,115 +119,174 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 36),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 12),
-                const _AppLogo(),
-                const SizedBox(height: 36),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Column(
+        children: [
+          // ── Teal header banner ──────────────────────────────────────────────
+          _LoginHeader(),
 
-                // Email or username
-                _AuthField(
-                  label: 'البريد الإلكتروني أو اسم المستخدم',
-                  ctrl:  _emailCtrl,
-                  icon:  Icons.person_outline,
-                  maxLen: 254,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'أدخل البريد الإلكتروني أو اسم المستخدم';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 14),
-
-                // Password
-                _PasswordField(
-                  ctrl: _passCtrl, obscure: _obscure,
-                  onToggle: () => setState(() => _obscure = !_obscure),
-                ),
-                const SizedBox(height: 4),
-
-                // Remember me + forgot password row
-                Row(
+          // ── Scrollable form ─────────────────────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(
-                      width: 24, height: 24,
-                      child: Checkbox(
-                        value: _rememberMe,
-                        onChanged: (v) => setState(() => _rememberMe = v ?? false),
-                        activeColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5)),
-                        side: BorderSide(color: AppColors.textSecondary.withOpacity(0.5)),
+                    Text(context.s.loginTitle,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ibmPlexSansArabic(
+                            fontSize: 22, fontWeight: FontWeight.bold,
+                            color: cs.onSurface)),
+                    const SizedBox(height: 6),
+                    Text(context.s.loginSubHint,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ibmPlexSansArabic(
+                            fontSize: 12, color: cs.onSurfaceVariant)),
+                    const SizedBox(height: 24),
+
+                    // Universal identifier field
+                    _UniversalLoginField(ctrl: _emailCtrl),
+                    const SizedBox(height: 14),
+
+                    // Password
+                    _PasswordField(
+                      ctrl: _passCtrl, obscure: _obscure,
+                      onToggle: () => setState(() => _obscure = !_obscure),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Remember me + forgot password
+                    Row(children: [
+                      SizedBox(
+                        width: 24, height: 24,
+                        child: Checkbox(
+                          value: _rememberMe,
+                          onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                          activeColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                          side: BorderSide(color: cs.onSurfaceVariant.withOpacity(0.5)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setState(() => _rememberMe = !_rememberMe),
+                        child: Text(context.s.rememberMe,
+                            style: GoogleFonts.ibmPlexSansArabic(
+                                fontSize: 13, color: cs.onSurfaceVariant)),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => context.push('/forgot-password'),
+                        style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
+                        child: Text(context.s.forgotPassword,
+                            style: GoogleFonts.ibmPlexSansArabic(
+                                color: AppColors.primary, fontSize: 13)),
+                      ),
+                    ]),
+
+                    if (_error != null) ...[
+                      const SizedBox(height: 8),
+                      _ErrorBanner(_error!),
+                    ],
+                    const SizedBox(height: 20),
+
+                    _PrimaryButton(
+                        label: context.s.loginTitle,
+                        loading: _loading,
+                        onPressed: _submit),
+                    const SizedBox(height: 18),
+
+                    _Divider(context.s.orWith),
+                    const SizedBox(height: 18),
+
+                    _SocialLoginRow(
+                      loading: _loading || _fbLoading,
+                      fbLoading: _fbLoading,
+                      onGoogle: _googleSignIn,
+                      onFacebook: _facebookSignIn,
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Sign up row — prominent
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.primary.withOpacity(0.18)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('${context.s.noAccount}  ',
+                              style: GoogleFonts.ibmPlexSansArabic(
+                                  color: cs.onSurfaceVariant, fontSize: 15)),
+                          GestureDetector(
+                            onTap: () => context.push('/signup'),
+                            child: Text(context.s.registerNow,
+                                style: GoogleFonts.ibmPlexSansArabic(
+                                    color: AppColors.primary,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: AppColors.primary)),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => setState(() => _rememberMe = !_rememberMe),
-                      child: Text('تذكرني',
-                          style: GoogleFonts.ibmPlexSansArabic(
-                              fontSize: 13, color: AppColors.textSecondary)),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => context.push('/forgot-password'),
-                      style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
-                      child: Text('نسيت كلمة المرور؟',
-                          style: GoogleFonts.ibmPlexSansArabic(
-                              color: AppColors.primary, fontSize: 13)),
-                    ),
                   ],
                 ),
-
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  _ErrorBanner(_error!),
-                ],
-                const SizedBox(height: 20),
-
-                _PrimaryButton(
-                  label: 'تسجيل الدخول',
-                  loading: _loading,
-                  onPressed: _submit,
-                ),
-                const SizedBox(height: 20),
-
-                _Divider('أو'),
-                const SizedBox(height: 16),
-
-                _GoogleButton(loading: _loading, onPressed: _googleSignIn),
-                const SizedBox(height: 32),
-
-                // Sign up — bigger text
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('ليس لديك حساب؟  ',
-                        style: GoogleFonts.ibmPlexSansArabic(
-                            color: AppColors.textSecondary, fontSize: 16)),
-                    GestureDetector(
-                      onTap: () => context.push('/signup'),
-                      child: Text('سجّل الآن',
-                          style: GoogleFonts.ibmPlexSansArabic(
-                              color: AppColors.primary,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              decoration: TextDecoration.underline,
-                              decorationColor: AppColors.primary)),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Teal header banner (matches app brand) ────────────────────────────────────
+class _LoginHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final topPad = MediaQuery.of(context).padding.top;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(24, topPad + 28, 24, 28),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF00796B), Color(0xFF009688), Color(0xFF26A69A)],
         ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+      ),
+      child: Column(
+        children: [
+          // App logo
+          Image.asset(
+            'assets/images/logo_white.png.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 12),
+          Text('Iraq Pharma Guide',
+              style: GoogleFonts.ibmPlexSansArabic(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5)),
+          const SizedBox(height: 4),
+          Text('دليل الصيدلة العراقي',
+              style: GoogleFonts.ibmPlexSansArabic(
+                  color: Colors.white.withOpacity(0.85), fontSize: 13)),
+        ],
       ),
     );
   }
@@ -239,7 +328,7 @@ class _LoginSuccessDialogState extends State<_LoginSuccessDialog>
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 28),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
           ),
@@ -253,13 +342,13 @@ class _LoginSuccessDialogState extends State<_LoginSuccessDialog>
                 child: const Icon(Icons.check_rounded, color: Colors.white, size: 40),
               ),
               const SizedBox(height: 16),
-              Text('أهلاً بعودتك!',
+              Text(context.s.welcomeBack,
                   style: GoogleFonts.ibmPlexSansArabic(
-                      fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                      fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 6),
-              Text('تم تسجيل الدخول بنجاح.',
+              Text(context.s.loginSuccess,
                   style: GoogleFonts.ibmPlexSansArabic(
-                      fontSize: 14, color: AppColors.textSecondary)),
+                      fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
@@ -279,10 +368,13 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final _formKey      = GlobalKey<FormState>();
-  final _nameCtrl     = TextEditingController();
-  final _usernameCtrl = TextEditingController();
+  final _formKey         = GlobalKey<FormState>();
+  final _firstNameCtrl   = TextEditingController();
+  final _middleNameCtrl  = TextEditingController();
+  final _lastNameCtrl    = TextEditingController();
+  final _usernameCtrl    = TextEditingController();
   final _emailCtrl    = TextEditingController();
+  final _phoneCtrl    = TextEditingController();
   final _passCtrl     = TextEditingController();
   final _confirmCtrl  = TextEditingController();
 
@@ -296,9 +388,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Timer?         _debounce;
   bool           _agreedToTerms      = false;
 
-  static const _roles = [
-    'مدير صيدلية', 'صيدلاني متدرب', 'معاون صيدلي',
-  ];
+  List<String> _getRoles(BuildContext context) => context.s.roles;
 
   static const _governorates = [
     'بغداد', 'البصرة', 'نينوى', 'أربيل', 'السليمانية', 'كركوك',
@@ -309,16 +399,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl.addListener(_onNameChanged);
+    _firstNameCtrl.addListener(_onNameChanged);
+    _lastNameCtrl.addListener(_onNameChanged);
     _usernameCtrl.addListener(_onUsernameEdited);
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    _nameCtrl.removeListener(_onNameChanged);
+    _firstNameCtrl.removeListener(_onNameChanged);
+    _lastNameCtrl.removeListener(_onNameChanged);
     _usernameCtrl.removeListener(_onUsernameEdited);
-    for (final c in [_nameCtrl, _usernameCtrl, _emailCtrl, _passCtrl, _confirmCtrl]) {
+    for (final c in [_firstNameCtrl, _middleNameCtrl, _lastNameCtrl,
+                     _usernameCtrl, _emailCtrl, _phoneCtrl, _passCtrl, _confirmCtrl]) {
       c.dispose();
     }
     super.dispose();
@@ -327,7 +420,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // ── Username auto-fill ────────────────────────────────────────────────────
   void _onNameChanged() {
     if (_userEditedUsername) return;
-    final generated = AuthService.instance.generateUsernameFromName(_nameCtrl.text);
+    final combined = '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}'.trim();
+    final generated = AuthService.instance.generateUsernameFromName(combined);
     if (generated.length >= 3) {
       _setUsername(generated);
       _scheduleCheck(generated, autoFix: true);
@@ -370,26 +464,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedRole == null) { setState(() => _error = 'يرجى اختيار المهنة'); return; }
-    if (_usernameStatus == UsernameStatus.taken) { setState(() => _error = 'اسم المستخدم مستخدم بالفعل'); return; }
-    if (!_agreedToTerms) { setState(() => _error = 'يجب الموافقة على الشروط وسياسة الخصوصية للمتابعة'); return; }
-    if (_usernameStatus == UsernameStatus.checking) { setState(() => _error = 'جارٍ التحقق من اسم المستخدم…'); return; }
+    if (_selectedRole == null) { setState(() => _error = context.s.chooseProfessionFirst); return; }
+    if (_usernameStatus == UsernameStatus.taken) { setState(() => _error = context.s.usernameTakenFull); return; }
+    if (!_agreedToTerms) { setState(() => _error = context.s.agreeToTermsErr); return; }
+    if (_usernameStatus == UsernameStatus.checking) { setState(() => _error = context.s.checkingUsername); return; }
 
     setState(() { _loading = true; _error = null; });
+
+    final middle = _middleNameCtrl.text.trim();
+    final fullName = [
+      _firstNameCtrl.text.trim(),
+      if (middle.isNotEmpty) middle,
+      _lastNameCtrl.text.trim(),
+    ].join(' ');
 
     final result = await AuthService.instance.signUp(
       email:     _emailCtrl.text,
       password:  _passCtrl.text,
-      fullName:  _nameCtrl.text,
+      fullName:  fullName,
       username:  _usernameCtrl.text,
       role:      _selectedRole!,
+      phone:     _phoneCtrl.text.trim(),
       birthDate: '',
       address:   '',
     );
 
     if (!mounted) return;
     if (result.isSuccess) {
-      context.go('/register-success');
+      context.push('/otp', extra: {
+        'email':   _emailCtrl.text.trim(),
+        'type':    OtpType.signup,
+        'isLogin': false,
+      });
     } else {
       setState(() { _loading = false; _error = result.error; });
     }
@@ -423,9 +529,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   (String, Color)? _statusLabel() {
     switch (_usernameStatus) {
-      case UsernameStatus.available: return ('متاح ✓', const Color(0xFF4CAF50));
-      case UsernameStatus.taken:     return ('مستخدم بالفعل', Colors.red);
-      case UsernameStatus.tooShort:  return ('4 أحرف على الأقل', Colors.orange);
+      case UsernameStatus.available: return (context.s.usernameAvailable, const Color(0xFF4CAF50));
+      case UsernameStatus.taken:     return (context.s.usernameTaken,     Colors.red);
+      case UsernameStatus.tooShort:  return (context.s.usernameTooShort,  Colors.orange);
       default: return null;
     }
   }
@@ -437,42 +543,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final focusC  = _usernameStatus == UsernameStatus.available
         ? const Color(0xFF4CAF50) : AppColors.primary;
 
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent, elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const _AppLogo(),
-                const SizedBox(height: 14),
-                Text('إنشاء حساب جديد',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.ibmPlexSansArabic(
-                        fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                const SizedBox(height: 20),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Column(
+        children: [
+          // ── Teal header ─────────────────────────────────────────────────────
+          _SignUpHeader(onBack: () => context.pop()),
 
-                // Full name
+          // ── Scrollable form ──────────────────────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(context.s.newAccount,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ibmPlexSansArabic(
+                            fontSize: 22, fontWeight: FontWeight.bold,
+                            color: cs.onSurface)),
+                    const SizedBox(height: 4),
+                    Text(context.s.newAccountSub,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ibmPlexSansArabic(
+                            fontSize: 12, color: cs.onSurfaceVariant)),
+                    const SizedBox(height: 20),
+
                 _AuthField(
-                  label: 'الاسم الكامل',
-                  ctrl:  _nameCtrl, icon: Icons.person_outline, maxLen: 80,
-                  hint: 'بالعربي أو الإنجليزي',
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'أدخل اسمك الكامل';
-                    if (v.trim().split(' ').where((s) => s.isNotEmpty).length < 2)
-                      return 'أدخل الاسم الأول والأخير على الأقل';
-                    return null;
-                  },
+                  label: context.s.firstName,
+                  ctrl: _firstNameCtrl, icon: Icons.person_outline, maxLen: 40,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? context.s.enterFirstName : null,
+                ),
+                const SizedBox(height: 12),
+
+                _AuthField(
+                  label: context.s.middleName,
+                  ctrl: _middleNameCtrl, icon: Icons.person_outline, maxLen: 40,
+                  validator: (_) => null,
+                ),
+                const SizedBox(height: 12),
+
+                _AuthField(
+                  label: context.s.lastName,
+                  ctrl: _lastNameCtrl, icon: Icons.person_outline, maxLen: 40,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? context.s.enterLastName : null,
                 ),
                 const SizedBox(height: 12),
 
@@ -490,18 +607,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                       style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
                       decoration: InputDecoration(
-                        labelText: 'اسم المستخدم',
+                        labelText: context.s.usernameField,
                         counterText: '',
-                        hintText: 'يُملأ تلقائياً من الاسم',
-                        prefixIcon: const Icon(Icons.alternate_email_rounded,
-                            color: AppColors.textSecondary, size: 20),
+                        hintText: context.s.usernameHint,
+                        prefixIcon: Icon(Icons.alternate_email_rounded,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
                         suffixIcon: Padding(
                             padding: const EdgeInsets.all(12), child: _indicator()),
-                        filled: true, fillColor: Colors.white,
+                        filled: true, fillColor: Theme.of(context).colorScheme.surfaceVariant,
                         labelStyle: GoogleFonts.ibmPlexSansArabic(
-                            color: AppColors.textSecondary, fontSize: 14),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                         hintStyle: GoogleFonts.ibmPlexSansArabic(
-                            color: AppColors.textSecondary.withOpacity(0.5), fontSize: 13),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5), fontSize: 13),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         border:             OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderC)),
                         enabledBorder:      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderC)),
@@ -510,9 +627,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'أدخل اسم المستخدم';
-                        if (v.trim().length < 4) return '4 أحرف على الأقل';
-                        if (_usernameStatus == UsernameStatus.taken) return 'اسم المستخدم مستخدم';
+                        if (v == null || v.trim().isEmpty) return context.s.enterUsername;
+                        if (v.trim().length < 4) return context.s.usernameTooShort;
+                        if (_usernameStatus == UsernameStatus.taken) return context.s.usernameTakenErr;
                         return null;
                       },
                     ),
@@ -531,7 +648,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 _AuthField(
                   label: 'البريد الإلكتروني', ctrl: _emailCtrl,
                   icon: Icons.email_outlined, maxLen: 254,
-                  keyboard: TextInputType.emailAddress, validator: _emailValidator,
+                  keyboard: TextInputType.emailAddress, validator: (v) => _emailValidator(v, context.s),
+                ),
+                const SizedBox(height: 12),
+
+                _AuthField(
+                  label: context.s.phoneOptional,
+                  ctrl: _phoneCtrl,
+                  icon: Icons.phone_outlined,
+                  maxLen: 15,
+                  keyboard: TextInputType.phone,
+                  textDirection: TextDirection.ltr,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    final digits = v.trim().replaceAll(RegExp(r'\D'), '');
+                    if (digits.length < 10) return context.s.invalidPhone;
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -539,8 +672,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ctrl: _passCtrl, obscure: _obscure1,
                   onToggle: () => setState(() => _obscure1 = !_obscure1),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
-                    if (v.length < 6) return '6 أحرف على الأقل';
+                    if (v == null || v.isEmpty) return context.s.enterPassword;
+                    if (v.length < 6) return context.s.passwordTooShort;
                     return null;
                   },
                 ),
@@ -548,11 +681,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 _PasswordField(
                   ctrl: _confirmCtrl, obscure: _obscure2,
-                  label: 'تأكيد كلمة المرور',
+                  label: context.s.confirmPassword,
                   onToggle: () => setState(() => _obscure2 = !_obscure2),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'أعد إدخال كلمة المرور';
-                    if (v != _passCtrl.text) return 'كلمتا المرور غير متطابقتين';
+                    if (v == null || v.isEmpty) return context.s.reEnterPassword;
+                    if (v != _passCtrl.text) return context.s.passwordMismatch;
                     return null;
                   },
                 ),
@@ -560,11 +693,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
-                  decoration: _fieldDeco(label: 'المهنة', icon: Icons.work_outline),
-                  style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: AppColors.textPrimary),
-                  items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                  decoration: _fieldDeco(label: context.s.profession, icon: Icons.work_outline, context: context),
+                  style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: Theme.of(context).colorScheme.onSurface),
+                  items: _getRoles(context).map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                   onChanged: (v) => setState(() => _selectedRole = v),
-                  validator: (v) => v == null ? 'اختر مهنتك' : null,
+                  validator: (v) => v == null ? context.s.chooseProfession : null,
                 ),
 
                 const SizedBox(height: 16),
@@ -588,23 +721,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Expanded(
                         child: Wrap(
                           children: [
-                            Text('أوافق على ',
+                            Text(context.s.agreePrefix,
                                 style: GoogleFonts.ibmPlexSansArabic(
-                                    fontSize: 13, color: AppColors.textSecondary)),
+                                    fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                             GestureDetector(
                               onTap: () => context.push('/legal/terms'),
-                              child: Text('شروط الاستخدام',
+                              child: Text(context.s.termsOfUse,
                                   style: GoogleFonts.ibmPlexSansArabic(
                                       fontSize: 13, color: AppColors.primary,
                                       decoration: TextDecoration.underline,
                                       decorationColor: AppColors.primary)),
                             ),
-                            Text(' و',
+                            Text(context.s.agreeAnd,
                                 style: GoogleFonts.ibmPlexSansArabic(
-                                    fontSize: 13, color: AppColors.textSecondary)),
+                                    fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                             GestureDetector(
                               onTap: () => context.push('/legal/privacy'),
-                              child: Text('سياسة الخصوصية',
+                              child: Text(context.s.privacyPolicy,
                                   style: GoogleFonts.ibmPlexSansArabic(
                                       fontSize: 13, color: AppColors.primary,
                                       decoration: TextDecoration.underline,
@@ -620,31 +753,102 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 if (_error != null) ...[const SizedBox(height: 10), _ErrorBanner(_error!)],
                 const SizedBox(height: 20),
 
-                _PrimaryButton(label: 'إنشاء الحساب', loading: _loading, onPressed: _submit),
+                _PrimaryButton(label: context.s.signUp, loading: _loading, onPressed: _submit),
                 const SizedBox(height: 20),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('لديك حساب؟ ',
-                        style: GoogleFonts.ibmPlexSansArabic(
-                            color: AppColors.textSecondary, fontSize: 15)),
-                    GestureDetector(
-                      onTap: () => context.pop(),
-                      child: Text('سجّل الدخول',
+                // Login row — prominent
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.18)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('${context.s.alreadyHaveAccount}  ',
                           style: GoogleFonts.ibmPlexSansArabic(
-                              color: AppColors.primary, fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              decoration: TextDecoration.underline,
-                              decorationColor: AppColors.primary)),
-                    ),
-                  ],
+                              color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 15)),
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: Text(context.s.signInNow,
+                            style: GoogleFonts.ibmPlexSansArabic(
+                                color: AppColors.primary, fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                decoration: TextDecoration.underline,
+                                decorationColor: AppColors.primary)),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
               ],
             ),
           ),
         ),
+      ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── SignUp header banner ───────────────────────────────────────────────────────
+class _SignUpHeader extends StatelessWidget {
+  final VoidCallback onBack;
+  const _SignUpHeader({required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    final topPad = MediaQuery.of(context).padding.top;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(16, topPad + 16, 24, 22),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF00796B), Color(0xFF009688), Color(0xFF26A69A)],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+      ),
+      child: Row(
+        children: [
+          // Back button
+          IconButton(
+            onPressed: onBack,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.15),
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Icon + text
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+            ),
+            child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 26),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(context.s.createAccount,
+                  style: GoogleFonts.ibmPlexSansArabic(
+                      color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Iraq Pharma Guide',
+                  style: GoogleFonts.ibmPlexSansArabic(
+                      color: Colors.white.withOpacity(0.8), fontSize: 12)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -654,21 +858,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
 //  SHARED WIDGETS & HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
 
-String? _emailValidator(String? v) {
-  if (v == null || v.trim().isEmpty) return 'أدخل البريد الإلكتروني';
+String? _emailValidator(String? v, AppStrings s) {
+  if (v == null || v.trim().isEmpty) return s.enterEmail;
   final t = v.trim();
-  if (!t.contains('@') || !t.contains('.')) return 'بريد إلكتروني غير صحيح';
-  if (t.length > 254) return 'البريد الإلكتروني طويل جداً';
+  if (!t.contains('@') || !t.contains('.')) return s.invalidEmail;
+  if (t.length > 254) return s.emailTooLong;
   return null;
 }
 
-InputDecoration _fieldDeco({required String label, required IconData icon, String? hint}) =>
+InputDecoration _fieldDeco({required String label, required IconData icon, String? hint, required BuildContext context}) =>
     InputDecoration(
       labelText: label, hintText: hint,
-      prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
-      filled: true, fillColor: Colors.white,
-      labelStyle: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary, fontSize: 14),
-      hintStyle:  GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary.withOpacity(0.5), fontSize: 13),
+      prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+      filled: true, fillColor: Theme.of(context).colorScheme.surfaceVariant,
+      labelStyle: GoogleFonts.ibmPlexSansArabic(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+      hintStyle:  GoogleFonts.ibmPlexSansArabic(color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5), fontSize: 13),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border:             OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
       enabledBorder:      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
@@ -681,22 +885,83 @@ class _AppLogo extends StatelessWidget {
   const _AppLogo();
   @override
   Widget build(BuildContext context) => Column(children: [
-    Container(
-      width: 72, height: 72,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.darkNavy, AppColors.primary],
-            begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
-      ),
-      child: const Icon(Icons.local_pharmacy_outlined, color: Colors.white, size: 36),
-    ),
     const SizedBox(height: 12),
     Text('Iraq Pharma Guide',
-        style: GoogleFonts.ibmPlexSansArabic(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        style: GoogleFonts.ibmPlexSansArabic(fontSize: 17, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
     Text('دليل الصيدلة العراقي',
-        style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: AppColors.textSecondary)),
+        style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
   ]);
+}
+
+// Smart login field: detects email / phone / username and adjusts keyboard + icon
+class _UniversalLoginField extends StatefulWidget {
+  final TextEditingController ctrl;
+  const _UniversalLoginField({required this.ctrl});
+  @override
+  State<_UniversalLoginField> createState() => _UniversalLoginFieldState();
+}
+
+class _UniversalLoginFieldState extends State<_UniversalLoginField> {
+  late TextInputType _keyboard;
+  late IconData      _icon;
+  String             _hint = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _update(widget.ctrl.text);
+    widget.ctrl.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() { widget.ctrl.removeListener(_onChanged); super.dispose(); }
+
+  void _onChanged() => setState(() => _update(widget.ctrl.text));
+
+  void _update(String v) {
+    final t = v.trim();
+    if (_looksLikePhone(t)) {
+      _keyboard = TextInputType.phone;
+      _icon     = Icons.phone_outlined;
+      _hint     = 'phone';
+    } else if (t.contains('@')) {
+      _keyboard = TextInputType.emailAddress;
+      _icon     = Icons.email_outlined;
+      _hint     = '';
+    } else {
+      _keyboard = TextInputType.text;
+      _icon     = Icons.person_outline;
+      _hint     = '';
+    }
+  }
+
+  bool _looksLikePhone(String v) {
+    final s = v.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (s.startsWith('+') && s.length >= 8) return true;
+    if (RegExp(r'^(07|009647)').hasMatch(s)) return true;
+    if (s.isNotEmpty && RegExp(r'^\d').hasMatch(s)) return true;
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) => TextFormField(
+    controller: widget.ctrl,
+    keyboardType: _keyboard,
+    textAlign: TextAlign.right,
+    maxLength: 254,
+    inputFormatters: [LengthLimitingTextInputFormatter(254)],
+    style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
+    decoration: _fieldDeco(
+      label: context.s.universalFieldLabel,
+      icon: _icon,
+      hint: _hint == 'phone' ? context.s.phoneExample : (_hint.isEmpty ? null : _hint),
+      context: context,
+    ).copyWith(counterText: ''),
+    validator: (v) {
+      if (v == null || v.trim().isEmpty) return context.s.enterIdentifier;
+      return null;
+    },
+  );
 }
 
 class _AuthField extends StatelessWidget {
@@ -706,19 +971,23 @@ class _AuthField extends StatelessWidget {
   final int maxLen;
   final String? hint;
   final TextInputType? keyboard;
+  final TextDirection? textDirection;
   final String? Function(String?)? validator;
 
   const _AuthField({
     required this.label, required this.ctrl, required this.icon,
-    this.maxLen = 200, this.hint, this.keyboard, this.validator,
+    this.maxLen = 200, this.hint, this.keyboard, this.textDirection, this.validator,
   });
 
   @override
   Widget build(BuildContext context) => TextFormField(
-    controller: ctrl, textAlign: TextAlign.right, keyboardType: keyboard,
+    controller: ctrl,
+    textAlign: textDirection == TextDirection.ltr ? TextAlign.left : TextAlign.right,
+    textDirection: textDirection,
+    keyboardType: keyboard,
     maxLength: maxLen, inputFormatters: [LengthLimitingTextInputFormatter(maxLen)],
     style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
-    decoration: _fieldDeco(label: label, icon: icon, hint: hint).copyWith(counterText: ''),
+    decoration: _fieldDeco(label: label, icon: icon, hint: hint, context: context).copyWith(counterText: ''),
     validator: validator,
   );
 }
@@ -741,61 +1010,126 @@ class _PasswordField extends StatelessWidget {
     textAlign: TextAlign.left, textDirection: TextDirection.ltr,
     maxLength: 128, inputFormatters: [LengthLimitingTextInputFormatter(128)],
     style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
-    decoration: _fieldDeco(label: label, icon: Icons.lock_outline).copyWith(
+    decoration: _fieldDeco(label: label, icon: Icons.lock_outline, context: context).copyWith(
       counterText: '',
       suffixIcon: IconButton(
         icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            color: AppColors.textSecondary),
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
         onPressed: onToggle,
       ),
     ),
     validator: validator ?? (v) {
-      if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
-      if (v.length < 6) return '6 أحرف على الأقل';
+      if (v == null || v.isEmpty) return context.s.enterPassword;
+      if (v.length < 6) return context.s.passwordTooShort;
       return null;
     },
   );
 }
 
-class _GoogleButton extends StatelessWidget {
+// ── Social Login Row ──────────────────────────────────────────────────────────
+
+// Official SVG logos embedded as constants
+const _kFacebookSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99
+    4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669
+    4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491
+    0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24
+    18.062 24 12.073z"/>
+</svg>''';
+
+const _kGoogleSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26
+    1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23
+    1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43
+    8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09
+    14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+</svg>''';
+
+class _SocialLoginRow extends StatelessWidget {
   final bool loading;
-  final VoidCallback onPressed;
-  const _GoogleButton({required this.loading, required this.onPressed});
+  final bool fbLoading;
+  final VoidCallback onGoogle;
+  final VoidCallback onFacebook;
+  const _SocialLoginRow({
+    required this.loading,
+    required this.fbLoading,
+    required this.onGoogle,
+    required this.onFacebook,
+  });
 
   @override
-  Widget build(BuildContext context) => OutlinedButton(
-    onPressed: loading ? null : onPressed,
-    style: OutlinedButton.styleFrom(
-      side: const BorderSide(color: Color(0xFFDDDDDD)),
-      backgroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
-    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      SizedBox(width: 22, height: 22, child: CustomPaint(painter: _GoogleGPainter())),
-      const SizedBox(width: 10),
-      Text('المتابعة عبر Google',
-          style: GoogleFonts.ibmPlexSansArabic(
-              fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Text(
+        'المتابعة عبر',
+        style: GoogleFonts.ibmPlexSansArabic(
+          fontSize: 12,
+          letterSpacing: 0.3,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: 16),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _SocialBtn(
+            onTap: loading ? null : onFacebook,
+            child: fbLoading
+                ? const SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Color(0xFF1877F2)))
+                : SvgPicture.string(_kFacebookSvg, width: 24, height: 24),
+          ),
+          const SizedBox(width: 20),
+          _SocialBtn(
+            onTap: loading ? null : onGoogle,
+            child: SvgPicture.string(_kGoogleSvg, width: 24, height: 24),
+          ),
+        ],
+      ),
+    ]);
+  }
 }
 
-class _GoogleGPainter extends CustomPainter {
+class _SocialBtn extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  const _SocialBtn({required this.child, required this.onTap});
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = size.width / 2 - 1.5;
-    final colors = [const Color(0xFF4285F4), const Color(0xFF34A853), const Color(0xFFFBBC05), const Color(0xFFEA4335)];
-    for (int i = 0; i < 4; i++) {
-      canvas.drawArc(
-        Rect.fromCircle(center: c, radius: r),
-        i * 1.5708 - 1.5708, 1.5708, false,
-        Paint()..color = colors[i]..style = PaintingStyle.stroke..strokeWidth = 3,
-      );
-    }
+  Widget build(BuildContext context) {
+    const double size = 54;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnimatedOpacity(
+      opacity: onTap == null ? 0.4 : 1.0,
+      duration: const Duration(milliseconds: 200),
+      child: Material(
+        color: isDark ? const Color(0xFF252525) : Colors.white,
+        shape: CircleBorder(
+          side: BorderSide(
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE8E8E8),
+            width: 1.0,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          splashColor: Colors.black.withOpacity(0.04),
+          highlightColor: Colors.black.withOpacity(0.02),
+          child: SizedBox(
+            width: size, height: size,
+            child: Center(child: child),
+          ),
+        ),
+      ),
+    );
   }
-  @override bool shouldRepaint(_) => false;
 }
 
 
@@ -849,7 +1183,7 @@ class _Divider extends StatelessWidget {
   Widget build(BuildContext context) => Row(children: [
     const Expanded(child: Divider()),
     Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(label, style: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary, fontSize: 13))),
+        child: Text(label, style: GoogleFonts.ibmPlexSansArabic(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13))),
     const Expanded(child: Divider()),
   ]);
 }

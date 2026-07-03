@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1411929971",
+    "project_id": "iraq-pharma-guide",
+    "storage_bucket": "iraq-pharma-guide.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1411929971:android:a5b4a249f0c6ff3c449706",
+        "android_client_info": {
+          "package_name": "com.iraqpharma.iraq_pharma_guide"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1411929971-4gvbfippaoi1r1puva3gqrbjc2p8ptid.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPtqSY3qprNWHQHPeoDocz5f1lSQBQ2Bc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1411929971-4gvbfippaoi1r1puva3gqrbjc2p8ptid.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

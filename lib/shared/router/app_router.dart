@@ -25,6 +25,12 @@ import '../../features/profile/interactive_reference_screen.dart';
 import '../../features/profile/support_screen.dart';
 import '../../features/profile/suggestion_screen.dart';
 import '../../features/legal/legal_screen.dart';
+import '../../features/otc/otc_screen.dart';
+import '../../features/admin/admin_pin_screen.dart';
+import '../../features/auth/reset_password_screen.dart';
+import '../../features/admin/admin_statistics_screen.dart';
+import '../../features/admin/admin_drug_list_screen.dart';
+import '../../features/admin/admin_drug_edit_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
@@ -35,7 +41,8 @@ final appRouter = GoRouter(
     // Auth
     GoRoute(path: '/login',           builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/signup',          builder: (_, __) => const SignUpScreen()),
-    GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
+    GoRoute(path: '/forgot-password',  builder: (_, __) => const ForgotPasswordScreen()),
+    GoRoute(path: '/reset-password',   builder: (_, __) => const ResetPasswordScreen()),
     GoRoute(path: '/register-success',         builder: (_, __) => const RegistrationSuccessScreen()),
     GoRoute(path: '/notification-permission',  builder: (_, __) => const NotificationPermissionScreen()),
     GoRoute(
@@ -76,6 +83,7 @@ final appRouter = GoRouter(
     GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
     GoRoute(path: '/pricing-calc',  builder: (_, __) => const PricingCalculatorScreen()),
     GoRoute(path: '/substitution',  builder: (_, __) => const SubstitutionScreen()),
+    GoRoute(path: '/otc',           builder: (_, __) => const OtcScreen()),
     GoRoute(path: '/profile',        builder: (_, __) => const ProfileScreen()),
     GoRoute(path: '/edit-profile',          builder: (_, __) => const EditProfileScreen()),
     GoRoute(path: '/interactive-reference', builder: (_, __) => const InteractiveReferenceScreen()),
@@ -84,5 +92,20 @@ final appRouter = GoRouter(
     GoRoute(path: '/legal/privacy',    builder: (_, __) => const LegalScreen(type: LegalType.privacy)),
     GoRoute(path: '/legal/terms',      builder: (_, __) => const LegalScreen(type: LegalType.terms)),
     GoRoute(path: '/legal/disclaimer', builder: (_, __) => const LegalScreen(type: LegalType.disclaimer)),
+
+    // Admin (PIN-protected data management)
+    GoRoute(path: '/admin-pin',         builder: (_, __) => const AdminPinScreen()),
+    GoRoute(path: '/admin/statistics',  builder: (_, __) => const AdminStatisticsScreen()),
+    GoRoute(path: '/admin/drugs',   builder: (_, __) => const AdminDrugListScreen()),
+    GoRoute(
+      path: '/admin/drug/new',
+      builder: (_, __) => const AdminDrugEditScreen(),
+    ),
+    GoRoute(
+      path: '/admin/drug/:id',
+      builder: (_, state) => AdminDrugEditScreen(
+        drugId: int.parse(state.pathParameters['id']!),
+      ),
+    ),
   ],
 );

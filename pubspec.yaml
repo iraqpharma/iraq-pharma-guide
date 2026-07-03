@@ -1,7 +1,7 @@
 name: iraq_pharma_guide
 description: Iraq Pharma Guide - دليل الدواء العراقي
 publish_to: 'none'
-version: 2.1.0+1
+version: 2.2.0+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -43,17 +43,32 @@ dependencies:
   # Image caching
   cached_network_image: ^3.4.1
 
+  # Image picker
+  image_picker: ^1.1.2
+
   # Version check
   package_info_plus: ^8.1.3
 
   # Auth
   google_sign_in: ^6.2.2
+  app_links: ^6.0.0
 
   # Firebase / Push Notifications
   firebase_core: ^3.13.1
   firebase_messaging: ^15.2.5
   flutter_local_notifications: ^18.0.1
 
+  # Security
+  crypto: ^3.0.3
+
+  # Admin import/export
+  csv: ^6.0.0
+  file_picker: ^9.0.2
+  share_plus: ^10.1.4
+
+
+dependency_overrides:
+  flutter_plugin_android_lifecycle: 2.0.24
 
 dev_dependencies:
   flutter_test:
@@ -61,10 +76,18 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   build_runner: ^2.4.11
   riverpod_generator: ^2.4.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/logo_app.png.jpeg"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/database/
+    - assets/images/
 

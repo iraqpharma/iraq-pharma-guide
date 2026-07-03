@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/auth_service.dart';
+import '../../core/l10n/app_strings.dart';
 
 class RenalCalculatorScreen extends StatefulWidget {
   const RenalCalculatorScreen({super.key});
@@ -15,6 +17,12 @@ class _RenalCalculatorScreenState extends State<RenalCalculatorScreen> {
   bool _isFemale = false;
   double? _crcl;
 
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.incrementToolUsage();
+  }
+
   void _calculate() {
     final age = double.tryParse(_ageCtrl.text);
     final weight = double.tryParse(_weightCtrl.text);
@@ -22,7 +30,7 @@ class _RenalCalculatorScreenState extends State<RenalCalculatorScreen> {
 
     if (age == null || weight == null || creat == null || creat == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى إدخال جميع القيم بشكل صحيح')),
+        SnackBar(content: Text(context.s.enterAllValues)),
       );
       return;
     }
@@ -41,20 +49,16 @@ class _RenalCalculatorScreenState extends State<RenalCalculatorScreen> {
     return AppColors.errorRed;
   }
 
-  String get _crclStage {
+  String _crclStage(AppStrings s) {
     if (_crcl == null) return '';
-    if (_crcl! >= 90) return 'طبيعي';
-    if (_crcl! >= 60) return 'قصور خفيف (G2)';
-    if (_crcl! >= 30) return 'قصور متوسط (G3)';
-    if (_crcl! >= 15) return 'قصور شديد (G4)';
-    return 'فشل كلوي (G5)';
+    return s.crclStage(_crcl!);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('حاسبة CrCl (Cockcroft-Gault)'),
+        title: Text(context.s.crclTitle),
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
       ),
@@ -63,36 +67,36 @@ class _RenalCalculatorScreenState extends State<RenalCalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('بيانات المريض',
+            Text(context.s.patientData,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
                     color: AppColors.primaryBlue)),
             const SizedBox(height: 16),
-            _buildField(_ageCtrl, 'العمر (سنة)', '45'),
+            _buildField(_ageCtrl, context.s.ageYears, '45'),
             const SizedBox(height: 12),
-            _buildField(_weightCtrl, 'الوزن (كغ)', '70'),
+            _buildField(_weightCtrl, context.s.weightKg, '70'),
             const SizedBox(height: 12),
             _buildField(_creatCtrl, 'الكرياتينين (mg/dL)', '1.2',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true)),
             const SizedBox(height: 16),
             Row(
               children: [
-                const Text('الجنس: ', style: TextStyle(fontSize: 15)),
+                Text(context.s.gender, style: const TextStyle(fontSize: 15)),
                 ChoiceChip(
-                  label: const Text('ذكر'),
+                  label: Text(context.s.male),
                   selected: !_isFemale,
                   onSelected: (_) => setState(() => _isFemale = false),
                   selectedColor: AppColors.primaryBlue,
                   labelStyle: TextStyle(
-                      color: !_isFemale ? Colors.white : AppColors.textPrimary),
+                      color: !_isFemale ? Colors.white : Theme.of(context).colorScheme.onSurface),
                 ),
                 const SizedBox(width: 10),
                 ChoiceChip(
-                  label: const Text('أنثى'),
+                  label: Text(context.s.female),
                   selected: _isFemale,
                   onSelected: (_) => setState(() => _isFemale = true),
                   selectedColor: AppColors.primaryBlue,
                   labelStyle: TextStyle(
-                      color: _isFemale ? Colors.white : AppColors.textPrimary),
+                      color: _isFemale ? Colors.white : Theme.of(context).colorScheme.onSurface),
                 ),
               ],
             ),
@@ -104,7 +108,7 @@ class _RenalCalculatorScreenState extends State<RenalCalculatorScreen> {
                 style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
                     padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: const Text('احسب', style: TextStyle(fontSize: 16)),
+                child: Text(context.s.calculate, style: const TextStyle(fontSize: 16)),
               ),
             ),
             if (_crcl != null) ...[
@@ -125,7 +129,7 @@ class _RenalCalculatorScreenState extends State<RenalCalculatorScreen> {
                             fontWeight: FontWeight.bold,
                             color: _crclColor)),
                     const SizedBox(height: 4),
-                    Text(_crclStage,
+                    Text(_crclStage(context.s),
                         style: TextStyle(fontSize: 16, color: _crclColor)),
                   ],
                 ),
@@ -168,18 +172,13 @@ class _RenalGuidanceTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const rows = [
-      ['≥ 90', 'طبيعي', 'لا تعديل'],
-      ['60–89', 'G2 خفيف', 'مراقبة فقط'],
-      ['30–59', 'G3 متوسط', 'تعديل الجرعة'],
-      ['15–29', 'G4 شديد', 'تقليل كبير'],
-      ['< 15', 'G5 فشل كلوي', 'يُمنع أو الغسيل'],
-    ];
+    final rows = context.s.renalRows;
+    final headers = context.s.renalTableHeaders;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('دليل تعديل الجرعات',
-            style: TextStyle(fontWeight: FontWeight.bold,
+        Text(context.s.dosageGuide,
+            style: const TextStyle(fontWeight: FontWeight.bold,
                 fontSize: 14, color: AppColors.primaryBlue)),
         const SizedBox(height: 8),
         Table(
@@ -192,12 +191,12 @@ class _RenalGuidanceTable extends StatelessWidget {
             2: FlexColumnWidth(1.8),
           },
           children: [
-            const TableRow(
-              decoration: BoxDecoration(color: AppColors.lightBlue),
+            TableRow(
+              decoration: const BoxDecoration(color: AppColors.lightBlue),
               children: [
-                _Cell('CrCl', bold: true),
-                _Cell('المرحلة', bold: true),
-                _Cell('التوجيه', bold: true),
+                _Cell(headers[0], bold: true),
+                _Cell(headers[1], bold: true),
+                _Cell(headers[2], bold: true),
               ],
             ),
             for (final r in rows)

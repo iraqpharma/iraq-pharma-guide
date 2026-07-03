@@ -9,7 +9,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white,
+      // No hardcoded color — inherits drawerTheme.backgroundColor from AppTheme
       child: Column(
         children: [
           _DrawerHeader(),
@@ -98,7 +98,7 @@ class _SectionLabel extends StatelessWidget {
       style: GoogleFonts.ibmPlexSansArabic(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.textSecondary,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         letterSpacing: 0.8,
       ),
     );
@@ -124,15 +124,19 @@ class _DrawerHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
+          Image.asset(
+            'assets/images/logo_white.png',
             width: 52,
             height: 52,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
-              borderRadius: BorderRadius.circular(14),
+            errorBuilder: (_, __, ___) => Container(
+              width: 52, height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.local_pharmacy_outlined,
+                  color: Colors.white, size: 28),
             ),
-            child: const Icon(Icons.local_pharmacy_outlined,
-                color: Colors.white, size: 28),
           ),
           const SizedBox(width: 14),
           Column(
@@ -185,10 +189,10 @@ class _DrawerTile extends StatelessWidget {
       title: Text(title,
           style: GoogleFonts.ibmPlexSansArabic(
               fontSize: 15, fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary)),
+              color: Theme.of(context).colorScheme.onSurface)),
       subtitle: Text(subtitle,
           style: GoogleFonts.ibmPlexSansArabic(
-              fontSize: 12, color: AppColors.textSecondary)),
+              fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -205,7 +209,7 @@ class _DrawerFooter extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, bottom + 16),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey.shade100)),
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Column(
         children: [
@@ -215,9 +219,9 @@ class _DrawerFooter extends StatelessWidget {
             spacing: 4,
             children: [
               _legalLink(context, 'سياسة الخصوصية', '/legal/privacy'),
-              Text('·', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+              Text('·', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
               _legalLink(context, 'شروط الاستخدام', '/legal/terms'),
-              Text('·', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+              Text('·', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
               _legalLink(context, 'إخلاء المسؤولية', '/legal/disclaimer'),
             ],
           ),
@@ -226,7 +230,7 @@ class _DrawerFooter extends StatelessWidget {
           Text(
             'Iraq Pharma Guide ® 2026',
             style: GoogleFonts.ibmPlexSansArabic(
-                color: AppColors.textSecondary, fontSize: 11),
+                color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
             textAlign: TextAlign.center,
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../../../providers/drug_provider.dart';
 import '../../../providers/recent_searches_provider.dart';
 import '../../barcode/barcode_scanner_screen.dart';
@@ -150,11 +151,11 @@ class _PharmaSearchBarState extends ConsumerState<PharmaSearchBar> {
       _openScanner();
     } else if (result.isPermanentlyDenied && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('يرجى السماح بالكاميرا من إعدادات الجهاز',
+        content: Text(context.s.allowCameraSettings,
             style: GoogleFonts.cairo()),
         backgroundColor: AppColors.errorRed,
         action: SnackBarAction(
-            label: 'الإعدادات',
+            label: context.s.settingsTitle,
             textColor: Colors.white,
             onPressed: openAppSettings),
       ));
@@ -177,7 +178,7 @@ class _PharmaSearchBarState extends ConsumerState<PharmaSearchBar> {
       child: Container(
         height: _barHeight,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -207,7 +208,7 @@ class _PharmaSearchBarState extends ConsumerState<PharmaSearchBar> {
                   }
                 },
                 decoration: InputDecoration(
-                  hintText: 'ابحث عن دواء... (عربي أو إنجليزي)',
+                  hintText: context.s.searchDrugHint,
                   hintStyle: GoogleFonts.cairo(
                       color: AppColors.textSecondary, fontSize: 13.5),
                   border:        InputBorder.none,
@@ -274,7 +275,7 @@ class _ScannerChip extends StatelessWidget {
               const Icon(Icons.qr_code_scanner_rounded,
                   color: AppColors.primary, size: 19),
               const SizedBox(width: 5),
-              Text('مسح',
+              Text(context.s.scan_,
                   style: GoogleFonts.cairo(
                       color: AppColors.primary,
                       fontSize: 11,
@@ -315,7 +316,7 @@ class _SearchDropdown extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -373,7 +374,7 @@ class _RecentList extends StatelessWidget {
               const Icon(Icons.history_rounded,
                   size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 6),
-              Text('عمليات البحث الأخيرة',
+              Text(context.s.recentSearches,
                   style: GoogleFonts.cairo(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -381,7 +382,7 @@ class _RecentList extends StatelessWidget {
               const Spacer(),
               GestureDetector(
                 onTap: onClear,
-                child: Text('مسح الكل',
+                child: Text(context.s.clearAll,
                     style: GoogleFonts.cairo(
                         fontSize: 11,
                         color: AppColors.primary,
@@ -427,7 +428,7 @@ class _RecentTile extends StatelessWidget {
             Expanded(
               child: Text(item,
                   style: GoogleFonts.cairo(
-                      fontSize: 13.5, color: AppColors.textPrimary)),
+                      fontSize: 13.5, color: Theme.of(context).colorScheme.onSurface)),
             ),
             GestureDetector(
               onTap: () => onRemove(item),
@@ -506,13 +507,6 @@ class _SuggestionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            Icon(
-              item.isGeneric
-                  ? Icons.medication_outlined
-                  : Icons.local_pharmacy_outlined,
-              size: 17,
-              color: item.isGeneric ? AppColors.primary : const Color(0xFF7C3AED),
-            ),
             const SizedBox(width: 10),
             Expanded(child: _HighlightedText(text: item.display, query: query)),
             const SizedBox(width: 8),
@@ -527,7 +521,7 @@ class _SuggestionTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                item.isGeneric ? 'جنيس' : 'تجاري',
+                item.isGeneric ? context.s.generic_ : context.s.commercial_,
                 style: GoogleFonts.cairo(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -560,14 +554,14 @@ class _HighlightedText extends StatelessWidget {
     final idx = lower.indexOf(query.toLowerCase());
     if (idx < 0) {
       return Text(text,
-          style: GoogleFonts.inter(fontSize: 13.5, color: AppColors.textPrimary));
+          style: GoogleFonts.inter(fontSize: 13.5, color: Theme.of(context).colorScheme.onSurface));
     }
     return Text.rich(TextSpan(children: [
       if (idx > 0)
         TextSpan(
             text: text.substring(0, idx),
             style: GoogleFonts.inter(
-                fontSize: 13.5, color: AppColors.textSecondary)),
+                fontSize: 13.5, color: Theme.of(context).colorScheme.onSurfaceVariant)),
       TextSpan(
           text: text.substring(idx, idx + query.length),
           style: GoogleFonts.inter(
@@ -578,7 +572,7 @@ class _HighlightedText extends StatelessWidget {
         TextSpan(
             text: text.substring(idx + query.length),
             style: GoogleFonts.inter(
-                fontSize: 13.5, color: AppColors.textPrimary)),
+                fontSize: 13.5, color: Theme.of(context).colorScheme.onSurface)),
     ]));
   }
 }
@@ -594,7 +588,6 @@ class _CameraPermissionDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.white,
       elevation: 0,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
@@ -612,18 +605,18 @@ class _CameraPermissionDialog extends StatelessWidget {
                   color: AppColors.primary, size: 44),
             ),
             const SizedBox(height: 20),
-            Text('إذن الكاميرا',
+            Text(context.s.cameraPermission,
                 style: GoogleFonts.cairo(
                     fontSize: 19,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 10),
             Text(
-              'نحتاج إلى إذن استخدام الكاميرا لمسح باركود الدواء بسرعة وبدقة.',
+              context.s.cameraPermissionReason,
               textAlign: TextAlign.center,
               style: GoogleFonts.cairo(
                   fontSize: 13.5,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.65),
             ),
             const SizedBox(height: 28),
@@ -639,7 +632,7 @@ class _CameraPermissionDialog extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('إلغاء',
+                    child: Text(context.s.cancel,
                         style: GoogleFonts.cairo(
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
@@ -657,7 +650,7 @@ class _CameraPermissionDialog extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('السماح',
+                    child: Text(context.s.allow_,
                         style: GoogleFonts.cairo(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

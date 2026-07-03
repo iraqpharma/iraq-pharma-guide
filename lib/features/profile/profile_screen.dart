@@ -1,24 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/locale_provider.dart';
+import '../../providers/theme_provider.dart';
+import '../../services/admin_access_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/avatar_service.dart';
 import '../../services/session_service.dart';
+import '../../shared/widgets/app_drawer.dart';
+import '../../shared/widgets/compact_app_header.dart';
+import '../../core/l10n/app_strings.dart';
 // ignore: unused_import
 import 'interactive_reference_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen>
+class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   Map<String, dynamic>? _profile;
-  bool _loading  = true;
-  bool _darkMode = false;
+  bool    _loading         = true;
+  bool    _uploadingAvatar = false;
+  String? _avatarUrl;
+  bool    _isSuperAdmin    = false;
 
   late final AnimationController _avatarCtrl;
   late final Animation<double>   _avatarScale;
@@ -29,13 +40,33 @@ class _ProfileScreenState extends State<ProfileScreen>
     _avatarCtrl  = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _avatarScale = CurvedAnimation(parent: _avatarCtrl, curve: Curves.elasticOut);
     _loadProfile();
+    _loadAdminAccess();
   }
 
   Future<void> _loadProfile() async {
     final data = await AuthService.instance.getProfile();
     if (!mounted) return;
-    setState(() { _profile = data; _loading = false; });
+    setState(() {
+      _profile   = data;
+      _loading   = false;
+      _avatarUrl = data?['avatar_url'] as String?;
+    });
     _avatarCtrl.forward();
+  }
+
+  Future<void> _loadAdminAccess() async {
+    final access = await AdminAccessService.instance.hasAccess();
+    if (mounted) setState(() => _isSuperAdmin = access);
+  }
+
+  Future<void> _pickAvatar() async {
+    setState(() => _uploadingAvatar = true);
+    final url = await AvatarService.instance.pickAndUpload();
+    if (!mounted) return;
+    setState(() {
+      _uploadingAvatar = false;
+      if (url != null) _avatarUrl = url;
+    });
   }
 
   @override
@@ -49,8 +80,52 @@ class _ProfileScreenState extends State<ProfileScreen>
   String get _fullName => _profile?['full_name'] as String? ?? '—';
   String get _username => _profile?['username']  as String? ?? '—';
   String get _role     => _profile?['role']       as String? ?? '—';
+
   int get _drugSearches   => (_profile?['drug_search_count']  as int?) ?? 0;
   int get _toolUsage      => (_profile?['tool_usage_count']   as int?) ?? 0;
+
+  void _showLangDialog(BuildContext ctx, WidgetRef ref, bool isArabic) {
+    final cs = Theme.of(ctx).colorScheme;
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: cs.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: cs.outline,
+                    borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text(context.s.langDialogTitle,
+                style: GoogleFonts.ibmPlexSansArabic(
+                    fontSize: 16, fontWeight: FontWeight.bold,
+                    color: cs.onSurface)),
+            const SizedBox(height: 12),
+            _LangOption(
+              label: 'العربية', sublabel: 'Arabic', flag: '🇮🇶',
+              selected: isArabic,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('ar'));
+                Navigator.pop(_);
+              },
+            ),
+            _LangOption(
+              label: 'English', sublabel: 'الإنجليزية', flag: '🇬🇧',
+              selected: !isArabic,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('en'));
+                Navigator.pop(_);
+              },
+            ),
+            const SizedBox(height: 8),
+          ]),
+        ),
+      ),
+    );
+  }
 
   String _initials(String name) {
     final parts = name.trim().split(' ').where((s) => s.isNotEmpty).toList();
@@ -59,13 +134,13 @@ class _ProfileScreenState extends State<ProfileScreen>
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  // Adds a thin space between each character of the name for display
   String _spacedName(String name) {
     final parts = name.trim().split(RegExp(r'\s+'));
     return parts.join('  ');
   }
 
   Future<void> _confirmLogout() async {
+    final cs = Theme.of(context).colorScheme;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -73,16 +148,16 @@ class _ProfileScreenState extends State<ProfileScreen>
         title: Row(children: [
           const Icon(Icons.logout_rounded, color: Colors.red, size: 22),
           const SizedBox(width: 10),
-          Text('تسجيل الخروج',
+          Text(context.s.signOut,
               style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.bold, fontSize: 17)),
         ]),
-        content: Text('هل أنت متأكد من تسجيل الخروج؟',
-            style: GoogleFonts.ibmPlexSansArabic(fontSize: 14, color: AppColors.textSecondary)),
+        content: Text(context.s.signOutConfirm,
+            style: GoogleFonts.ibmPlexSansArabic(fontSize: 14, color: cs.onSurfaceVariant)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('إلغاء',
-                style: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary)),
+            child: Text(context.s.cancel,
+                style: GoogleFonts.ibmPlexSansArabic(color: cs.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -91,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: Text('خروج', style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600)),
+            child: Text(context.s.signOut, style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -105,20 +180,25 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    // ── watch theme so the entire screen rebuilds on toggle ──
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    final cs     = Theme.of(context).colorScheme;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF0F4F8),
-        body: _loading ? _buildLoader() : _buildBody(),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        drawer: const AppDrawer(),
+        body: _loading ? _buildLoader(cs) : _buildBody(cs, isDark),
       ),
     );
   }
 
-  Widget _buildLoader() => const Center(
-    child: CircularProgressIndicator(color: AppColors.primary),
+  Widget _buildLoader(ColorScheme cs) => Center(
+    child: CircularProgressIndicator(color: cs.primary),
   );
 
-  Widget _buildBody() {
+  Widget _buildBody(ColorScheme cs, bool isDark) {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -129,88 +209,106 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                _buildUserCard(),
+                _buildUserCard(cs),
                 const SizedBox(height: 16),
-                _buildStatsRow(),
+                _buildStatsRow(cs),
                 const SizedBox(height: 16),
-                _buildCard(children: [
-                  _buildNavTile(
+                _buildCard(cs, children: [
+                  _buildNavTile(cs,
                     icon: Icons.manage_accounts_outlined,
                     color: AppColors.primary,
-                    title: 'تعديل البيانات الشخصية',
+                    title: context.s.editProfile,
                     onTap: () async {
                       await context.push('/edit-profile');
-                      _loadProfile(); // refresh after edit
+                      _loadProfile();
                     },
                   ),
-                  _divider(),
-                  _buildNavTile(
+                  _divider(cs),
+                  _buildNavTile(cs,
                     icon: Icons.menu_book_outlined,
                     color: const Color(0xFF5C6BC0),
-                    title: 'المرجع التفاعلي',
+                    title: context.s.interactiveRef,
                     onTap: () => context.push('/interactive-reference'),
                   ),
                 ]),
                 const SizedBox(height: 12),
-                _buildCard(children: [
-                  _buildNavTile(
-                    icon: Icons.settings_outlined,
-                    color: const Color(0xFF546E7A),
-                    title: 'الإعدادات',
-                    onTap: () => context.push('/settings'),
-                  ),
-                  _divider(),
-                  _buildNavTile(
-                    icon: Icons.language_rounded,
-                    color: const Color(0xFF00897B),
-                    title: 'لغة التطبيق',
-                    trailing: _LangBadge(),
-                    onTap: () {},
-                  ),
-                  _divider(),
-                  _buildSwitchTile(
-                    icon: Icons.dark_mode_outlined,
-                    color: const Color(0xFF5E35B1),
-                    title: 'المظهر الداكي',
-                    value: _darkMode,
-                    onChanged: (v) => setState(() => _darkMode = v),
-                  ),
+                _buildCard(cs, children: [
+                  Consumer(builder: (ctx, ref, _) {
+                    final locale   = ref.watch(localeProvider);
+                    final isArabic = locale.languageCode == 'ar';
+                    return _buildNavTile(cs,
+                      icon: Icons.language_rounded,
+                      color: const Color(0xFF00897B),
+                      title: ctx.s.appLanguage,
+                      trailing: _LangBadge(isArabic: isArabic),
+                      onTap: () => _showLangDialog(ctx, ref, isArabic),
+                    );
+                  }),
+                  _divider(cs),
+                  // ── Dark mode toggle ─────────────────────────────────
+                  _buildThemeToggleRow(cs, isDark),
                 ]),
                 const SizedBox(height: 12),
-                // Support & Suggestions card
-                _buildCard(children: [
-                  _buildNavTile(
+                _buildCard(cs, children: [
+                  _buildNavTile(cs,
                     icon: Icons.help_outline_rounded,
                     color: const Color(0xFF00897B),
-                    title: 'قسم الدعم',
+                    title: context.s.support,
                     onTap: () => context.push('/support'),
                   ),
-                  _divider(),
-                  _buildNavTile(
+                  _divider(cs),
+                  _buildNavTile(cs,
                     icon: Icons.lightbulb_outline_rounded,
                     color: const Color(0xFFF57C00),
-                    title: 'إرسال اقتراح',
+                    title: context.s.sendSuggestion,
                     onTap: () => context.push('/suggestion'),
                   ),
                 ]),
-                const SizedBox(height: 20),
-                // Legal links row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _legalLink('سياسة الخصوصية', '/legal/privacy'),
-                    Text(' · ', style: GoogleFonts.ibmPlexSansArabic(
-                        color: AppColors.textSecondary, fontSize: 13)),
-                    _legalLink('شروط الاستخدام', '/legal/terms'),
-                    Text(' · ', style: GoogleFonts.ibmPlexSansArabic(
-                        color: AppColors.textSecondary, fontSize: 13)),
-                    _legalLink('إخلاء المسؤولية', '/legal/disclaimer'),
-                  ],
-                ),
+                const SizedBox(height: 12),
+                _buildCard(cs, children: [
+                  _buildNavTile(cs,
+                    icon: Icons.shield_outlined,
+                    color: const Color(0xFF1565C0),
+                    title: context.s.privacyPolicy,
+                    onTap: () => context.push('/legal/privacy'),
+                  ),
+                  _divider(cs),
+                  _buildNavTile(cs,
+                    icon: Icons.gavel_rounded,
+                    color: const Color(0xFF6A1B9A),
+                    title: context.s.termsOfUse,
+                    onTap: () => context.push('/legal/terms'),
+                  ),
+                  _divider(cs),
+                  _buildNavTile(cs,
+                    icon: Icons.warning_amber_rounded,
+                    color: const Color(0xFFE65100),
+                    title: context.s.disclaimer,
+                    onTap: () => context.push('/legal/disclaimer'),
+                  ),
+                ]),
+                if (_isSuperAdmin) ...[
+                  const SizedBox(height: 12),
+                  _buildCard(cs, children: [
+                    _buildNavTile(cs,
+                      icon: Icons.bar_chart_rounded,
+                      color: const Color(0xFF6366F1),
+                      title: 'إحصائيات التطبيق',
+                      onTap: () => context.push('/admin/statistics'),
+                    ),
+                    _divider(cs),
+                    _buildNavTile(cs,
+                      icon: Icons.admin_panel_settings_outlined,
+                      color: const Color(0xFF455A64),
+                      title: 'إدارة قاعدة البيانات',
+                      onTap: () => context.push('/admin-pin'),
+                    ),
+                  ]),
+                ],
                 const SizedBox(height: 16),
-                _buildLogoutCard(),
-                const SizedBox(height: 28),
-                _buildFooter(),
+                _buildLogoutCard(cs),
+                const SizedBox(height: 20),
+                _buildFooter(cs),
               ],
             ),
           ),
@@ -219,71 +317,24 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // ── App Header (gradient with logo) ──────────────────────────────────────
-  SliverAppBar _buildAppHeader() {
-    return SliverAppBar(
-      pinned: true,
-      elevation: 0,
-      backgroundColor: AppColors.darkNavy,
-      surfaceTintColor: Colors.transparent,
-      automaticallyImplyLeading: false,
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.darkNavy, AppColors.primary],
-            begin: Alignment.centerRight,
-            end: Alignment.centerLeft,
-          ),
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            height: kToolbarHeight,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 38, height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.local_pharmacy_outlined, color: Colors.white, size: 22),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Iraq Pharma Guide',
-                        style: GoogleFonts.ibmPlexSansArabic(
-                            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text('دليل الصيدلة العراقي',
-                        style: GoogleFonts.ibmPlexSansArabic(
-                            fontSize: 11, color: Colors.white.withOpacity(0.75))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // ── App Header ────────────────────────────────────────────────────────────
+  Widget _buildAppHeader() => SliverToBoxAdapter(
+    child: Builder(builder: (ctx) => CompactAppHeader(title: ctx.s.myAccount)),
+  );
 
   // ── User card ─────────────────────────────────────────────────────────────
-  Widget _buildUserCard() {
+  Widget _buildUserCard(ColorScheme cs) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 6)),
+          BoxShadow(color: cs.primary.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 6)),
         ],
       ),
       child: Column(
         children: [
-          // Gradient strip
           Container(
             height: 72,
             decoration: BoxDecoration(
@@ -300,47 +351,60 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 ScaleTransition(
                   scale: _avatarScale,
-                  child: _Avatar(initials: _initials(_fullName)),
+                  child: GestureDetector(
+                    onTap: _uploadingAvatar ? null : _pickAvatar,
+                    child: Stack(
+                      children: [
+                        _Avatar(initials: _initials(_fullName), avatarUrl: _avatarUrl, cs: cs),
+                        Positioned(
+                          bottom: 0, right: 0,
+                          child: Container(
+                            width: 30, height: 30,
+                            decoration: BoxDecoration(
+                              color: _uploadingAvatar ? Colors.grey : AppColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: cs.surface, width: 2),
+                            ),
+                            child: _uploadingAvatar
+                                ? const Padding(
+                                    padding: EdgeInsets.all(6),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 15),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 10),
-                // Name — large, spaced
                 Text(
                   _spacedName(_fullName),
                   style: GoogleFonts.ibmPlexSansArabic(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                    letterSpacing: 0.5,
-                    wordSpacing: 6,
+                    fontSize: 22, fontWeight: FontWeight.bold,
+                    color: cs.onSurface, letterSpacing: 0.5, wordSpacing: 6,
                   ),
                 ),
                 const SizedBox(height: 6),
-                // Username chip
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.alternate_email_rounded, size: 13, color: AppColors.primary),
-                      const SizedBox(width: 4),
-                      Text(_username,
-                          style: GoogleFonts.ibmPlexSansArabic(
-                              fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.alternate_email_rounded, size: 13, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Text(_username,
+                        style: GoogleFonts.ibmPlexSansArabic(
+                            fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500)),
+                  ]),
                 ),
                 const SizedBox(height: 8),
-                // Role badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                    color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
                   child: Text(_role,
                       style: GoogleFonts.ibmPlexSansArabic(
                           fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
@@ -354,30 +418,25 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // ── Stats row (real data) ─────────────────────────────────────────────────
-  Widget _buildStatsRow() {
+  // ── Stats row ─────────────────────────────────────────────────────────────
+  Widget _buildStatsRow(ColorScheme cs) {
     return Row(
       children: [
         Expanded(child: _StatCard(
-          icon: Icons.search_rounded,
-          color: AppColors.primary,
-          value: _formatStat(_drugSearches),
-          label: 'بحث دواء',
-        )),
+          icon: Icons.search_rounded, color: AppColors.primary,
+          value: _formatStat(_drugSearches), label: context.s.drugSearchStat, cs: cs)),
         const SizedBox(width: 12),
         Expanded(child: _StatCard(
-          icon: Icons.build_outlined,
-          color: const Color(0xFF5C6BC0),
-          value: _formatStat(_toolUsage),
-          label: 'استخدام الأدوات',
-        )),
+          icon: Icons.build_outlined, color: const Color(0xFF5C6BC0),
+          value: _formatStat(_toolUsage), label: context.s.toolUsageStat, cs: cs)),
       ],
     );
   }
 
-  Widget _buildCard({required List<Widget> children}) => Container(
+  // ── Generic card container ────────────────────────────────────────────────
+  Widget _buildCard(ColorScheme cs, {required List<Widget> children}) => Container(
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: cs.surface,
       borderRadius: BorderRadius.circular(18),
       boxShadow: [
         BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4)),
@@ -386,12 +445,13 @@ class _ProfileScreenState extends State<ProfileScreen>
     child: Column(children: children),
   );
 
-  Widget _divider() => Padding(
+  Widget _divider(ColorScheme cs) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Divider(height: 1, color: Colors.grey.shade100),
+    child: Divider(height: 1, color: cs.outline.withOpacity(0.5)),
   );
 
-  Widget _buildNavTile({
+  // ── Navigation tile ───────────────────────────────────────────────────────
+  Widget _buildNavTile(ColorScheme cs, {
     required IconData icon, required Color color,
     required String title, Widget? trailing,
     required VoidCallback onTap,
@@ -404,12 +464,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(children: [
-            const Icon(Icons.chevron_left_rounded, size: 20, color: Color(0xFFCCCCCC)),
+            Icon(Icons.chevron_left_rounded, size: 20, color: cs.outline),
+            if (trailing != null) ...[const SizedBox(width: 8), trailing],
             const Spacer(),
-            if (trailing != null) ...[trailing, const SizedBox(width: 10)],
             Text(title,
                 style: GoogleFonts.ibmPlexSansArabic(
-                    fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                    fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface)),
             const SizedBox(width: 14),
             _IconBadge(icon: icon, color: color),
           ]),
@@ -418,38 +478,71 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildSwitchTile({
-    required IconData icon, required Color color,
-    required String title, required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
+  // ── Sun / Moon animated theme toggle ─────────────────────────────────────
+  Widget _buildThemeToggleRow(ColorScheme cs, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
-        Switch(value: value, onChanged: onChanged, activeColor: AppColors.primary),
+        // Animated toggle pill
+        GestureDetector(
+          onTap: () => ref.read(themeProvider.notifier).toggle(),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+            width: 60,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AppColors.accent : Colors.amber.shade400,
+                width: 1.5,
+              ),
+            ),
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOut,
+              alignment: isDark ? Alignment.centerLeft : Alignment.centerRight,
+              child: Container(
+                margin: const EdgeInsets.all(3),
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.accent : Colors.amber.shade400,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isDark ? AppColors.accent : Colors.amber).withOpacity(0.4),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isDark ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+            ),
+          ),
+        ),
         const Spacer(),
-        Text(title,
-            style: GoogleFonts.ibmPlexSansArabic(
-                fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+        Text(
+          context.s.darkMode,
+          style: GoogleFonts.ibmPlexSansArabic(
+              fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface),
+        ),
         const SizedBox(width: 14),
-        _IconBadge(icon: icon, color: color),
+        _IconBadge(
+          icon: isDark ? Icons.nightlight_round : Icons.wb_sunny_outlined,
+          color: isDark ? AppColors.accent : const Color(0xFF5E35B1),
+        ),
       ]),
     );
   }
 
-  Widget _legalLink(String label, String route) => GestureDetector(
-    onTap: () => context.push(route),
-    child: Text(label,
-      style: GoogleFonts.ibmPlexSansArabic(
-        fontSize: 13,
-        color: AppColors.textSecondary,
-        decoration: TextDecoration.underline,
-        decorationColor: AppColors.textSecondary,
-      ),
-    ),
-  );
-
-  Widget _buildLogoutCard() => Material(
+  // ── Logout card ───────────────────────────────────────────────────────────
+  Widget _buildLogoutCard(ColorScheme cs) => Material(
     color: Colors.transparent,
     child: InkWell(
       onTap: _confirmLogout,
@@ -457,9 +550,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.red.shade100),
+          border: Border.all(color: Colors.red.shade200.withOpacity(0.6)),
           boxShadow: [
             BoxShadow(color: Colors.red.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4)),
           ],
@@ -473,7 +566,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Icon(Icons.logout_rounded, color: Colors.red.shade400, size: 20),
             ),
             const SizedBox(width: 12),
-            Text('تسجيل الخروج',
+            Text(context.s.signOut,
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 15, fontWeight: FontWeight.w600, color: Colors.red.shade400)),
           ],
@@ -482,25 +575,29 @@ class _ProfileScreenState extends State<ProfileScreen>
     ),
   );
 
-  Widget _buildFooter() => Column(children: [
-    Text('IRAQ PHARMA GUIDE',
+  // ── Footer ────────────────────────────────────────────────────────────────
+  Widget _buildFooter(ColorScheme cs) => Column(children: [
+    Text('Iraq Pharma Guide ® 2026',
         style: GoogleFonts.ibmPlexSansArabic(
-            fontSize: 10, letterSpacing: 2.5, fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary.withOpacity(0.5))),
-    const SizedBox(height: 2),
-    Text('v2.1.0',
+            fontSize: 12, fontWeight: FontWeight.w600,
+            color: cs.onSurfaceVariant.withOpacity(0.7))),
+    const SizedBox(height: 3),
+    Text('${context.s.version} v2.2.0',
         style: GoogleFonts.ibmPlexSansArabic(
-            fontSize: 10, color: AppColors.textSecondary.withOpacity(0.4))),
+            fontSize: 11, color: cs.onSurfaceVariant.withOpacity(0.45))),
   ]);
 }
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 class _Avatar extends StatelessWidget {
   final String initials;
-  const _Avatar({required this.initials});
+  final String? avatarUrl;
+  final ColorScheme cs;
+  const _Avatar({required this.initials, this.avatarUrl, required this.cs});
+
   @override
-  Widget build(BuildContext context) => Stack(children: [
-    Container(
+  Widget build(BuildContext context) {
+    return Container(
       width: 96, height: 96,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -508,38 +605,41 @@ class _Avatar extends StatelessWidget {
           colors: [AppColors.darkNavy, AppColors.primary],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.white, width: 4),
+        border: Border.all(color: cs.surface, width: 4),
         boxShadow: [
           BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 6)),
         ],
       ),
-      child: Center(child: Text(initials,
-          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
-    ),
-    Positioned(
-      bottom: 2, left: 2,
-      child: Container(
-        width: 30, height: 30,
-        decoration: BoxDecoration(
-          color: AppColors.primary, shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-        ),
-        child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 15),
+      child: ClipOval(
+        child: avatarUrl != null && avatarUrl!.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: avatarUrl!,
+                fit: BoxFit.cover, width: 96, height: 96,
+                placeholder: (_, __) => const Center(
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+                errorWidget: (_, __, ___) => Center(child: Text(initials,
+                    style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
+              )
+            : Center(child: Text(initials,
+                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
       ),
-    ),
-  ]);
+    );
+  }
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 class _StatCard extends StatelessWidget {
   final IconData icon; final Color color;
   final String value; final String label;
-  const _StatCard({required this.icon, required this.color, required this.value, required this.label});
+  final ColorScheme cs;
+  const _StatCard({required this.icon, required this.color,
+      required this.value, required this.label, required this.cs});
+
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
     decoration: BoxDecoration(
-      color: Colors.white, borderRadius: BorderRadius.circular(18),
+      color: cs.surface, borderRadius: BorderRadius.circular(18),
       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
     ),
     child: Row(children: [
@@ -551,9 +651,9 @@ class _StatCard extends StatelessWidget {
       const SizedBox(width: 12),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(value, style: GoogleFonts.ibmPlexSansArabic(
-            fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            fontSize: 20, fontWeight: FontWeight.bold, color: cs.onSurface)),
         Text(label, style: GoogleFonts.ibmPlexSansArabic(
-            fontSize: 12, color: AppColors.textSecondary)),
+            fontSize: 12, color: cs.onSurfaceVariant)),
       ]),
     ]),
   );
@@ -563,6 +663,7 @@ class _StatCard extends StatelessWidget {
 class _IconBadge extends StatelessWidget {
   final IconData icon; final Color color;
   const _IconBadge({required this.icon, required this.color});
+
   @override
   Widget build(BuildContext context) => Container(
     width: 38, height: 38,
@@ -573,11 +674,70 @@ class _IconBadge extends StatelessWidget {
 
 // ── Language badge ────────────────────────────────────────────────────────────
 class _LangBadge extends StatelessWidget {
+  final bool isArabic;
+  const _LangBadge({required this.isArabic});
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(20)),
-    child: Text('عربية / English',
-        style: GoogleFonts.ibmPlexSansArabic(fontSize: 11, color: const Color(0xFF2E7D32), fontWeight: FontWeight.w500)),
-  );
+  Widget build(BuildContext context) {
+    final label = isArabic ? '🇮🇶  العربية' : '🇬🇧  English';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF00897B).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF00897B).withOpacity(0.3)),
+      ),
+      child: Text(label,
+          style: GoogleFonts.ibmPlexSansArabic(
+              fontSize: 12, color: const Color(0xFF00695C), fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+// ── Language option in bottom sheet ──────────────────────────────────────────
+class _LangOption extends StatelessWidget {
+  final String label, sublabel, flag;
+  final bool selected;
+  final VoidCallback onTap;
+  const _LangOption({required this.label, required this.sublabel,
+      required this.flag, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF00897B).withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: selected ? const Color(0xFF00897B) : cs.outline,
+              width: selected ? 1.5 : 1),
+        ),
+        child: Row(children: [
+          Text(flag, style: const TextStyle(fontSize: 22)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label,
+                style: GoogleFonts.ibmPlexSansArabic(
+                    fontSize: 15,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                    color: selected ? const Color(0xFF00695C) : cs.onSurface)),
+            Text(sublabel,
+                style: GoogleFonts.ibmPlexSansArabic(
+                    fontSize: 12, color: cs.onSurfaceVariant)),
+          ])),
+          if (selected)
+            Container(
+              width: 22, height: 22,
+              decoration: const BoxDecoration(color: Color(0xFF00897B), shape: BoxShape.circle),
+              child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+            ),
+        ]),
+      ),
+    );
+  }
 }

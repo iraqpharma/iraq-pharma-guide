@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../data/models/pricing_entry.dart';
 import '../../providers/supabase_pricing_provider.dart';
 
@@ -95,7 +96,7 @@ class _CommercialPriceGuideScreenState
             ),
             const SizedBox(width: 12),
             Text(
-              'تم استيراد أحدث البيانات بنجاح',
+              context.s.dataRefreshed,
               style: GoogleFonts.ibmPlexSansArabic(
                   color: Colors.white, fontSize: 14),
             ),
@@ -121,7 +122,7 @@ class _CommercialPriceGuideScreenState
     final isConnecting = entriesAsync.isLoading && _cached.isEmpty;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -129,7 +130,7 @@ class _CommercialPriceGuideScreenState
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('دليل الأسعار التجاري',
+            Text(context.s.priceGuideTitle,
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
@@ -151,7 +152,7 @@ class _CommercialPriceGuideScreenState
                 )
               : IconButton(
                   icon: const Icon(Icons.sync_rounded),
-                  tooltip: 'تحديث القائمة',
+                  tooltip: context.s.refreshList,
                   onPressed: _refresh,
                 ),
         ],
@@ -165,11 +166,11 @@ class _CommercialPriceGuideScreenState
               onChanged: _onSearchChanged,
               textDirection: TextDirection.rtl,
               decoration: InputDecoration(
-                hintText: 'ابحث باسم المنتج أو الباركود...',
+                hintText: context.s.priceSearchHint,
                 hintStyle: GoogleFonts.ibmPlexSansArabic(
-                    color: AppColors.textSecondary, fontSize: 14),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                 prefixIcon:
-                    const Icon(Icons.search, color: AppColors.textSecondary),
+                    Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.close, size: 18),
@@ -177,14 +178,14 @@ class _CommercialPriceGuideScreenState
                       )
                     : null,
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.divider),
+                  borderSide: BorderSide(color: Theme.of(context).dividerColor),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.divider),
+                  borderSide: BorderSide(color: Theme.of(context).dividerColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -245,9 +246,9 @@ class _PriceCard extends StatelessWidget {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppColors.divider),
+          side: BorderSide(color: Theme.of(context).dividerColor),
         ),
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -270,17 +271,17 @@ class _PriceCard extends StatelessWidget {
                         style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                     if (entry.barcode.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Row(children: [
-                        const Icon(Icons.qr_code,
-                            size: 12, color: AppColors.textSecondary),
+                        Icon(Icons.qr_code,
+                            size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Text(entry.barcode,
                             style: GoogleFonts.ibmPlexMono(
                                 fontSize: 11,
-                                color: AppColors.textSecondary)),
+                                color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       ]),
                     ],
                   ],
@@ -309,7 +310,7 @@ class _PriceCard extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Icon(Icons.chevron_left_rounded,
-                  color: AppColors.textSecondary.withOpacity(0.4), size: 18),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4), size: 18),
             ],
           ),
         ),
@@ -330,7 +331,7 @@ class _PriceDetailDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -361,12 +362,12 @@ class _PriceDetailDialog extends StatelessWidget {
                         style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close_rounded, size: 20),
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
                         minWidth: 32, minHeight: 32),
@@ -389,10 +390,10 @@ class _PriceDetailDialog extends StatelessWidget {
                       border: Border.all(color: _green.withOpacity(0.18)),
                     ),
                     child: Column(children: [
-                      Text('سعر البيع',
+                      Text(context.s.sellingPrice,
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 12,
-                              color: AppColors.textSecondary)),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       const SizedBox(height: 2),
                       Text('${entry.sellingPrice.toStringAsFixed(0)} د.ع',
                           style: GoogleFonts.ibmPlexSansArabic(
@@ -407,9 +408,9 @@ class _PriceDetailDialog extends StatelessWidget {
                   // التفاصيل
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: Theme.of(context).colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.divider),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,23 +418,23 @@ class _PriceDetailDialog extends StatelessWidget {
                         Padding(
                           padding:
                               const EdgeInsets.fromLTRB(14, 10, 14, 6),
-                          child: Text('التفاصيل الفنية',
+                          child: Text(context.s.technicalDetails,
                               style: GoogleFonts.ibmPlexSansArabic(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary)),
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         ),
                         const Divider(height: 1),
                         if (entry.barcode.isNotEmpty)
                           _DetailRow(
-                            label: 'الباركود',
+                            label: context.s.barcode_,
                             value: entry.barcode,
                             icon: Icons.qr_code_rounded,
                             mono: true,
                             copyable: true,
                           ),
                         _DetailRow(
-                          label: 'المعرف (ID)',
+                          label: context.s.entryId,
                           value:
                               '#${entry.id.substring(0, 8).toUpperCase()}',
                           icon: Icons.tag_rounded,
@@ -442,7 +443,7 @@ class _PriceDetailDialog extends StatelessWidget {
                         if (entry.notes != null &&
                             entry.notes!.isNotEmpty)
                           _DetailRow(
-                            label: 'التعبئة',
+                            label: context.s.packaging,
                             value: entry.notes!,
                             icon: Icons.info_outline_rounded,
                             isLast: true,
@@ -485,11 +486,11 @@ class _DetailRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(icon, size: 16, color: AppColors.textSecondary),
+              Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 10),
               Text(label,
                   style: GoogleFonts.ibmPlexSansArabic(
-                      fontSize: 13, color: AppColors.textSecondary)),
+                      fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const Spacer(),
               if (copyable)
                 GestureDetector(
@@ -497,7 +498,7 @@ class _DetailRow extends StatelessWidget {
                     Clipboard.setData(ClipboardData(text: value));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('تم نسخ الباركود',
+                        content: Text(context.s.barcodeCopied,
                             style: GoogleFonts.ibmPlexSansArabic()),
                         duration: const Duration(seconds: 2),
                         behavior: SnackBarBehavior.floating,
@@ -510,15 +511,15 @@ class _DetailRow extends StatelessWidget {
                             ? GoogleFonts.ibmPlexMono(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary)
+                                color: Theme.of(context).colorScheme.onSurface)
                             : GoogleFonts.ibmPlexSansArabic(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary)),
+                                color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(width: 6),
                     Icon(Icons.copy_rounded,
                         size: 14,
-                        color: AppColors.textSecondary.withOpacity(0.5)),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5)),
                   ]),
                 )
               else
@@ -527,11 +528,11 @@ class _DetailRow extends StatelessWidget {
                         ? GoogleFonts.ibmPlexMono(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary)
+                            color: Theme.of(context).colorScheme.onSurface)
                         : GoogleFonts.ibmPlexSansArabic(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary)),
+                            color: Theme.of(context).colorScheme.onSurface)),
             ],
           ),
         ),
@@ -554,18 +555,18 @@ class _EmptyState extends StatelessWidget {
           children: [
             Icon(Icons.price_check_outlined,
                 size: 72,
-                color: AppColors.textSecondary.withOpacity(0.3)),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3)),
             const SizedBox(height: 16),
-            Text('القائمة فارغة حالياً',
+            Text(context.s.listCurrentlyEmpty,
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary)),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 8),
-            Text('ستظهر هنا أسعار المنتجات بعد إضافتها من لوحة التحكم',
+            Text(context.s.priceListEmptyHint,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.ibmPlexSansArabic(
-                    fontSize: 13, color: AppColors.textSecondary)),
+                    fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),
@@ -585,18 +586,18 @@ class _ErrorState extends StatelessWidget {
           children: [
             Icon(Icons.cloud_off_outlined,
                 size: 64,
-                color: AppColors.textSecondary.withOpacity(0.4)),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4)),
             const SizedBox(height: 16),
-            Text('تعذّر الاتصال بالخادم',
+            Text(context.s.serverConnectionFailed,
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary)),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 8),
-            Text('تحقق من اتصالك بالإنترنت',
+            Text(context.s.checkInternet,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.ibmPlexSansArabic(
-                    fontSize: 13, color: AppColors.textSecondary)),
+                    fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),

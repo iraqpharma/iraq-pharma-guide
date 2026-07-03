@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 class InteractiveReferenceScreen extends StatefulWidget {
   const InteractiveReferenceScreen({super.key});
@@ -54,26 +55,26 @@ class _InteractiveReferenceScreenState extends State<InteractiveReferenceScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: Text('المرجع التفاعلي',
+        title: Text(context.s.interactiveRefTitle,
             style: GoogleFonts.ibmPlexSansArabic(
-                fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: TextButton.icon(
               onPressed: () => _openEditor(),
               icon: const Icon(Icons.add_rounded, size: 18),
-              label: Text('إضافة', style: GoogleFonts.ibmPlexSansArabic(fontSize: 13)),
+              label: Text(context.s.addLabel, style: GoogleFonts.ibmPlexSansArabic(fontSize: 13)),
               style: TextButton.styleFrom(foregroundColor: AppColors.primary),
             ),
           ),
@@ -118,17 +119,17 @@ class _InteractiveReferenceScreenState extends State<InteractiveReferenceScreen>
         child: const Icon(Icons.menu_book_outlined, color: AppColors.primary, size: 40),
       ),
       const SizedBox(height: 20),
-      Text('لا توجد ملاحظات بعد',
+      Text(context.s.noNotesYet,
           style: GoogleFonts.ibmPlexSansArabic(
-              fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              fontSize: 17, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 8),
-      Text('أضف بروتوكولاتك وملاحظاتك المهنية هنا',
-          style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: AppColors.textSecondary)),
+      Text(context.s.addNotesHint,
+          style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
       const SizedBox(height: 24),
       ElevatedButton.icon(
         onPressed: () => _openEditor(),
         icon: const Icon(Icons.add_rounded),
-        label: Text('إضافة ملاحظة', style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600)),
+        label: Text(context.s.addNote, style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600)),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary, foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -144,17 +145,17 @@ class _InteractiveReferenceScreenState extends State<InteractiveReferenceScreen>
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('حذف الملاحظة', style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.bold)),
-        content: Text('هل تريد حذف هذه الملاحظة نهائياً؟',
-            style: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary)),
+        title: Text(context.s.deleteNote, style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.bold)),
+        content: Text(context.s.deleteNoteConfirm,
+            style: GoogleFonts.ibmPlexSansArabic(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
-              child: Text('إلغاء', style: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary))),
+              child: Text(context.s.cancel, style: GoogleFonts.ibmPlexSansArabic(color: Theme.of(context).colorScheme.onSurfaceVariant))),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade400, foregroundColor: Colors.white, elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: Text('حذف', style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600)),
+            child: Text(context.s.delete, style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -179,7 +180,7 @@ class _NoteCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
@@ -205,7 +206,7 @@ class _NoteCard extends StatelessWidget {
                 Expanded(
                   child: Text(note['title'] as String? ?? '',
                       style: GoogleFonts.ibmPlexSansArabic(
-                          fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                          fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 ),
                 PopupMenuButton<String>(
                   onSelected: (v) { if (v == 'edit') onEdit(); else onDelete(); },
@@ -213,28 +214,28 @@ class _NoteCard extends StatelessWidget {
                     PopupMenuItem(value: 'edit', child: Row(children: [
                       const Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
                       const SizedBox(width: 8),
-                      Text('تعديل', style: GoogleFonts.ibmPlexSansArabic()),
+                      Text(context.s.edit, style: GoogleFonts.ibmPlexSansArabic()),
                     ])),
                     PopupMenuItem(value: 'delete', child: Row(children: [
                       Icon(Icons.delete_outline, size: 16, color: Colors.red.shade400),
                       const SizedBox(width: 8),
-                      Text('حذف', style: GoogleFonts.ibmPlexSansArabic(color: Colors.red.shade400)),
+                      Text(context.s.delete, style: GoogleFonts.ibmPlexSansArabic(color: Colors.red.shade400)),
                     ])),
                   ],
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary, size: 20),
+                  icon: Icon(Icons.more_vert_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
                 ),
               ]),
               const SizedBox(height: 10),
               Text(note['content'] as String? ?? '',
                   maxLines: 3, overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.ibmPlexSansArabic(
-                      fontSize: 13, color: AppColors.textSecondary, height: 1.6)),
+                      fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6)),
               if (dateStr.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(dateStr,
                     style: GoogleFonts.ibmPlexSansArabic(
-                        fontSize: 11, color: AppColors.textSecondary.withOpacity(0.6))),
+                        fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6))),
               ],
             ]),
           ),
@@ -294,7 +295,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
       }
       if (mounted) { widget.onSaved(); Navigator.pop(context); }
     } catch (_) {
-      setState(() { _saving = false; _error = 'فشل الحفظ، حاول مجدداً'; });
+      setState(() { _saving = false; _error = context.s.saveFailed; });
     }
   }
 
@@ -304,7 +305,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(24)),
       child: Form(
         key: _formKey,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -312,15 +313,15 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
           Container(width: 40, height: 4,
               decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
           const SizedBox(height: 16),
-          Text(widget.note != null ? 'تعديل الملاحظة' : 'ملاحظة جديدة',
-              style: GoogleFonts.ibmPlexSansArabic(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          Text(widget.note != null ? context.s.editNote : context.s.newNote,
+              style: GoogleFonts.ibmPlexSansArabic(fontSize: 17, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 20),
           TextFormField(
             controller: _titleCtrl,
             textAlign: TextAlign.right,
             style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
-            decoration: _deco('العنوان', Icons.title_rounded),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'أدخل عنوان الملاحظة' : null,
+            decoration: _deco(context.s.noteTitle, Icons.title_rounded),
+            validator: (v) => (v == null || v.trim().isEmpty) ? context.s.noteTitleRequired : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
@@ -328,8 +329,8 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
             textAlign: TextAlign.right,
             maxLines: 6, minLines: 4,
             style: GoogleFonts.ibmPlexSansArabic(fontSize: 14, height: 1.6),
-            decoration: _deco('المحتوى', Icons.notes_rounded),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'أدخل محتوى الملاحظة' : null,
+            decoration: _deco(context.s.noteContent, Icons.notes_rounded),
+            validator: (v) => (v == null || v.trim().isEmpty) ? context.s.noteContentRequired : null,
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
@@ -346,7 +347,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
               ),
               child: _saving
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text('حفظ الملاحظة', style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600, fontSize: 15)),
+                  : Text(context.s.saveNote, style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600, fontSize: 15)),
             ),
           ),
         ]),
@@ -354,11 +355,13 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
     );
   }
 
-  InputDecoration _deco(String label, IconData icon) => InputDecoration(
+  InputDecoration _deco(String label, IconData icon) {
+    final context = this.context;
+    return InputDecoration(
     labelText: label,
-    prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
-    filled: true, fillColor: const Color(0xFFF8F9FA),
-    labelStyle: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary, fontSize: 14),
+    prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+    filled: true, fillColor: Theme.of(context).colorScheme.surfaceVariant,
+    labelStyle: GoogleFonts.ibmPlexSansArabic(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     border:             OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
     enabledBorder:      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
@@ -366,4 +369,5 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
     errorBorder:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
     focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
   );
+  }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../services/auth_service.dart';
 
 class PricingCalculatorScreen extends StatefulWidget {
   const PricingCalculatorScreen({super.key});
@@ -28,6 +30,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
   @override
   void initState() {
     super.initState();
+    AuthService.instance.incrementToolUsage();
     for (final c in [_baseCostCtrl, _purchasedCtrl, _bonusCtrl,
                      _discountCtrl, _cashCtrl, _profitCtrl]) {
       c.addListener(_recalculate);
@@ -96,7 +99,6 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
     final topPad  = mq.padding.top;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
       body: Column(
         children: [
@@ -112,7 +114,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                   onPressed: () => Navigator.pop(context),
                 ),
                 Expanded(
-                  child: Text('حاسبة التسعير الذكي',
+                  child: Text(context.s.pricingTitle,
                       style: GoogleFonts.cairo(
                           color: Colors.white,
                           fontSize: 17,
@@ -133,7 +135,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                         const Icon(Icons.refresh_rounded,
                             color: Colors.white, size: 15),
                         const SizedBox(width: 4),
-                        Text('مسح',
+                        Text(context.s.reset_,
                             style: GoogleFonts.cairo(
                                 color: Colors.white, fontSize: 12)),
                       ],
@@ -152,12 +154,12 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── صف 1: سعر القطعة ───────────────────────────────────
-                  _buildLabel('سعر القطعة في الفاتورة *'),
+                  _buildLabel('${context.s.baseCost} *'),
                   const SizedBox(height: 5),
                   _Field(
                     controller: _baseCostCtrl,
                     hint: '0.000',
-                    suffix: 'د.ع',
+                    suffix: context.s.iqd,
                     icon: Icons.sell_outlined,
                   ),
 
@@ -170,12 +172,12 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel('الكمية المشتراة *'),
+                            _buildLabel('${context.s.purchased} *'),
                             const SizedBox(height: 5),
                             _Field(
                               controller: _purchasedCtrl,
                               hint: '0',
-                              suffix: 'قطعة',
+                              suffix: context.s.piecesUnit,
                               icon: Icons.inventory_2_outlined,
                               isInt: true,
                             ),
@@ -187,12 +189,12 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel('البونص المجاني'),
+                            _buildLabel(context.s.bonus),
                             const SizedBox(height: 5),
                             _Field(
                               controller: _bonusCtrl,
                               hint: '0',
-                              suffix: 'قطعة',
+                              suffix: context.s.piecesUnit,
                               icon: Icons.card_giftcard_rounded,
                               isInt: true,
                             ),
@@ -211,7 +213,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel('نسبة الخصم'),
+                            _buildLabel(context.s.discount),
                             const SizedBox(height: 5),
                             _Field(
                               controller: _discountCtrl,
@@ -227,12 +229,12 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel('خصم نقدي إضافي'),
+                            _buildLabel(context.s.cashDiscount),
                             const SizedBox(height: 5),
                             _Field(
                               controller: _cashCtrl,
                               hint: '0',
-                              suffix: 'د.ع',
+                              suffix: context.s.iqd,
                               icon: Icons.money_off_rounded,
                             ),
                           ],
@@ -249,12 +251,12 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                       // تكلفة الوحدة الصافية
                       Expanded(
                         child: _ResultTile(
-                          label: 'تكلفة الوحدة الصافية',
-                          value: _hasResult ? '${_fmt(_netCost)} د.ع' : '—',
+                          label: context.s.netCost,
+                          value: _hasResult ? '${_fmt(_netCost)} ${context.s.iqd}' : '—',
                           color: AppColors.primary,
                           icon: Icons.calculate_outlined,
                           sub: _hasResult
-                              ? '${_totalPieces.toInt()} قطعة • ${_fmt(_totalPaid)} د.ع'
+                              ? context.s.piecesAndPaid(_totalPieces.toInt(), _fmt(_totalPaid))
                               : null,
                         ),
                       ),
@@ -262,14 +264,14 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                       // سعر البيع
                       Expanded(
                         child: _ResultTile(
-                          label: 'سعر البيع',
+                          label: context.s.sellingPrice,
                           value: _hasResult
-                              ? '${_fmt(_sellingPrice)} د.ع'
+                              ? '${_fmt(_sellingPrice)} ${context.s.iqd}'
                               : '—',
                           color: const Color(0xFF6A1B9A),
                           icon: Icons.storefront_outlined,
                           sub: _hasResult && _netCost > 0
-                              ? 'ربح ${_fmt(_sellingPrice - _netCost)} د.ع'
+                              ? context.s.profitOf(_fmt(_sellingPrice - _netCost))
                               : null,
                           isHighlight: true,
                         ),
@@ -294,7 +296,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                             color: const Color(0xFF6A1B9A), size: 18),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text('نسبة الربح لحساب سعر البيع',
+                          child: Text(context.s.profitMargin,
                               style: GoogleFonts.cairo(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -321,9 +323,9 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.divider),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,7 +335,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                             Icon(Icons.info_outline_rounded,
                                 size: 14, color: AppColors.textSecondary),
                             const SizedBox(width: 6),
-                            Text('كيفية الاستخدام',
+                            Text(context.s.howToUse,
                                 style: GoogleFonts.cairo(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -341,10 +343,10 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        _HelpRow('*', 'الحقول المعلّمة بـ (*) إلزامية — الباقي اختياري'),
-                        _HelpRow('🎁', 'البونص: القطع المجانية من المورد — تُحسب في التكلفة'),
-                        _HelpRow('%', 'نسبة الخصم والخصم النقدي يُطرحان من الفاتورة'),
-                        _HelpRow('⚡', 'النتائج تتحدث تلقائياً عند كل إدخال'),
+                        _HelpRow('*', context.s.helpRequired),
+                        _HelpRow('🎁', context.s.helpBonus),
+                        _HelpRow('%', context.s.helpDiscountNote),
+                        _HelpRow('⚡', context.s.helpAutoUpdate),
                       ],
                     ),
                   ),
@@ -375,7 +377,7 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
               color: AppColors.divider,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text('اختياري',
+            child: Text(context.s.optional,
                 style: GoogleFonts.cairo(
                     fontSize: 9,
                     color: AppColors.textSecondary)),
@@ -430,7 +432,7 @@ class _Field extends StatelessWidget {
             fontWeight: FontWeight.w600),
         isDense: true,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).colorScheme.surfaceVariant,
         contentPadding: EdgeInsets.symmetric(
             horizontal: 10, vertical: compact ? 10 : 12),
         border: OutlineInputBorder(
@@ -470,7 +472,7 @@ class _ResultTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isHighlight ? color : Colors.white,
+        color: isHighlight ? color : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
             color: isHighlight ? color : color.withOpacity(0.25),
