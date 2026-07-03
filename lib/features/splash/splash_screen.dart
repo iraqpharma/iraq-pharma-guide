@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_permission_service.dart';
 import '../../services/session_service.dart';
 import '../../services/version_checker_service.dart';
 import '../../shared/widgets/force_update_dialog.dart';
@@ -145,6 +146,8 @@ class _SplashScreenState extends State<SplashScreen>
       final valid = await SessionService.instance.isSessionStillValid();
       if (!mounted) return;
       if (valid) {
+        // تحديث FCM Token في كل مرة يفتح فيها التطبيق وهو مسجّل
+        NotificationPermissionService.instance.enableNotifications();
         context.go('/home');
       } else {
         await AuthService.instance.signOut();
