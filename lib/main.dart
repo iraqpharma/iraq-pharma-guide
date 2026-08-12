@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/config/supabase_config.dart';
-import 'services/connectivity_service.dart';
 import 'services/notification_service.dart';
 import 'shared/router/app_router.dart';
 
@@ -34,7 +33,6 @@ void main() async {
   });
 
   await NotificationService.instance.initialize();
-  ConnectivityService.instance.init();
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

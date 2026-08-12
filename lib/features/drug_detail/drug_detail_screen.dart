@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
 import '../../providers/drug_provider.dart';
@@ -186,17 +185,6 @@ class _DrugDetailView extends StatelessWidget {
 
 // ─── Custom AppBar ────────────────────────────────────────────────────────────
 
-void _shareDrug(BuildContext context, Drug drug) {
-  final buf = StringBuffer();
-  buf.writeln('💊 ${drug.genericName}');
-  if (drug.genericNameAr.isNotEmpty) buf.writeln('${drug.genericNameAr}');
-  if (drug.drugClass.isNotEmpty) buf.writeln('📂 ${drug.drugClass}');
-  if (drug.availableDoses.isNotEmpty) buf.writeln('\n🔹 الجرع المتوفرة:\n${drug.availableDoses}');
-  if (drug.adultDose.isNotEmpty) buf.writeln('\n👤 جرعة البالغين:\n${drug.adultDose}');
-  buf.writeln('\n🔗 Iraq Pharma Guide');
-  Share.share(buf.toString(), subject: drug.genericName);
-}
-
 class _DrugAppBar extends StatelessWidget {
   final Drug drug;
   final bool isArabic;
@@ -243,12 +231,6 @@ class _DrugAppBar extends StatelessWidget {
                         ),
                     ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.share_rounded,
-                      color: Colors.white, size: 22),
-                  onPressed: () => _shareDrug(context, drug),
-                  tooltip: 'مشاركة',
                 ),
                 if (drug.isRefrigerated)
                   Container(
@@ -407,7 +389,7 @@ class _DosageFormCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.45),
+        color: const Color(0xFFE3F2FD),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF1976D2).withOpacity(0.3)),
       ),
@@ -459,7 +441,7 @@ class _AvailableDosesCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.45),
+        color: const Color(0xFFF3E5F5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF7B1FA2).withOpacity(0.3)),
       ),

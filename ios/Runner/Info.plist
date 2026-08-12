@@ -26,6 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>يستخدم التطبيق الكاميرا للسماح لك بالتقاط صور وإرفاقها بملاحظاتك الشخصية داخل التطبيق.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>يحتاج التطبيق الوصول لمكتبة الصور للسماح لك باختيار وإرفاق صور بملاحظاتك الشخصية داخل التطبيق.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>لا يستخدم التطبيق موقعك الجغرافي بشكل مباشر، وهذا الإذن مطلوب فقط من بعض المكتبات الداخلية للتطبيق.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

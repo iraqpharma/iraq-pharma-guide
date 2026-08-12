@@ -256,7 +256,7 @@ class _AdCard extends StatelessWidget {
                               const Icon(Icons.phone_rounded,
                                   size: 18, color: AppColors.primary),
                               const SizedBox(width: 8),
-                              Text('9647861071077',
+                              Text('07861071077',
                                   style: GoogleFonts.ibmPlexMono(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -272,7 +272,7 @@ class _AdCard extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () async {
                           Navigator.pop(context);
-                          final uri = Uri.parse('tel:9647861071077');
+                          final uri = Uri.parse('tel:07861071077');
                           await launchUrl(uri);
                         },
                         style: ElevatedButton.styleFrom(

@@ -7,8 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Handles FCM background messages — must be a top-level function.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // يُستدعى عند وصول رسالة data-only والتطبيق في الخلفية أو مغلق
-  // رسائل notification تُعرضها Android تلقائياً بدون هذا الكود
+  // Firebase is already initialized by the time this is called.
   debugPrint('FCM background: ${message.messageId}');
 }
 
@@ -55,10 +54,15 @@ class NotificationService {
 
   // ── FCM ────────────────────────────────────────────────────────────────────
   Future<void> _setupFCM() async {
-    // لا نطلب إذن الإشعارات هنا — يُطلب فقط بعد تسجيل الدخول
-    // عبر NotificationPermissionService في شاشة notification_permission_screen
+    // 1. Request permission
+    NotificationSettings settings = await _fcm.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    if (settings.authorizationStatus == AuthorizationStatus.denied) return;
 
-    // 1. Background handler (top-level)
+    // 2. Background handler (top-level)
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     // 3. Foreground handler — show local notification

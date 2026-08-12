@@ -62,24 +62,21 @@ class NotificationsScreen extends ConsumerWidget {
             children: [
               if (hasUnread) _MarkAllBanner(onTap: () => svc.markAllAsRead()),
               Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async => ref.invalidate(notificationsProvider),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 32),
-                    itemCount: _countItems(grouped),
-                    itemBuilder: (ctx, i) {
-                      final item = _itemAt(grouped, i);
-                      if (item is String) return _DateHeader(label: context.s.notifGroupLabel(item));
-                      final notif = item as AppNotification;
-                      return _NotificationTile(
-                        notif: notif,
-                        onTap: () {
-                          svc.markAsRead(notif.id);
-                          _openDetail(ctx, notif);
-                        },
-                      );
-                    },
-                  ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 32),
+                  itemCount: _countItems(grouped),
+                  itemBuilder: (ctx, i) {
+                    final item = _itemAt(grouped, i);
+                    if (item is String) return _DateHeader(label: context.s.notifGroupLabel(item));
+                    final notif = item as AppNotification;
+                    return _NotificationTile(
+                      notif: notif,
+                      onTap: () {
+                        svc.markAsRead(notif.id);
+                        _openDetail(ctx, notif);
+                      },
+                    );
+                  },
                 ),
               ),
             ],
