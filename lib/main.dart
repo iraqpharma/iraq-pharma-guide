@@ -7,13 +7,16 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/config/supabase_config.dart';
+import 'firebase_options.dart';
 import 'services/notification_service.dart';
 import 'shared/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await Supabase.initialize(
     url: SupabaseConfig.url,
