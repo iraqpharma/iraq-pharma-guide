@@ -23,8 +23,13 @@ class NotificationService {
 
   // ── Init ───────────────────────────────────────────────────────────────────
   Future<void> initialize() async {
-    await _setupLocalNotifications();
-    await _setupFCM();
+    try {
+      await _setupLocalNotifications();
+      await _setupFCM().timeout(const Duration(seconds: 8));
+    } catch (e) {
+      // Never let notification setup failures block app startup.
+      debugPrint('NotificationService init failed (non-fatal): $e');
+    }
   }
 
   // ── Local notifications (foreground display) ───────────────────────────────
