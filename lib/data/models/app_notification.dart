@@ -85,20 +85,27 @@ class AppNotification {
     required this.createdAt,
   });
 
+  // Parsed defensively: Supabase realtime can hand back id as an int (int4
+  // primary key) rather than a String, and a malformed/incomplete row must
+  // never throw and break the whole stream — a single bad row silently
+  // killed the unread-count badge before this fix.
   factory AppNotification.fromJson(Map<String, dynamic> json) =>
       AppNotification(
-        id: json['id'] as String,
-        title: json['title'] as String,
-        body: json['body'] as String,
+        id: json['id']?.toString() ?? '',
+        title: json['title'] as String? ?? '',
+        body: json['body'] as String? ?? '',
         type: NotificationType.fromString(json['type'] as String? ?? 'update'),
         isRead: json['is_read'] as bool? ?? false,
-        expiresAt: json['expires_at'] != null
-            ? DateTime.parse(json['expires_at'] as String)
-            : null,
+        expiresAt: _tryParseDate(json['expires_at']),
         actionUrl:   json['action_url']   as String?,
         actionLabel: json['action_label'] as String?,
-        createdAt: DateTime.parse(json['created_at'] as String),
+        createdAt: _tryParseDate(json['created_at']) ?? DateTime.now(),
       );
+
+  static DateTime? _tryParseDate(dynamic v) {
+    if (v == null) return null;
+    return DateTime.tryParse(v.toString());
+  }
 
   bool get isExpired =>
       expiresAt != null && DateTime.now().isAfter(expiresAt!);

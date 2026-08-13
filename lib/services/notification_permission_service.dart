@@ -43,10 +43,11 @@ class NotificationPermissionService {
       granted = true;
     }
 
-    // Fetch FCM token and persist it, so the server can actually
-    // target this device with push notifications.
+    // Fetch a fresh FCM token and persist it, so the server can actually
+    // target this device with push notifications. Force-refresh instead of
+    // reusing a possibly stale cached token (see refreshAndSaveToken docs).
     if (granted) {
-      await NotificationService.instance.saveTokenForCurrentUser();
+      await NotificationService.instance.refreshAndSaveToken();
     }
 
     await _markAsked();

@@ -234,7 +234,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         _passField(ctrl: _currPassCtrl, label: context.s.currentPassword,
                             obscure: _obscureCurr, onToggle: () => setState(() => _obscureCurr = !_obscureCurr),
                             validator: (v) => (v == null || v.isEmpty) ? context.s.enterCurrentPassword : null),
-                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: () => context.push('/forgot-password'),
+                            style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero, minimumSize: const Size(0, 32)),
+                            child: Text(context.s.forgotPassword,
+                                style: GoogleFonts.ibmPlexSansArabic(
+                                    color: AppColors.primary, fontSize: 12.5)),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
                         _passField(ctrl: _newPassCtrl, label: context.s.newPassword,
                             obscure: _obscureNew, onToggle: () => setState(() => _obscureNew = !_obscureNew),
                             validator: (v) {

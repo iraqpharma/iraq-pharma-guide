@@ -120,6 +120,23 @@ class NotificationService {
     await _saveTokenForCurrentUser(token);
   }
 
+  /// Forces a brand-new FCM token instead of reusing whatever is cached
+  /// on-device. On iOS the FCM token can survive in the Keychain across
+  /// app deletions/reinstalls and go stale (APNs rejects it with
+  /// UNREGISTERED) while getToken() keeps happily returning the same dead
+  /// value. Call this once when the user explicitly grants notification
+  /// permission, so we're guaranteed a token Apple actually recognizes.
+  Future<void> refreshAndSaveToken() async {
+    try {
+      await _fcm.deleteToken();
+    } catch (e) {
+      debugPrint('deleteToken failed (non-fatal): $e');
+    }
+    final token = await _fcm.getToken();
+    debugPrint('FCM Token (refreshed): $token');
+    await _saveTokenForCurrentUser(token);
+  }
+
   void _onForegroundMessage(RemoteMessage message) {
     final notification = message.notification;
     if (notification == null) return;

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/notification_permission_service.dart';
+import '../../services/profile_completion_service.dart';
 import '../../core/l10n/app_strings.dart';
 
 class NotificationPermissionScreen extends StatefulWidget {
@@ -57,7 +58,15 @@ class _NotificationPermissionScreenState
   Future<void> _checkAndMaybeSkip() async {
     final show = await NotificationPermissionService.instance.shouldShowScreen();
     if (!mounted) return;
-    if (!show) context.go('/home');
+    if (!show) await _goNext();
+  }
+
+  /// Routes to the one-time profile-completion prompt if it hasn't been
+  /// shown/answered yet, otherwise straight to home.
+  Future<void> _goNext() async {
+    final showProfileCompletion = await ProfileCompletionService.instance.shouldShowScreen();
+    if (!mounted) return;
+    context.go(showProfileCompletion ? '/complete-profile' : '/home');
   }
 
   @override
@@ -70,12 +79,12 @@ class _NotificationPermissionScreenState
   Future<void> _onEnable() async {
     setState(() => _loading = true);
     await NotificationPermissionService.instance.requestPermission();
-    if (mounted) context.go('/home');
+    if (mounted) await _goNext();
   }
 
   Future<void> _onSkip() async {
     await NotificationPermissionService.instance.deny();
-    if (mounted) context.go('/home');
+    if (mounted) await _goNext();
   }
 
   @override

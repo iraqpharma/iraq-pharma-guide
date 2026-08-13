@@ -296,6 +296,13 @@ class AppStrings {
   String get profileSavedSuccess   => isAr ? 'تم حفظ البيانات بنجاح'         : 'Profile saved successfully';
   String get chooseProfessionErr   => isAr ? 'اختر المهنة'                    : 'Choose your profession';
 
+  // ── Profile completion prompt (post-login, optional) ────────────────────
+  String get completeProfileTitle  => isAr ? 'أكمل ملفك الشخصي'                : 'Complete your profile';
+  String get completeProfileSub    => isAr ? 'أضف محافظتك وتاريخ ميلادك وصورتك — كل هذا اختياري ويمكنك تخطيه الآن'
+                                            : 'Add your governorate, birth date and photo — all optional, you can skip for now';
+  String get addPhotoLabel         => isAr ? 'إضافة صورة'                     : 'Add photo';
+  String get skipForNow            => isAr ? 'تخطي الآن'                      : 'Skip for now';
+
   // ── Drug List ─────────────────────────────────────────────────────────────
   String get noDrugsInCategory  => isAr ? 'لا توجد أدوية في هذا الصنف' : 'No drugs in this category';
   String get searchInCategory   => isAr ? 'بحث في'                     : 'Search in';

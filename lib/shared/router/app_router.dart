@@ -19,6 +19,7 @@ import '../../features/auth/otp_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/success_screen.dart';
 import '../../features/auth/notification_permission_screen.dart';
+import '../../features/auth/profile_completion_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/edit_profile_screen.dart';
 import '../../features/profile/interactive_reference_screen.dart';
@@ -45,6 +46,7 @@ final appRouter = GoRouter(
     GoRoute(path: '/reset-password',   builder: (_, __) => const ResetPasswordScreen()),
     GoRoute(path: '/register-success',         builder: (_, __) => const RegistrationSuccessScreen()),
     GoRoute(path: '/notification-permission',  builder: (_, __) => const NotificationPermissionScreen()),
+    GoRoute(path: '/complete-profile',         builder: (_, __) => const ProfileCompletionScreen()),
     GoRoute(
       path: '/otp',
       builder: (_, state) {
