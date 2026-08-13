@@ -24,6 +24,16 @@ enum NotificationType {
     }
   }
 
+  String label(bool isAr) {
+    if (isAr) return arabicLabel;
+    switch (this) {
+      case update: return 'Update Notice';
+      case alert:  return 'Medical Alert';
+      case price:  return 'Price Update';
+      case promo:  return 'Promotion';
+    }
+  }
+
   IconData get icon {
     switch (this) {
       case update: return Icons.system_update_alt_rounded;

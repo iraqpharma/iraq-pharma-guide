@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notification_service.dart';
 
 class NotificationPermissionService {
   NotificationPermissionService._();
@@ -42,13 +43,10 @@ class NotificationPermissionService {
       granted = true;
     }
 
-    // Fetch FCM token if granted
+    // Fetch FCM token and persist it, so the server can actually
+    // target this device with push notifications.
     if (granted) {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        // Token is ready — can be sent to Supabase profiles if needed
-        debugPrintToken(token);
-      }
+      await NotificationService.instance.saveTokenForCurrentUser();
     }
 
     await _markAsked();
@@ -61,10 +59,5 @@ class NotificationPermissionService {
   Future<void> _markAsked() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_askedKey, true);
-  }
-
-  void debugPrintToken(String token) {
-    // ignore: avoid_print
-    print('[FCM Token] $token');
   }
 }

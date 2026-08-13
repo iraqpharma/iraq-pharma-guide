@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return Drawer(
       // No hardcoded color — inherits drawerTheme.backgroundColor from AppTheme
       child: Column(
@@ -18,63 +20,63 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
                 // ── الأدوات السريرية ──────────────────────────────────
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 10, 20, 6),
-                  child: _SectionLabel('الأدوات السريرية'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 6),
+                  child: _SectionLabel(s.clinicalTools),
                 ),
                 _DrawerTile(
                   icon: Icons.calculate_outlined,
-                  color: Color(0xFF5C6BC0),
-                  title: 'حاسبة الجرعة',
-                  subtitle: 'للأطفال والبالغين',
+                  color: const Color(0xFF5C6BC0),
+                  title: s.doseCalc,
+                  subtitle: s.doseCalcSub,
                   onTap: () { Navigator.pop(context); context.push('/calc'); },
                 ),
                 _DrawerTile(
                   icon: Icons.monitor_heart_outlined,
-                  color: Color(0xFF0097A7),
-                  title: 'حاسبة CrCl',
+                  color: const Color(0xFF0097A7),
+                  title: s.crcl,
                   subtitle: 'Cockcroft-Gault',
                   onTap: () { Navigator.pop(context); context.push('/renal-calc'); },
                 ),
                 _DrawerTile(
                   icon: Icons.science_outlined,
-                  color: Color(0xFFE65100),
-                  title: 'فاحص التفاعلات',
-                  subtitle: 'تفاعلات الأدوية المتعددة',
+                  color: const Color(0xFFE65100),
+                  title: s.interactions,
+                  subtitle: s.drawerInteractionsSub,
                   onTap: () { Navigator.pop(context); context.push('/interactions'); },
                 ),
                 _DrawerTile(
                   icon: Icons.edit_note_outlined,
-                  color: Color(0xFF2E7D32),
-                  title: 'دفتر الصيدلاني',
-                  subtitle: 'الأدوية المفقودة والملاحظات',
+                  color: const Color(0xFF2E7D32),
+                  title: s.notebook,
+                  subtitle: s.drawerNotebookSub,
                   onTap: () { Navigator.pop(context); context.push('/notebook'); },
                 ),
                 _DrawerTile(
                   icon: Icons.price_change_outlined,
-                  color: Color(0xFF6A1B9A),
-                  title: 'حاسبة التسعير الذكي',
-                  subtitle: 'تكلفة الوحدة وسعر البيع',
+                  color: const Color(0xFF6A1B9A),
+                  title: s.pricingTitle,
+                  subtitle: s.drawerPricingSub,
                   onTap: () { Navigator.pop(context); context.push('/pricing-calc'); },
                 ),
                 _DrawerTile(
                   icon: Icons.swap_horiz_rounded,
-                  color: Color(0xFF0097A7),
-                  title: 'الباحث عن البدائل',
-                  subtitle: 'البدائل المباشرة والعلاجية',
+                  color: const Color(0xFF0097A7),
+                  title: s.substitution,
+                  subtitle: s.drawerSubstitutionSub,
                   onTap: () { Navigator.pop(context); context.push('/substitution'); },
                 ),
 
                 // ── دليل الأسعار ──────────────────────────────────────
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 6),
-                  child: _SectionLabel('الأسعار'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+                  child: _SectionLabel(s.pricesSectionLabel),
                 ),
                 _DrawerTile(
                   icon: Icons.price_check_outlined,
-                  color: Color(0xFFF59E0B),
-                  title: 'دليل الأسعار التجاري',
-                  subtitle: 'تكلفة وبيع وهامش الربح',
+                  color: const Color(0xFFF59E0B),
+                  title: s.priceGuide,
+                  subtitle: s.priceGuideSubtitle,
                   onTap: () { Navigator.pop(context); context.push('/price-guide'); },
                 ),
               ],
@@ -206,6 +208,7 @@ class _DrawerFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
+    final s = context.s;
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, bottom + 16),
       decoration: BoxDecoration(
@@ -218,11 +221,11 @@ class _DrawerFooter extends StatelessWidget {
             alignment: WrapAlignment.center,
             spacing: 4,
             children: [
-              _legalLink(context, 'سياسة الخصوصية', '/legal/privacy'),
+              _legalLink(context, s.privacyPolicy, '/legal/privacy'),
               Text('·', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
-              _legalLink(context, 'شروط الاستخدام', '/legal/terms'),
+              _legalLink(context, s.termsOfUse, '/legal/terms'),
               Text('·', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
-              _legalLink(context, 'إخلاء المسؤولية', '/legal/disclaimer'),
+              _legalLink(context, s.disclaimer, '/legal/disclaimer'),
             ],
           ),
           const SizedBox(height: 8),

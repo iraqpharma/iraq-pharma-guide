@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 const _playStoreUrl =
     'https://play.google.com/store/apps/details?id=com.iraqpharma.guide';
@@ -43,13 +44,12 @@ class _SoftUpdateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return PopScope(
       canPop: false,
       child: Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Padding(
+      child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -69,7 +69,7 @@ class _SoftUpdateWidget extends StatelessWidget {
 
               // عنوان
               Text(
-                '🎉 تحديث جديد متاح!',
+                s.newUpdateAvailableTitle,
                 style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class _SoftUpdateWidget extends StatelessWidget {
               const SizedBox(height: 6),
 
               Text(
-                'الإصدار $latestVersion',
+                s.versionLabel(latestVersion),
                 style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: 13,
                   color: AppColors.primary,
@@ -117,7 +117,7 @@ class _SoftUpdateWidget extends StatelessWidget {
                   onPressed: _openStore,
                   icon: const Icon(Icons.download_rounded, size: 20),
                   label: Text(
-                    'حدّث التطبيق الآن',
+                    s.updateAppNowLabel,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 15, fontWeight: FontWeight.bold),
                   ),
@@ -136,6 +136,6 @@ class _SoftUpdateWidget extends StatelessWidget {
           ),
         ),
       ),
-    ));
+    );
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -256,6 +258,10 @@ class AuthService {
   //    → Enable Google, paste the Web Client ID and Client Secret from step 1
   // 5. Supabase Dashboard → Authentication → URL Configuration
   //    → Add  com.iraqpharmaguide.app://*  to Redirect URLs
+  // 6. [iOS] Google Cloud Console → Credentials → Create OAuth 2.0 Client ID → iOS
+  //    → Bundle ID: com.iraqpharmaguide.iraqPharmaGuide
+  //    → Add the resulting client ID as GIDClientID + its reversed form as a
+  //      CFBundleURLTypes scheme in ios/Runner/Info.plist (done — see Info.plist)
   //
   static const _kGoogleWebClientId =
       '1411929971-4gvbfippaoi1r1puva3gqrbjc2p8ptid.apps.googleusercontent.com';
@@ -295,6 +301,72 @@ class AuthService {
       return AuthResult.failure(_translateAuthError(e.message));
     } catch (_) {
       return AuthResult.failure('فشل تسجيل الدخول بـ Google');
+    }
+  }
+
+  // ── Apple Sign-In (iOS only — required by App Store guideline 4.8) ─────────
+  //
+  // SETUP CHECKLIST (do this once before releasing):
+  // 1. Apple Developer portal → Certificates, Identifiers & Profiles → Identifiers
+  //    → select the app's App ID (com.iraqpharmaguide.iraqPharmaGuide)
+  //    → check "Sign In with Apple" → Save.
+  //    (No Services ID / key needed — this is the native iOS-only flow.)
+  // 2. Supabase Dashboard → Authentication → Providers → Apple → Enable
+  //    → Client IDs: com.iraqpharmaguide.iraqPharmaGuide
+  //    → leave Secret Key blank (only required for the web/Android OAuth flow).
+  //
+  Future<AuthResult> signInWithApple() async {
+    try {
+      final rawNonce = _client.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) return AuthResult.failure('فشل الحصول على بيانات Apple');
+
+      await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken:  idToken,
+        nonce:    rawNonce,
+      );
+
+      // Create profile on first Apple login.
+      // Apple only sends the name/email once — on the very first authorization —
+      // so we must capture and persist it right here.
+      final uid = _client.auth.currentUser?.id;
+      if (uid != null) {
+        final existing = await _client.from('profiles').select('id').eq('id', uid).maybeSingle();
+        if (existing == null) {
+          final fullName = [credential.givenName, credential.familyName]
+              .where((p) => p != null && p.isNotEmpty)
+              .join(' ');
+          final email = credential.email ?? _client.auth.currentUser?.email ?? '';
+          final baseUsername = email.contains('@') ? _usernameFromEmail(email) : 'user_${uid.substring(0, 8)}';
+          final uname = await _uniqueUsername(baseUsername);
+          await _client.from('profiles').insert({
+            'id':        uid,
+            'full_name': fullName,
+            'username':  uname,
+          });
+        }
+      }
+      return AuthResult.success();
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return AuthResult.failure('تم إلغاء تسجيل الدخول');
+      }
+      return AuthResult.failure('فشل تسجيل الدخول بـ Apple');
+    } on AuthException catch (e) {
+      return AuthResult.failure(_translateAuthError(e.message));
+    } catch (_) {
+      return AuthResult.failure('فشل تسجيل الدخول بـ Apple');
     }
   }
 

@@ -26,11 +26,34 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.iraqpharmaguide.app.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.iraqpharmaguide.app</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.iraqpharmaguide.google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1411929971-rkqcg54gjgotljig5e9jmiqm5340scsq</string>
+			</array>
+		</dict>
+	</array>
+	<key>GIDClientID</key>
+	<string>1411929971-rkqcg54gjgotljig5e9jmiqm5340scsq.apps.googleusercontent.com</string>
 	<key>NSCameraUsageDescription</key>
 	<string>يستخدم التطبيق الكاميرا للسماح لك بالتقاط صور وإرفاقها بملاحظاتك الشخصية داخل التطبيق.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>يحتاج التطبيق الوصول لمكتبة الصور للسماح لك باختيار وإرفاق صور بملاحظاتك الشخصية داخل التطبيق.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>لا يستخدم التطبيق موقعك الجغرافي بشكل مباشر، وهذا الإذن مطلوب فقط من بعض المكتبات الداخلية للتطبيق.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>لا يستخدم التطبيق موقعك الجغرافي بشكل مباشر، وهذا الإذن مطلوب فقط من بعض المكتبات الداخلية للتطبيق.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

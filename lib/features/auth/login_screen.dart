@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,10 +25,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey   = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl  = TextEditingController();
-  bool    _loading    = false;
-  bool    _fbLoading  = false;
-  bool    _obscure    = true;
-  bool    _rememberMe = false;
+  bool    _loading      = false;
+  bool    _fbLoading    = false;
+  bool    _appleLoading = false;
+  bool    _obscure      = true;
+  bool    _rememberMe   = false;
   String? _error;
   StreamSubscription<AuthState>? _authSub;
 
@@ -89,6 +91,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final result = await AuthService.instance.signInWithGoogle();
     if (!mounted) return;
     setState(() => _loading = false);
+    if (result.isSuccess) {
+      _showLoginSuccess();
+    } else {
+      setState(() => _error = result.error);
+    }
+  }
+
+  Future<void> _appleSignIn() async {
+    setState(() { _appleLoading = true; _error = null; });
+    final result = await AuthService.instance.signInWithApple();
+    if (!mounted) return;
+    setState(() => _appleLoading = false);
     if (result.isSuccess) {
       _showLoginSuccess();
     } else {
@@ -205,10 +219,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 18),
 
                     _SocialLoginRow(
-                      loading: _loading || _fbLoading,
+                      loading: _loading || _fbLoading || _appleLoading,
                       fbLoading: _fbLoading,
+                      appleLoading: _appleLoading,
                       onGoogle: _googleSignIn,
                       onFacebook: _facebookSignIn,
+                      onApple: _appleSignIn,
                     ),
                     const SizedBox(height: 30),
 
@@ -995,13 +1011,13 @@ class _AuthField extends StatelessWidget {
 class _PasswordField extends StatelessWidget {
   final TextEditingController ctrl;
   final bool obscure;
-  final String label;
+  final String? label;
   final VoidCallback onToggle;
   final String? Function(String?)? validator;
 
   const _PasswordField({
     required this.ctrl, required this.obscure,
-    this.label = 'كلمة المرور', required this.onToggle, this.validator,
+    this.label, required this.onToggle, this.validator,
   });
 
   @override
@@ -1010,7 +1026,7 @@ class _PasswordField extends StatelessWidget {
     textAlign: TextAlign.left, textDirection: TextDirection.ltr,
     maxLength: 128, inputFormatters: [LengthLimitingTextInputFormatter(128)],
     style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
-    decoration: _fieldDeco(label: label, icon: Icons.lock_outline, context: context).copyWith(
+    decoration: _fieldDeco(label: label ?? context.s.password, icon: Icons.lock_outline, context: context).copyWith(
       counterText: '',
       suffixIcon: IconButton(
         icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -1053,20 +1069,29 @@ const _kGoogleSvg = '''
 class _SocialLoginRow extends StatelessWidget {
   final bool loading;
   final bool fbLoading;
+  final bool appleLoading;
   final VoidCallback onGoogle;
   final VoidCallback onFacebook;
+  final VoidCallback onApple;
   const _SocialLoginRow({
     required this.loading,
     required this.fbLoading,
+    required this.appleLoading,
     required this.onGoogle,
     required this.onFacebook,
+    required this.onApple,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Sign in with Apple is only offered on iOS, per App Store guideline 4.8 —
+    // Apple requires it as an equivalent to other third-party sign-in options,
+    // but Apple's own SDK is iOS/macOS-only anyway.
+    final showApple = Platform.isIOS;
     return Column(children: [
       Text(
-        'المتابعة عبر',
+        context.s.continueWithLabel,
         style: GoogleFonts.ibmPlexSansArabic(
           fontSize: 12,
           letterSpacing: 0.3,
@@ -1091,6 +1116,20 @@ class _SocialLoginRow extends StatelessWidget {
             onTap: loading ? null : onGoogle,
             child: SvgPicture.string(_kGoogleSvg, width: 24, height: 24),
           ),
+          if (showApple) ...[
+            const SizedBox(width: 20),
+            _SocialBtn(
+              onTap: loading ? null : onApple,
+              child: appleLoading
+                  ? SizedBox(
+                      width: 20, height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: isDark ? Colors.white : Colors.black))
+                  : Icon(Icons.apple, size: 28,
+                      color: isDark ? Colors.white : Colors.black),
+            ),
+          ],
         ],
       ),
     ]);

@@ -95,7 +95,9 @@ class _HomeBody extends StatelessWidget {
         // ── Teal Header (pinned — يثبت عند التمرير) ──────────────────────
         SliverPersistentHeader(
           pinned: true,
-          delegate: _TealHeaderDelegate(),
+          delegate: _TealHeaderDelegate(
+            topPadding: MediaQuery.of(context).padding.top,
+          ),
         ),
 
         // ── Ad Carousel (Supabase Realtime) ──────────────────────────────
@@ -174,27 +176,30 @@ class _HomeBody extends StatelessWidget {
 
 // ── SliverPersistentHeader delegate for TealHeader ───────────────────────────
 class _TealHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double topPadding;
+  _TealHeaderDelegate({required this.topPadding});
+
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return _TealHeader();
   }
 
-  @override
-  double get maxExtent => _kHeaderHeight;
+  // ارتفاع الهيدر يُحسب من safe-area الفعلي للجهاز + مساحة كافية
+  // لعنوانين (العربي + الإنجليزي) — كان ثابتاً على 100 بدون مراعاة
+  // اختلاف حجم الـ Dynamic Island/notch بين الأجهزة، فكان ينقطع النص
+  // على الأجهزة ذات safe-area أكبر (آيفون 14/15/16 Pro مثلاً).
+  double get _height => topPadding + 12 + 46 + 20;
 
   @override
-  double get minExtent => _kHeaderHeight;
+  double get maxExtent => _height;
 
   @override
-  bool shouldRebuild(_TealHeaderDelegate old) => false;
-}
+  double get minExtent => _height;
 
-// ارتفاع الهيدر الثابت
-double get _kHeaderHeight {
-  // top padding (status bar) + padding داخلي + Row height + bottom padding
-  // نستخدم قيمة ثابتة معقولة — MediaQuery غير متاح هنا
-  return 100;
+  @override
+  bool shouldRebuild(covariant _TealHeaderDelegate old) =>
+      old.topPadding != topPadding;
 }
 
 // ── OTC Banner ────────────────────────────────────────────────────────────────
@@ -374,7 +379,7 @@ class _TealHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
     return Container(
-      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 16),
+      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 20),
       decoration: const BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.only(
@@ -1266,7 +1271,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
               child: favAsync.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('خطأ: $e')),
+                error: (e, _) => Center(child: Text('${context.s.error}: $e')),
                 data: (drugs) => drugs.isEmpty
                     ? _emptyState()
                     : _buildList(context, ref, drugs),
@@ -1841,6 +1846,7 @@ class _NotificationsDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
+    final s = context.s;
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -1856,7 +1862,7 @@ class _NotificationsDrawer extends StatelessWidget {
                 const Icon(Icons.notifications_rounded,
                     color: Colors.white, size: 24),
                 const SizedBox(width: 10),
-                Text('الإشعارات',
+                Text(s.notifications,
                     style: GoogleFonts.cairo(
                         color: Colors.white,
                         fontSize: 20,
@@ -1890,13 +1896,13 @@ class _NotificationsDrawer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Text('لا توجد إشعارات',
+                  Text(s.noNotifications,
                       style: GoogleFonts.cairo(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 8),
-                  Text('ستظهر هنا الإشعارات والتنبيهات الجديدة',
+                  Text(s.noNotificationsSub,
                       style: GoogleFonts.cairo(
                           fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       textAlign: TextAlign.center),

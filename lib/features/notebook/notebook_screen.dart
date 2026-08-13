@@ -374,6 +374,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -387,14 +388,14 @@ class _EmptyState extends StatelessWidget {
                 size: 44, color: AppColors.primaryBlue),
           ),
           const SizedBox(height: 20),
-          Text('الدفتر فارغ',
+          Text(s.emptyNotebook,
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 10),
           Text(
-            'أضف أسماء الأدوية المفقودة\nثم أرسلها مباشرة عبر واتساب',
+            s.emptyNotebookWhatsappSub,
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),

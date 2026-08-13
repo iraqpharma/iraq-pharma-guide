@@ -104,7 +104,7 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
-                  Center(child: Text('خطأ: $e')),
+                  Center(child: Text('${context.s.error}: $e')),
               data: (drugs) {
                 // Filter by search query
                 final filtered = _query.isEmpty

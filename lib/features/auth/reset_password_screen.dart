@@ -111,6 +111,7 @@ class _FormView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final s = context.s;
 
     InputDecoration fieldDeco(String label, IconData icon, {Widget? suffix}) =>
         InputDecoration(
@@ -162,14 +163,14 @@ class _FormView extends StatelessWidget {
           ),
           const SizedBox(height: 22),
 
-          Text('تعيين كلمة مرور جديدة',
+          Text(s.setNewPasswordTitle,
               textAlign: TextAlign.center,
               style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: cs.onSurface)),
           const SizedBox(height: 8),
-          Text('أدخل كلمة المرور الجديدة التي تريد استخدامها',
+          Text(s.setNewPasswordSub,
               textAlign: TextAlign.center,
               style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: 13, color: cs.onSurfaceVariant, height: 1.5)),
@@ -183,7 +184,7 @@ class _FormView extends StatelessWidget {
             inputFormatters: [LengthLimitingTextInputFormatter(128)],
             style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
             decoration: fieldDeco(
-              'كلمة المرور الجديدة',
+              s.newPassword,
               Icons.lock_outline_rounded,
               suffix: IconButton(
                 icon: Icon(
@@ -196,8 +197,8 @@ class _FormView extends StatelessWidget {
               ),
             ),
             validator: (v) {
-              if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
-              if (v.length < 8) return 'يجب أن تكون 8 أحرف على الأقل';
+              if (v == null || v.isEmpty) return s.enterPassword;
+              if (v.length < 8) return s.passwordMin8Chars;
               return null;
             },
           ),
@@ -211,7 +212,7 @@ class _FormView extends StatelessWidget {
             inputFormatters: [LengthLimitingTextInputFormatter(128)],
             style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
             decoration: fieldDeco(
-              'تأكيد كلمة المرور',
+              s.confirmPassword,
               Icons.lock_outline_rounded,
               suffix: IconButton(
                 icon: Icon(
@@ -224,8 +225,8 @@ class _FormView extends StatelessWidget {
               ),
             ),
             validator: (v) {
-              if (v == null || v.isEmpty) return 'أكّد كلمة المرور';
-              if (v != passCtrl.text) return 'كلمتا المرور غير متطابقتين';
+              if (v == null || v.isEmpty) return s.confirmPasswordValidate;
+              if (v != passCtrl.text) return s.passwordMismatch;
               return null;
             },
           ),
@@ -268,7 +269,7 @@ class _FormView extends StatelessWidget {
                       width: 22, height: 22,
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2.5))
-                  : Text('حفظ كلمة المرور',
+                  : Text(s.savePasswordBtn,
                       style: GoogleFonts.ibmPlexSansArabic(
                           fontSize: 16, fontWeight: FontWeight.w600)),
             ),
@@ -283,7 +284,9 @@ class _FormView extends StatelessWidget {
 
 class _DoneView extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context) {
+    final s = context.s;
+    return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       const SizedBox(height: 60),
@@ -296,14 +299,14 @@ class _DoneView extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 28),
-      Text('تم تغيير كلمة المرور',
+      Text(s.passwordChangedTitle,
           textAlign: TextAlign.center,
           style: GoogleFonts.ibmPlexSansArabic(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 10),
-      Text('يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة',
+      Text(s.canNowSignInMsg,
           textAlign: TextAlign.center,
           style: GoogleFonts.ibmPlexSansArabic(
               fontSize: 14,
@@ -321,11 +324,12 @@ class _DoneView extends StatelessWidget {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14)),
           ),
-          child: Text('الذهاب إلى تسجيل الدخول',
+          child: Text(s.goToLogin,
               style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: 16, fontWeight: FontWeight.w600)),
         ),
       ),
     ],
-  );
+    );
+  }
 }

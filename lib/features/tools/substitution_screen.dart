@@ -556,14 +556,14 @@ class _EmptyState extends StatelessWidget {
                 size: 64,
                 color: AppColors.textSecondary.withOpacity(0.3)),
             const SizedBox(height: 16),
-            Text('لا توجد نتائج لـ "$query"',
+            Text(context.s.noResultsForQuery(query),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cairo(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 8),
-            Text('جرّب البحث باسم تجاري آخر أو بالاسم العلمي',
+            Text(context.s.tryDifferentSearchTerm,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cairo(
                     fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),

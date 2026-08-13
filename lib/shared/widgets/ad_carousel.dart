@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../providers/advertisement_provider.dart';
 import '../../data/models/advertisement.dart';
 
@@ -139,6 +140,7 @@ class _AdCard extends StatelessWidget {
   });
 
   void _showAdInfo(BuildContext context) {
+    final s = context.s;
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -179,7 +181,7 @@ class _AdCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text('المساحة الإعلانية',
+                      child: Text(s.adSpaceTitle,
                           style: GoogleFonts.cairo(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -208,7 +210,7 @@ class _AdCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'اعرض منتجاتك أو خدماتك أمام أكثر من',
+                      s.adReachText,
                       style: GoogleFonts.cairo(
                           fontSize: 14, color: AppColors.textPrimary),
                     ),
@@ -222,14 +224,14 @@ class _AdCard extends StatelessWidget {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text('5,000 صيدلاني',
+                          child: Text(s.pharmacistCountLabel,
                               style: GoogleFonts.cairo(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white)),
                         ),
                         const SizedBox(width: 8),
-                        Text('في العراق',
+                        Text(s.inIraqLabel,
                             style: GoogleFonts.cairo(
                                 fontSize: 14, color: AppColors.textPrimary)),
                       ],
@@ -246,7 +248,7 @@ class _AdCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('للتواصل والاستفسار:',
+                          Text(s.contactInquiryLabel,
                               style: GoogleFonts.cairo(
                                   fontSize: 12,
                                   color: AppColors.textSecondary)),
@@ -284,7 +286,7 @@ class _AdCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.phone_rounded, size: 18),
-                        label: Text('اتصل الآن',
+                        label: Text(s.callNowLabel,
                             style: GoogleFonts.cairo(
                                 fontSize: 14, fontWeight: FontWeight.bold)),
                       ),
@@ -334,7 +336,7 @@ class _AdCard extends StatelessWidget {
                         const Icon(Icons.broken_image_outlined,
                             color: AppColors.primary, size: 28),
                         const SizedBox(height: 6),
-                        Text('تعذّر تحميل الصورة',
+                        Text(context.s.imageLoadFailed,
                             style: GoogleFonts.cairo(
                                 fontSize: 11, color: AppColors.primary)),
                       ],

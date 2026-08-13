@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 
 // Replace with your actual Play Store URL when published
 const _playStoreUrl =
@@ -66,6 +67,7 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
 
   @override
   Widget build(BuildContext context) {
+    final s = context.s;
     return PopScope(
       canPop: false, // prevents back-button dismiss
       child: ScaleTransition(
@@ -98,7 +100,7 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
                       color: Colors.white, size: 34),
                 ),
                 const SizedBox(height: 12),
-                Text('تحديث مطلوب',
+                Text(s.updateRequired,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 20, fontWeight: FontWeight.bold,
                         color: Colors.white)),
@@ -110,7 +112,7 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
               padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
               child: Column(children: [
                 Text(
-                  'يتوفر تحديث جديد!\nيرجى تحديث التطبيق للمتابعة.',
+                  s.updateAvailableBody,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.ibmPlexSansArabic(
                       fontSize: 15, height: 1.7, color: AppColors.textPrimary),
@@ -119,11 +121,11 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
 
                 // Version badges
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _VersionBadge(label: 'الإصدار الحالي', version: widget.currentVersion, color: Colors.red.shade400),
+                  _VersionBadge(label: s.currentVersionLabel, version: widget.currentVersion, color: Colors.red.shade400),
                   const SizedBox(width: 8),
                   const Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.textSecondary),
                   const SizedBox(width: 8),
-                  _VersionBadge(label: 'الإصدار المطلوب', version: widget.minVersion, color: AppColors.primary),
+                  _VersionBadge(label: s.requiredVersionLabel, version: widget.minVersion, color: AppColors.primary),
                 ]),
                 const SizedBox(height: 22),
 
@@ -137,7 +139,7 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
                             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : const Icon(Icons.download_rounded, size: 20),
                     label: Text(
-                      _launching ? 'جارٍ الفتح...' : 'تحديث الآن',
+                      _launching ? s.openingLabel : s.updateNowLabel,
                       style: GoogleFonts.ibmPlexSansArabic(
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
@@ -152,7 +154,7 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'لا يمكن الاستمرار بدون التحديث',
+                  s.cannotContinueWithoutUpdate,
                   style: GoogleFonts.ibmPlexSansArabic(
                       fontSize: 12, color: AppColors.textSecondary),
                 ),

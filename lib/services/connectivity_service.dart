@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import '../core/l10n/app_strings.dart';
 
 class ConnectivityService {
   ConnectivityService._();
@@ -48,13 +49,14 @@ class _ConnectivityListenerState extends State<ConnectivityListener> {
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
+    final s = context.s;
     if (isOnline) {
       messenger.showSnackBar(SnackBar(
-        content: const Row(children: [
-          Icon(Icons.wifi_rounded, color: Colors.white, size: 18),
-          SizedBox(width: 10),
-          Text('تم الاتصال بالإنترنت',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        content: Row(children: [
+          const Icon(Icons.wifi_rounded, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Text(s.connectedToInternet,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         ]),
         backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
@@ -63,11 +65,11 @@ class _ConnectivityListenerState extends State<ConnectivityListener> {
       ));
     } else {
       messenger.showSnackBar(SnackBar(
-        content: const Row(children: [
-          Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
-          SizedBox(width: 10),
-          Text('لا يوجد اتصال بالإنترنت',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        content: Row(children: [
+          const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Text(s.noInternetConnection,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         ]),
         backgroundColor: const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,

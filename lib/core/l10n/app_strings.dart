@@ -104,13 +104,20 @@ class AppStrings {
   String get crcl              => isAr ? 'حاسبة CrCl'                              : 'CrCl Calculator';
   String get crclSub           => isAr ? 'تصفية الكرياتينين — معادلة Cockcroft-Gault' : 'Creatinine Clearance — Cockcroft-Gault';
   String get interactions      => isAr ? 'فاحص التفاعلات'     : 'Interaction Checker';
-  String get interactionsSub   => isAr ? 'Drug Interactions'  : 'تفاعلات الأدوية';
+  String get interactionsSub   => isAr ? 'تفاعلات الأدوية'    : 'Drug Interactions';
   String get notebook          => isAr ? 'دفتر الصيدلاني'     : 'Pharmacist Notebook';
-  String get notebookSub       => isAr ? 'Missing Drugs'      : 'الأدوية المفقودة';
+  String get notebookSub       => isAr ? 'الأدوية المفقودة'   : 'Missing Drugs';
   String get pricingCalc       => isAr ? 'حاسبة التسعير'      : 'Pricing Calculator';
-  String get pricingCalcSub    => isAr ? 'Smart Pricing Calculator' : 'حاسبة التسعير الذكية';
+  String get pricingCalcSub    => isAr ? 'حاسبة التسعير الذكية' : 'Smart Pricing Calculator';
   String get substitution      => isAr ? 'الباحث عن البدائل'  : 'Substitution Finder';
-  String get substitutionSub   => isAr ? 'Smart Substitution' : 'البديل الذكي';
+  String get substitutionSub   => isAr ? 'البديل الذكي'       : 'Smart Substitution';
+
+  // ── Drawer (hamburger menu) ─────────────────────────────────────────────────
+  String get pricesSectionLabel   => isAr ? 'الأسعار' : 'Prices';
+  String get drawerInteractionsSub => isAr ? 'تفاعلات الأدوية المتعددة' : 'Multiple drug interactions';
+  String get drawerNotebookSub    => isAr ? 'الأدوية المفقودة والملاحظات' : 'Missing drugs and notes';
+  String get drawerPricingSub     => isAr ? 'تكلفة الوحدة وسعر البيع' : 'Unit cost and selling price';
+  String get drawerSubstitutionSub => isAr ? 'البدائل المباشرة والعلاجية' : 'Direct and therapeutic alternatives';
 
   // Quick filters
   String get safePregnancy     => isAr ? 'آمن للحمل'    : 'Safe for Pregnancy';
@@ -194,6 +201,8 @@ class AppStrings {
   String get agreeAnd          => isAr ? ' و'          : ' and ';
   String get rememberMe        => isAr ? 'تذكرني'      : 'Remember me';
   String get continueGoogle    => isAr ? 'المتابعة عبر Google' : 'Continue with Google';
+  String get continueApple     => isAr ? 'المتابعة عبر Apple' : 'Continue with Apple';
+  String get continueWithLabel => isAr ? 'المتابعة عبر'       : 'Continue with';
   String get orWith            => isAr ? 'أو'          : 'or';
   String get loginSubHint      => isAr ? 'البريد الإلكتروني · رقم الهاتف · اسم المستخدم'
                                        : 'Email · Phone · Username';
@@ -485,6 +494,9 @@ class AppStrings {
   String get noPendingItems  => isAr ? 'لا توجد عناصر غير مكتملة للإرسال' : 'No pending items to send';
   String get emptyNotebook   => isAr ? 'الدفتر فارغ'           : 'Notebook is empty';
   String get emptyNotebookSub => isAr ? 'أضف الأدوية الناقصة في صيدليتك' : 'Add missing drugs in your pharmacy';
+  String get emptyNotebookWhatsappSub => isAr
+      ? 'أضف أسماء الأدوية المفقودة\nثم أرسلها مباشرة عبر واتساب'
+      : 'Add the names of missing drugs\nthen send them directly via WhatsApp';
   String get all_             => isAr ? 'الكل'   : 'All';
   String get missing          => isAr ? 'مفقود'  : 'Missing';
   String get doneLabel        => isAr ? 'تم'     : 'Done';
@@ -680,6 +692,64 @@ class AppStrings {
   String get search            => isAr ? 'بحث'             : 'Search';
   String get send              => isAr ? 'إرسال'           : 'Send';
   String get required_         => isAr ? 'مطلوب'           : 'Required';
+
+  // ── Rating modal ──────────────────────────────────────────────────────────
+  String get rateApp           => isAr ? 'قيّم التطبيق'    : 'Rate the App';
+  String get rateAppLater      => isAr ? 'لاحقاً'          : 'Later';
+  String get rateAppSubmit     => isAr ? 'إرسال التقييم'  : 'Submit Rating';
+  String get rateAppThanks     => isAr ? 'شكراً لك!'       : 'Thank you!';
+  String get rateAppHintHigh   => isAr ? '🎉 شكراً! سنحولك للمتجر لإتمام التقييم' : '🎉 Thanks! We\'ll take you to the store to finish rating';
+  String get rateAppHintLow    => isAr ? 'نأسف لذلك. سنعمل على التحسين' : 'Sorry to hear that. We\'ll work on improving';
+  String get rateAppThanksHigh => isAr ? 'تقييمك يعني لنا الكثير ❤️' : 'Your rating means a lot to us ❤️';
+  String get rateAppThanksLow  => isAr ? 'سنعمل على تحسين التطبيق' : 'We\'ll work on improving the app';
+
+  // ── Force update dialog ───────────────────────────────────────────────────
+  String get updateRequired          => isAr ? 'تحديث مطلوب' : 'Update Required';
+  String get updateAvailableBody     => isAr ? 'يتوفر تحديث جديد!\nيرجى تحديث التطبيق للمتابعة.' : 'A new update is available!\nPlease update the app to continue.';
+  String get currentVersionLabel     => isAr ? 'الإصدار الحالي' : 'Current Version';
+  String get requiredVersionLabel    => isAr ? 'الإصدار المطلوب' : 'Required Version';
+  String get openingLabel            => isAr ? 'جارٍ الفتح...' : 'Opening...';
+  String get updateNowLabel          => isAr ? 'تحديث الآن' : 'Update Now';
+  String get cannotContinueWithoutUpdate => isAr ? 'لا يمكن الاستمرار بدون التحديث' : 'Cannot continue without updating';
+
+  // ── Soft update dialog ────────────────────────────────────────────────────
+  String get newUpdateAvailableTitle => isAr ? '🎉 تحديث جديد متاح!' : '🎉 New update available!';
+  String versionLabel(String v)      => isAr ? 'الإصدار $v' : 'Version $v';
+  String get updateAppNowLabel       => isAr ? 'حدّث التطبيق الآن' : 'Update App Now';
+
+  // ── Ad carousel ───────────────────────────────────────────────────────────
+  String get adSpaceTitle      => isAr ? 'المساحة الإعلانية' : 'Ad Space';
+  String get pharmacistCountLabel => isAr ? '5,000 صيدلاني' : '5,000 Pharmacists';
+  String get adReachText       => isAr ? 'اعرض منتجاتك أو خدماتك أمام أكثر من' : 'Showcase your products or services to over';
+  String get inIraqLabel       => isAr ? 'في العراق' : 'in Iraq';
+  String get contactInquiryLabel => isAr ? 'للتواصل والاستفسار:' : 'For contact & inquiries:';
+  String get callNowLabel      => isAr ? 'اتصل الآن' : 'Call Now';
+  String get imageLoadFailed   => isAr ? 'تعذّر تحميل الصورة' : 'Failed to load image';
+
+  // ── Connectivity ──────────────────────────────────────────────────────────
+  String get connectedToInternet   => isAr ? 'تم الاتصال بالإنترنت' : 'Connected to the internet';
+  String get noInternetConnection  => isAr ? 'لا يوجد اتصال بالإنترنت' : 'No internet connection';
+
+  // ── Substitution search ───────────────────────────────────────────────────
+  String noResultsForQuery(String q) => isAr ? 'لا توجد نتائج لـ "$q"' : 'No results for "$q"';
+  String get tryDifferentSearchTerm  => isAr ? 'جرّب البحث باسم تجاري آخر أو بالاسم العلمي' : 'Try a different trade name or the generic name';
+
+  // ── Reset password ────────────────────────────────────────────────────────
+  String get setNewPasswordTitle => isAr ? 'تعيين كلمة مرور جديدة' : 'Set a New Password';
+  String get setNewPasswordSub   => isAr ? 'أدخل كلمة المرور الجديدة التي تريد استخدامها' : 'Enter the new password you want to use';
+  String get passwordMin8Chars   => isAr ? 'يجب أن تكون 8 أحرف على الأقل' : 'Must be at least 8 characters';
+  String get confirmPasswordValidate => isAr ? 'أكّد كلمة المرور' : 'Confirm your password';
+  String get savePasswordBtn     => isAr ? 'حفظ كلمة المرور' : 'Save Password';
+  String get passwordChangedTitle => isAr ? 'تم تغيير كلمة المرور' : 'Password Changed';
+  String get canNowSignInMsg     => isAr ? 'يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة' : 'You can now sign in with your new password';
+
+  // ── OTP screen ────────────────────────────────────────────────────────────
+  String get pasteCodeLabel    => isAr ? 'اضغط للصق الرمز' : 'Tap to paste code';
+  String get changeEmailLabel  => isAr ? 'تغيير البريد الإلكتروني' : 'Change Email';
+
+  // ── Drug detail extras ────────────────────────────────────────────────────
+  String get drugFormAdministration => isAr ? 'شكل الدواء وطريقة الإعطاء' : 'Drug Form & Administration';
+  String get availableDosesLabel    => isAr ? 'الجرع المتوفرة' : 'Available Doses';
 }
 
 extension AppStringsExt on BuildContext {

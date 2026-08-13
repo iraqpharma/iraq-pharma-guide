@@ -1,7 +1,7 @@
 name: iraq_pharma_guide
 description: Iraq Pharma Guide - دليل الدواء العراقي
 publish_to: 'none'
-version: 2.2.0+5
+version: 2.2.0+6
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -51,6 +51,7 @@ dependencies:
 
   # Auth
   google_sign_in: ^6.2.2
+  sign_in_with_apple: ^8.1.0
   app_links: ^6.0.0
 
   # Firebase / Push Notifications

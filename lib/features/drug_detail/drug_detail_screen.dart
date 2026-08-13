@@ -410,7 +410,7 @@ class _DosageFormCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('شكل الدواء وطريقة الإعطاء',
+                Text(context.s.drugFormAdministration,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF1976D2),
@@ -462,7 +462,7 @@ class _AvailableDosesCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('الجرع المتوفرة',
+                Text(context.s.availableDosesLabel,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF7B1FA2),

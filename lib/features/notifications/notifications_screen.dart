@@ -301,7 +301,7 @@ class _NotificationTile extends StatelessWidget {
                           children: [
                             Icon(type.icon, size: 10, color: type.color),
                             const SizedBox(width: 3),
-                            Text(type.arabicLabel,
+                            Text(type.label(context.s.isAr),
                                 style: GoogleFonts.cairo(
                                     fontSize: 10,
                                     color: type.color,
@@ -410,7 +410,7 @@ class _NotificationDetailDialog extends StatelessWidget {
                             children: [
                               Icon(type.icon, size: 11, color: type.color),
                               const SizedBox(width: 4),
-                              Text(type.arabicLabel,
+                              Text(type.label(context.s.isAr),
                                   style: GoogleFonts.cairo(
                                       fontSize: 11,
                                       color: type.color,

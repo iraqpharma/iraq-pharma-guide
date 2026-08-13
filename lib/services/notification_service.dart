@@ -80,16 +80,44 @@ class NotificationService {
     final initial = await _fcm.getInitialMessage();
     if (initial != null) _onNotificationTap(initial);
 
-    // 6. Log token for testing
+    // 6. Persist the token so the server can actually target this device.
+    //    Without this, push notifications are silently never sent — the
+    //    server-side edge function looks up profiles.fcm_token and has
+    //    nothing to send to.
     final token = await _fcm.getToken();
     debugPrint('FCM Token: $token');
+    await _saveTokenForCurrentUser(token);
 
-    // 7. iOS foreground presentation
+    // 7. Keep the token fresh — FCM tokens rotate periodically.
+    _fcm.onTokenRefresh.listen(_saveTokenForCurrentUser);
+
+    // 8. iOS foreground presentation
     if (Platform.isIOS) {
       await _fcm.setForegroundNotificationPresentationOptions(
         alert: true, badge: true, sound: true,
       );
     }
+  }
+
+  /// Saves the FCM token to the current user's profile row so the
+  /// send-push-notification edge function can find it.
+  Future<void> _saveTokenForCurrentUser(String? token) async {
+    if (token == null) return;
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) return; // not logged in yet — will be saved on next call
+    try {
+      await _db.from('profiles').update({'fcm_token': token}).eq('id', uid);
+    } catch (e) {
+      debugPrint('Failed to save FCM token: $e');
+    }
+  }
+
+  /// Public entry point — call this right after notification permission is
+  /// granted (user is guaranteed logged-in at that point) and again on every
+  /// app start so returning users on an existing install stay registered.
+  Future<void> saveTokenForCurrentUser() async {
+    final token = await _fcm.getToken();
+    await _saveTokenForCurrentUser(token);
   }
 
   void _onForegroundMessage(RemoteMessage message) {

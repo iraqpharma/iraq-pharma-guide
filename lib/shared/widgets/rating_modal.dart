@@ -3,6 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/l10n/app_strings.dart';
 import '../../services/rating_service.dart';
 
 const _kStoreThreshold = 4.0;
@@ -70,20 +71,18 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _submitted ? _buildThanks() : _buildForm(),
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _submitted ? _buildThanks() : _buildForm(),
         ),
       ),
     );
   }
 
   Widget _buildForm() {
+    final s = context.s;
     return Column(
       key: const ValueKey('form'),
       mainAxisSize: MainAxisSize.min,
@@ -102,7 +101,7 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
         const SizedBox(height: 16),
 
         // Title
-        Text('قيّم التطبيق',
+        Text(s.rateApp,
           style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 18, fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -143,8 +142,8 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
           duration: const Duration(milliseconds: 200),
           child: Text(
             _rating >= _kStoreThreshold
-                ? '🎉 شكراً! سنحولك للمتجر لإتمام التقييم'
-                : 'نأسف لذلك. سنعمل على التحسين',
+                ? s.rateAppHintHigh
+                : s.rateAppHintLow,
             style: GoogleFonts.ibmPlexSansArabic(
               fontSize: 12,
               color: _rating >= _kStoreThreshold
@@ -163,7 +162,7 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
             Expanded(
               child: TextButton(
                 onPressed: _loading ? null : () => Navigator.of(context).pop(),
-                child: Text('لاحقاً',
+                child: Text(s.rateAppLater,
                   style: GoogleFonts.ibmPlexSansArabic(
                     color: AppColors.textSecondary, fontSize: 14,
                   ),
@@ -194,7 +193,7 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
                             strokeWidth: 2, color: Colors.white,
                           ),
                         )
-                      : Text('إرسال التقييم',
+                      : Text(s.rateAppSubmit,
                           style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 14, fontWeight: FontWeight.bold,
                           )),
@@ -208,6 +207,7 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
   }
 
   Widget _buildThanks() {
+    final s = context.s;
     return Column(
       key: const ValueKey('thanks'),
       mainAxisSize: MainAxisSize.min,
@@ -215,7 +215,7 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
         const Icon(Icons.check_circle_rounded,
             color: AppColors.primary, size: 64),
         const SizedBox(height: 16),
-        Text('شكراً لك!',
+        Text(s.rateAppThanks,
           style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 18, fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -224,8 +224,8 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
         const SizedBox(height: 8),
         Text(
           _rating >= _kStoreThreshold
-              ? 'تقييمك يعني لنا الكثير ❤️'
-              : 'سنعمل على تحسين التطبيق',
+              ? s.rateAppThanksHigh
+              : s.rateAppThanksLow,
           style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 14, color: AppColors.textSecondary,
           ),

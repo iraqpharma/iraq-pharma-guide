@@ -167,6 +167,7 @@ class _OtpScreenState extends State<OtpScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final boxW   = _len > 6 ? 36.0 : 46.0;
     final boxH   = _len > 6 ? 50.0 : 58.0;
+    final s      = context.s;
 
     return Scaffold(
       backgroundColor: isDark ? cs.surface : const Color(0xFFF5F7FA),
@@ -227,12 +228,12 @@ class _OtpScreenState extends State<OtpScreen>
                             color: Colors.white, size: 32),
                       ),
                       const SizedBox(height: 12),
-                      Text('التحقق من البريد الإلكتروني',
+                      Text(s.otpTitle,
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 19, fontWeight: FontWeight.bold,
                               color: Colors.white)),
                       const SizedBox(height: 6),
-                      Text('أرسلنا رمزاً مكوناً من $_len أرقام إلى',
+                      Text('${s.otpSentTo} $_len ${s.otpDigits}',
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 13,
                               color: Colors.white.withOpacity(0.82))),
@@ -337,7 +338,7 @@ class _OtpScreenState extends State<OtpScreen>
                           Icon(Icons.content_paste_rounded,
                               size: 13, color: cs.onSurfaceVariant),
                           const SizedBox(width: 5),
-                          Text('اضغط للصق الرمز',
+                          Text(s.pasteCodeLabel,
                               style: GoogleFonts.ibmPlexSansArabic(
                                   fontSize: 12, color: cs.onSurfaceVariant)),
                         ],
@@ -430,7 +431,7 @@ class _OtpScreenState extends State<OtpScreen>
                       onPressed: _goBack,
                       icon: const Icon(Icons.edit_outlined,
                           size: 15, color: AppColors.primary),
-                      label: Text('تغيير البريد الإلكتروني',
+                      label: Text(s.changeEmailLabel,
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 13,
                               color: AppColors.primary,
