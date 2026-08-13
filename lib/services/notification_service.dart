@@ -120,6 +120,19 @@ class NotificationService {
     await _saveTokenForCurrentUser(token);
   }
 
+  /// Clears the saved token for the current user, so the server-side
+  /// edge function finds nothing to send to. Used when the user turns
+  /// push notifications OFF from the in-app toggle.
+  Future<void> clearTokenForCurrentUser() async {
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      await _db.from('profiles').update({'fcm_token': null}).eq('id', uid);
+    } catch (e) {
+      debugPrint('Failed to clear FCM token: $e');
+    }
+  }
+
   /// Forces a brand-new FCM token instead of reusing whatever is cached
   /// on-device. On iOS the FCM token can survive in the Keychain across
   /// app deletions/reinstalls and go stale (APNs rejects it with

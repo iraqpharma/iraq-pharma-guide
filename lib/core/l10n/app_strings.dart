@@ -269,6 +269,9 @@ class AppStrings {
   // ── Notifications ─────────────────────────────────────────────────────────
   String get notifications     => isAr ? 'الإشعارات'                      : 'Notifications';
   String get noNotifications   => isAr ? 'لا توجد إشعارات'               : 'No Notifications';
+  String get enableNotifFromSettings => isAr
+      ? 'الإذن مرفوض من إعدادات الجهاز — فعّله من الإعدادات أولاً'
+      : 'Permission denied at the device level — enable it from Settings first';
   String get noNotificationsSub=> isAr ? 'ستظهر هنا الإشعارات والتنبيهات الجديدة' : 'New notifications and alerts will appear here';
 
   // ── Notification Permission ───────────────────────────────────────────────

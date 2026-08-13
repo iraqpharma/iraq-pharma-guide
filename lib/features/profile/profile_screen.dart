@@ -10,6 +10,8 @@ import '../../providers/theme_provider.dart';
 import '../../services/admin_access_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/avatar_service.dart';
+import '../../services/notification_permission_service.dart';
+import '../../services/notification_service.dart';
 import '../../services/session_service.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/compact_app_header.dart';
@@ -30,6 +32,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool    _uploadingAvatar = false;
   String? _avatarUrl;
   bool    _isSuperAdmin    = false;
+  bool    _pushEnabled     = true;
+  bool    _pushBusy        = false;
 
   late final AnimationController _avatarCtrl;
   late final Animation<double>   _avatarScale;
@@ -41,6 +45,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _avatarScale = CurvedAnimation(parent: _avatarCtrl, curve: Curves.elasticOut);
     _loadProfile();
     _loadAdminAccess();
+    _loadPushState();
+  }
+
+  Future<void> _loadPushState() async {
+    final enabled = await NotificationPermissionService.instance.isEnabled();
+    if (mounted) setState(() => _pushEnabled = enabled);
+  }
+
+  Future<void> _togglePush() async {
+    if (_pushBusy) return;
+    setState(() => _pushBusy = true);
+    final target = !_pushEnabled;
+    final result = await NotificationPermissionService.instance.setEnabled(target);
+    if (!mounted) return;
+    setState(() {
+      _pushEnabled = result;
+      _pushBusy    = false;
+    });
+    if (target && !result) {
+      // User tried to enable but OS-level permission is denied.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.s.enableNotifFromSettings)),
+      );
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -247,6 +275,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   _divider(cs),
                   // ── Dark mode toggle ─────────────────────────────────
                   _buildThemeToggleRow(cs, isDark),
+                  _divider(cs),
+                  // ── Push notifications toggle ────────────────────────
+                  _buildPushToggleRow(cs),
+                  _divider(cs),
+                  // ── TEMP debug: copy this device's FCM token ─────────
+                  _buildNavTile(cs,
+                    icon: Icons.bug_report_outlined,
+                    color: const Color(0xFF546E7A),
+                    title: 'نسخ توكن الجهاز (تشخيص)',
+                    onTap: () async {
+                      final token = await NotificationService.instance.getToken();
+                      if (!mounted) return;
+                      if (token == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('لا يوجد توكن حاليًا')),
+                        );
+                        return;
+                      }
+                      await Clipboard.setData(ClipboardData(text: token));
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('تم النسخ: ${token.substring(0, 20)}...')),
+                      );
+                    },
+                  ),
                 ]),
                 const SizedBox(height: 12),
                 _buildCard(cs, children: [
@@ -536,6 +589,74 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         _IconBadge(
           icon: isDark ? Icons.nightlight_round : Icons.wb_sunny_outlined,
           color: isDark ? AppColors.accent : const Color(0xFF5E35B1),
+        ),
+      ]),
+    );
+  }
+
+  // ── Push notifications on/off toggle ─────────────────────────────────────
+  Widget _buildPushToggleRow(ColorScheme cs) {
+    final isOn = _pushEnabled;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(children: [
+        GestureDetector(
+          onTap: _pushBusy ? null : _togglePush,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+            width: 60,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isOn ? AppColors.primary.withOpacity(0.15) : cs.outline.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isOn ? AppColors.primary : cs.outline,
+                width: 1.5,
+              ),
+            ),
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOut,
+              alignment: isOn ? Alignment.centerLeft : Alignment.centerRight,
+              child: Container(
+                margin: const EdgeInsets.all(3),
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: isOn ? AppColors.primary : cs.outline,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isOn ? AppColors.primary : cs.outline).withOpacity(0.4),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+                child: _pushBusy
+                    ? const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Icon(
+                        isOn ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
+                        color: Colors.white,
+                        size: 15,
+                      ),
+              ),
+            ),
+          ),
+        ),
+        const Spacer(),
+        Text(
+          context.s.notifications,
+          style: GoogleFonts.ibmPlexSansArabic(
+              fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface),
+        ),
+        const SizedBox(width: 14),
+        _IconBadge(
+          icon: isOn ? Icons.notifications_active_outlined : Icons.notifications_off_outlined,
+          color: isOn ? AppColors.primary : cs.outline,
         ),
       ]),
     );

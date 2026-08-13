@@ -61,4 +61,38 @@ class NotificationPermissionService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_askedKey, true);
   }
+
+  // ── In-app on/off toggle (Profile screen) ────────────────────────────────
+  static const _enabledKey = 'push_notifications_enabled';
+
+  /// Whether the user has push notifications turned on via the in-app
+  /// toggle. Defaults to true (matches the onboarding flow default).
+  Future<bool> isEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_enabledKey) ?? true;
+  }
+
+  /// Turn the in-app toggle on: (re)requests OS permission if needed and
+  /// saves a fresh token. Returns the actual resulting state (false if the
+  /// OS permission was denied).
+  Future<bool> setEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!enabled) {
+      await NotificationService.instance.clearTokenForCurrentUser();
+      await prefs.setBool(_enabledKey, false);
+      return false;
+    }
+
+    final status = await Permission.notification.status;
+    bool granted = status.isGranted;
+    if (!granted) {
+      granted = await requestPermission();
+    } else {
+      await NotificationService.instance.refreshAndSaveToken();
+    }
+
+    await prefs.setBool(_enabledKey, granted);
+    return granted;
+  }
 }
