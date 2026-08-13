@@ -35,7 +35,12 @@ void main() async {
     }
   });
 
-  await NotificationService.instance.initialize();
+  // Fire-and-forget: FCM setup (in particular fcm.getToken()) can take
+  // several seconds on iOS. Awaiting it here was blocking the first frame
+  // from rendering at all — the white-screen delay on launch. It's not
+  // needed before the UI can show, so let it finish in the background.
+  NotificationService.instance.initialize();
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

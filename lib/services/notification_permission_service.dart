@@ -72,9 +72,10 @@ class NotificationPermissionService {
     return prefs.getBool(_enabledKey) ?? true;
   }
 
-  /// Turn the in-app toggle on: (re)requests OS permission if needed and
-  /// saves a fresh token. Returns the actual resulting state (false if the
-  /// OS permission was denied).
+  /// Turn the in-app toggle on: if OS permission is already granted, enable
+  /// directly (no extra prompt) and save a fresh token; otherwise (re)request
+  /// permission. Returns the actual resulting state (false if the OS
+  /// permission is denied).
   Future<bool> setEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -84,12 +85,20 @@ class NotificationPermissionService {
       return false;
     }
 
-    final status = await Permission.notification.status;
-    bool granted = status.isGranted;
-    if (!granted) {
-      granted = await requestPermission();
-    } else {
+    // Use FirebaseMessaging's own settings check (consistent across
+    // platforms) instead of permission_handler, which has been unreliable
+    // at reflecting the real OS state on iOS in this app.
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final alreadyGranted =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+
+    bool granted;
+    if (alreadyGranted) {
+      granted = true;
       await NotificationService.instance.refreshAndSaveToken();
+    } else {
+      granted = await requestPermission();
     }
 
     await prefs.setBool(_enabledKey, granted);

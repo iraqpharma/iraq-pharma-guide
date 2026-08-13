@@ -11,7 +11,6 @@ import '../../services/admin_access_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/avatar_service.dart';
 import '../../services/notification_permission_service.dart';
-import '../../services/notification_service.dart';
 import '../../services/session_service.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/compact_app_header.dart';
@@ -57,12 +56,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (_pushBusy) return;
     setState(() => _pushBusy = true);
     final target = !_pushEnabled;
-    final result = await NotificationPermissionService.instance.setEnabled(target);
+    bool result = _pushEnabled;
+    try {
+      result = await NotificationPermissionService.instance.setEnabled(target);
+    } catch (e) {
+      debugPrint('Push toggle failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('حدث خطأ: $e')),
+        );
+      }
+    } finally {
+      // Always clear the busy flag, even on error, so the switch never
+      // gets stuck unresponsive.
+      if (mounted) setState(() => _pushBusy = false);
+    }
     if (!mounted) return;
-    setState(() {
-      _pushEnabled = result;
-      _pushBusy    = false;
-    });
+    setState(() => _pushEnabled = result);
     if (target && !result) {
       // User tried to enable but OS-level permission is denied.
       ScaffoldMessenger.of(context).showSnackBar(
@@ -279,27 +289,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   // ── Push notifications toggle ────────────────────────
                   _buildPushToggleRow(cs),
                   _divider(cs),
-                  // ── TEMP debug: copy this device's FCM token ─────────
-                  _buildNavTile(cs,
-                    icon: Icons.bug_report_outlined,
-                    color: const Color(0xFF546E7A),
-                    title: 'نسخ توكن الجهاز (تشخيص)',
-                    onTap: () async {
-                      final token = await NotificationService.instance.getToken();
-                      if (!mounted) return;
-                      if (token == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('لا يوجد توكن حاليًا')),
-                        );
-                        return;
-                      }
-                      await Clipboard.setData(ClipboardData(text: token));
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('تم النسخ: ${token.substring(0, 20)}...')),
-                      );
-                    },
-                  ),
                 ]),
                 const SizedBox(height: 12),
                 _buildCard(cs, children: [

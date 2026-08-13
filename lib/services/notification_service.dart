@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Handles FCM background messages — must be a top-level function.
@@ -80,16 +81,20 @@ class NotificationService {
     final initial = await _fcm.getInitialMessage();
     if (initial != null) _onNotificationTap(initial);
 
-    // 6. Persist the token so the server can actually target this device.
-    //    Without this, push notifications are silently never sent — the
-    //    server-side edge function looks up profiles.fcm_token and has
-    //    nothing to send to.
-    final token = await _fcm.getToken();
-    debugPrint('FCM Token: $token');
-    await _saveTokenForCurrentUser(token);
+    // 6. Persist the token so the server can actually target this device —
+    //    but only if the user hasn't explicitly turned push OFF in-app.
+    //    Without this guard, re-opening the app would silently re-enable
+    //    push right after the user disabled it.
+    if (await _isPushEnabled()) {
+      final token = await _fcm.getToken();
+      debugPrint('FCM Token: $token');
+      await _saveTokenForCurrentUser(token);
+    }
 
-    // 7. Keep the token fresh — FCM tokens rotate periodically.
-    _fcm.onTokenRefresh.listen(_saveTokenForCurrentUser);
+    // 7. Keep the token fresh — FCM tokens rotate periodically. Same guard.
+    _fcm.onTokenRefresh.listen((t) async {
+      if (await _isPushEnabled()) await _saveTokenForCurrentUser(t);
+    });
 
     // 8. iOS foreground presentation
     if (Platform.isIOS) {
@@ -150,7 +155,18 @@ class NotificationService {
     await _saveTokenForCurrentUser(token);
   }
 
-  void _onForegroundMessage(RemoteMessage message) {
+  /// Same key used by NotificationPermissionService's in-app toggle.
+  /// Read directly here (rather than importing that service) to avoid a
+  /// circular import — that service already imports this one.
+  static const _pushEnabledKey = 'push_notifications_enabled';
+
+  Future<bool> _isPushEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_pushEnabledKey) ?? true;
+  }
+
+  void _onForegroundMessage(RemoteMessage message) async {
+    if (!await _isPushEnabled()) return; // user turned push off in-app
     final notification = message.notification;
     if (notification == null) return;
     _localNotifications.show(
