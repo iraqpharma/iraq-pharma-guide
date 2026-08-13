@@ -86,7 +86,7 @@ class NotificationService {
     //    Without this guard, re-opening the app would silently re-enable
     //    push right after the user disabled it.
     if (await _isPushEnabled()) {
-      final token = await _fcm.getToken();
+      final token = await _getTokenSafely();
       debugPrint('FCM Token: $token');
       await _saveTokenForCurrentUser(token);
     }
@@ -101,6 +101,36 @@ class NotificationService {
       await _fcm.setForegroundNotificationPresentationOptions(
         alert: true, badge: true, sound: true,
       );
+    }
+  }
+
+  /// On iOS, FCM's getToken() needs the native APNs device token to exist
+  /// first (Apple assigns it asynchronously right after permission is
+  /// granted). Calling getToken() before that's ready throws
+  /// [firebase_messaging/apns-token-not-set] — this was the real root
+  /// cause of every "UNREGISTERED" token we kept generating: we were
+  /// asking for an FCM token before Apple had finished registering the
+  /// device, so every token we ever got back on iOS was junk. Poll for
+  /// the APNs token first (Android doesn't need this at all).
+  Future<String?> _getTokenSafely() async {
+    if (Platform.isIOS) {
+      String? apnsToken = await _fcm.getAPNSToken();
+      var attempts = 0;
+      while (apnsToken == null && attempts < 10) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        apnsToken = await _fcm.getAPNSToken();
+        attempts++;
+      }
+      if (apnsToken == null) {
+        debugPrint('APNs token never became available after ~5s of waiting');
+        return null;
+      }
+    }
+    try {
+      return await _fcm.getToken();
+    } catch (e) {
+      debugPrint('getToken failed: $e');
+      return null;
     }
   }
 
@@ -121,7 +151,7 @@ class NotificationService {
   /// granted (user is guaranteed logged-in at that point) and again on every
   /// app start so returning users on an existing install stay registered.
   Future<void> saveTokenForCurrentUser() async {
-    final token = await _fcm.getToken();
+    final token = await _getTokenSafely();
     await _saveTokenForCurrentUser(token);
   }
 
@@ -150,7 +180,7 @@ class NotificationService {
     } catch (e) {
       debugPrint('deleteToken failed (non-fatal): $e');
     }
-    final token = await _fcm.getToken();
+    final token = await _getTokenSafely();
     debugPrint('FCM Token (refreshed): $token');
     await _saveTokenForCurrentUser(token);
   }
@@ -209,5 +239,5 @@ class NotificationService {
   }
 
   /// FCM token — send this to your backend to target this device.
-  Future<String?> getToken() => _fcm.getToken();
+  Future<String?> getToken() => _getTokenSafely();
 }
