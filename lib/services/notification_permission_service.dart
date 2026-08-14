@@ -10,13 +10,28 @@ class NotificationPermissionService {
 
   static const _askedKey = 'notif_permission_asked';
 
-  /// Returns true if the screen should be shown (not yet decided).
+  /// Returns true if the onboarding screen should be shown.
+  ///
+  /// When the OS permission is already granted we skip the screen — but we
+  /// now make sure the token is persisted on the way out. Previously this
+  /// early-return was the reason iPhones ended up with permission granted and
+  /// no fcm_token at all.
   Future<bool> shouldShowScreen() async {
     final prefs = await SharedPreferences.getInstance();
+
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final granted =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+
+    if (granted) {
+      await NotificationService.instance.syncToken();
+      await prefs.setBool(_askedKey, true);
+      return false;
+    }
+
     if (prefs.getBool(_askedKey) == true) return false;
-    // Also skip if already granted
-    final status = await Permission.notification.status;
-    return !status.isGranted && !status.isPermanentlyDenied;
+    return settings.authorizationStatus != AuthorizationStatus.denied;
   }
 
   /// Request permission. Call when user taps "تفعيل الآن".
@@ -28,7 +43,6 @@ class NotificationPermissionService {
       granted = status.isGranted;
     }
 
-    // iOS & supplementary Firebase request
     final settings = await FirebaseMessaging.instance.requestPermission(
       alert:         true,
       badge:         true,
@@ -43,18 +57,14 @@ class NotificationPermissionService {
       granted = true;
     }
 
-    // Fetch a fresh FCM token and persist it, so the server can actually
-    // target this device with push notifications. Force-refresh instead of
-    // reusing a possibly stale cached token (see refreshAndSaveToken docs).
     if (granted) {
-      await NotificationService.instance.refreshAndSaveToken();
+      await NotificationService.instance.syncToken();
     }
 
     await _markAsked();
     return granted;
   }
 
-  /// Call when user taps "ليس الآن".
   Future<void> deny() async => _markAsked();
 
   Future<void> _markAsked() async {
@@ -65,17 +75,11 @@ class NotificationPermissionService {
   // ── In-app on/off toggle (Profile screen) ────────────────────────────────
   static const _enabledKey = 'push_notifications_enabled';
 
-  /// Whether the user has push notifications turned on via the in-app
-  /// toggle. Defaults to true (matches the onboarding flow default).
   Future<bool> isEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_enabledKey) ?? true;
   }
 
-  /// Turn the in-app toggle on: if OS permission is already granted, enable
-  /// directly (no extra prompt) and save a fresh token; otherwise (re)request
-  /// permission. Returns the actual resulting state (false if the OS
-  /// permission is denied).
   Future<bool> setEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -85,9 +89,9 @@ class NotificationPermissionService {
       return false;
     }
 
-    // Use FirebaseMessaging's own settings check (consistent across
-    // platforms) instead of permission_handler, which has been unreliable
-    // at reflecting the real OS state on iOS in this app.
+    // Flip the flag first: syncToken() refuses to run while it is false.
+    await prefs.setBool(_enabledKey, true);
+
     final settings = await FirebaseMessaging.instance.getNotificationSettings();
     final alreadyGranted =
         settings.authorizationStatus == AuthorizationStatus.authorized ||
@@ -96,7 +100,7 @@ class NotificationPermissionService {
     bool granted;
     if (alreadyGranted) {
       granted = true;
-      await NotificationService.instance.refreshAndSaveToken();
+      await NotificationService.instance.syncToken();
     } else {
       granted = await requestPermission();
     }

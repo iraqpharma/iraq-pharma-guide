@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +9,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Handles FCM background messages — must be a top-level function.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Firebase is already initialized by the time this is called.
   debugPrint('FCM background: ${message.messageId}');
 }
 
@@ -22,11 +22,16 @@ class NotificationService {
   static const _channelId   = 'iraq_pharma_high';
   static const _channelName = 'Iraq Pharma Notifications';
 
+  /// Same key used by NotificationPermissionService's in-app toggle.
+  static const _pushEnabledKey = 'push_notifications_enabled';
+
+  bool _authListenerAttached = false;
+
   // ── Init ───────────────────────────────────────────────────────────────────
   Future<void> initialize() async {
     try {
       await _setupLocalNotifications();
-      await _setupFCM().timeout(const Duration(seconds: 8));
+      await _setupFCM();
     } catch (e) {
       // Never let notification setup failures block app startup.
       debugPrint('NotificationService init failed (non-fatal): $e');
@@ -36,16 +41,21 @@ class NotificationService {
   // ── Local notifications (foreground display) ───────────────────────────────
   Future<void> _setupLocalNotifications() async {
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const ios     = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+    // IMPORTANT: all three must stay false. When they were true, this call
+    // fired the real iOS permission dialog during cold start, which meant the
+    // dedicated NotificationPermissionScreen was always skipped
+    // (shouldShowScreen() saw the permission as already decided) and therefore
+    // refreshAndSaveToken() never ran on iOS — that is why iPhones never had
+    // an fcm_token row. Permission is now requested only from that screen.
+    const ios = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
     await _localNotifications.initialize(
       const InitializationSettings(android: android, iOS: ios),
     );
 
-    // Create high-importance Android channel
     const channel = AndroidNotificationChannel(
       _channelId,
       _channelName,
@@ -60,69 +70,64 @@ class NotificationService {
 
   // ── FCM ────────────────────────────────────────────────────────────────────
   Future<void> _setupFCM() async {
-    // 1. Request permission
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    if (settings.authorizationStatus == AuthorizationStatus.denied) return;
-
-    // 2. Background handler (top-level)
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-    // 3. Foreground handler — show local notification
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
-
-    // 4. Notification tap when app is in background (not terminated)
     FirebaseMessaging.onMessageOpenedApp.listen(_onNotificationTap);
 
-    // 5. App opened from terminated state via notification
     final initial = await _fcm.getInitialMessage();
     if (initial != null) _onNotificationTap(initial);
 
-    // 6. Persist the token so the server can actually target this device —
-    //    but only if the user hasn't explicitly turned push OFF in-app.
-    //    Without this guard, re-opening the app would silently re-enable
-    //    push right after the user disabled it.
-    if (await _isPushEnabled()) {
-      final token = await _getTokenSafely();
-      debugPrint('FCM Token: $token');
-      await _saveTokenForCurrentUser(token);
-    }
-
-    // 7. Keep the token fresh — FCM tokens rotate periodically. Same guard.
-    _fcm.onTokenRefresh.listen((t) async {
-      if (await _isPushEnabled()) await _saveTokenForCurrentUser(t);
-    });
-
-    // 8. iOS foreground presentation
     if (Platform.isIOS) {
       await _fcm.setForegroundNotificationPresentationOptions(
         alert: true, badge: true, sound: true,
       );
     }
+
+    // Tokens rotate periodically — persist every rotation.
+    _fcm.onTokenRefresh.listen((t) async {
+      if (await _isPushEnabled()) await _persist(t);
+    });
+
+    // The single most important fix: initialize() runs from main() BEFORE the
+    // Supabase session is restored and long before login, so currentUser was
+    // null and every token save silently bailed out. Re-sync on every auth
+    // event instead of only once at startup.
+    _attachAuthListener();
+
+    unawaited(syncToken());
   }
 
-  /// On iOS, FCM's getToken() needs the native APNs device token to exist
-  /// first (Apple assigns it asynchronously right after permission is
-  /// granted). Calling getToken() before that's ready throws
-  /// [firebase_messaging/apns-token-not-set] — this was the real root
-  /// cause of every "UNREGISTERED" token we kept generating: we were
-  /// asking for an FCM token before Apple had finished registering the
-  /// device, so every token we ever got back on iOS was junk. Poll for
-  /// the APNs token first (Android doesn't need this at all).
+  void _attachAuthListener() {
+    if (_authListenerAttached) return;
+    _authListenerAttached = true;
+    _db.auth.onAuthStateChange.listen((state) {
+      switch (state.event) {
+        case AuthChangeEvent.initialSession:
+        case AuthChangeEvent.signedIn:
+        case AuthChangeEvent.tokenRefreshed:
+        case AuthChangeEvent.userUpdated:
+          unawaited(syncToken());
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  /// On iOS, getToken() needs the native APNs device token to exist first
+  /// (Apple assigns it asynchronously after permission is granted). Calling
+  /// getToken() earlier throws [firebase_messaging/apns-token-not-set].
   Future<String?> _getTokenSafely() async {
     if (Platform.isIOS) {
       String? apnsToken = await _fcm.getAPNSToken();
       var attempts = 0;
-      while (apnsToken == null && attempts < 10) {
+      while (apnsToken == null && attempts < 20) {
         await Future.delayed(const Duration(milliseconds: 500));
         apnsToken = await _fcm.getAPNSToken();
         attempts++;
       }
       if (apnsToken == null) {
-        debugPrint('APNs token never became available after ~5s of waiting');
+        debugPrint('APNs token never became available after ~10s of waiting');
         return null;
       }
     }
@@ -134,30 +139,61 @@ class NotificationService {
     }
   }
 
-  /// Saves the FCM token to the current user's profile row so the
-  /// send-push-notification edge function can find it.
-  Future<void> _saveTokenForCurrentUser(String? token) async {
-    if (token == null) return;
+  /// Fetches the current token and stores it, returning whether the row was
+  /// actually written. Safe to call as often as you like.
+  Future<bool> syncToken() async {
+    if (!await _isPushEnabled()) return false;
+
     final uid = _db.auth.currentUser?.id;
-    if (uid == null) return; // not logged in yet — will be saved on next call
+    if (uid == null) return false;
+
+    final settings = await _fcm.getNotificationSettings();
+    final granted =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+    if (!granted) return false;
+
+    final token = await _getTokenSafely();
+    if (token == null) return false;
+
+    return _persist(token);
+  }
+
+  /// Writes the token and VERIFIES it landed. The old code ran a bare
+  /// update() with no .select(), so a zero-row update looked identical to a
+  /// successful one and every failure was invisible.
+  Future<bool> _persist(String token) async {
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) {
+      debugPrint('FCM token not saved: no signed-in user yet');
+      return false;
+    }
     try {
-      await _db.from('profiles').update({'fcm_token': token}).eq('id', uid);
+      final rows = await _db
+          .from('profiles')
+          .update({'fcm_token': token})
+          .eq('id', uid)
+          .select('id');
+      if (rows.isEmpty) {
+        debugPrint('FCM token save affected 0 rows (uid=$uid) — check RLS/row');
+        return false;
+      }
+      debugPrint('FCM token saved (${token.length} chars) for $uid');
+      return true;
     } catch (e) {
       debugPrint('Failed to save FCM token: $e');
+      return false;
     }
   }
 
-  /// Public entry point — call this right after notification permission is
-  /// granted (user is guaranteed logged-in at that point) and again on every
-  /// app start so returning users on an existing install stay registered.
-  Future<void> saveTokenForCurrentUser() async {
-    final token = await _getTokenSafely();
-    await _saveTokenForCurrentUser(token);
-  }
+  /// Public entry points kept for the permission screen / profile toggle.
+  Future<bool> saveTokenForCurrentUser() => syncToken();
 
-  /// Clears the saved token for the current user, so the server-side
-  /// edge function finds nothing to send to. Used when the user turns
-  /// push notifications OFF from the in-app toggle.
+  /// Previously called deleteToken() first. That invalidated the live token
+  /// before minting a new one and was in the exact path used by every manual
+  /// test. Now it is simply a forced re-sync.
+  Future<bool> refreshAndSaveToken() => syncToken();
+
   Future<void> clearTokenForCurrentUser() async {
     final uid = _db.auth.currentUser?.id;
     if (uid == null) return;
@@ -168,35 +204,13 @@ class NotificationService {
     }
   }
 
-  /// Forces a brand-new FCM token instead of reusing whatever is cached
-  /// on-device. On iOS the FCM token can survive in the Keychain across
-  /// app deletions/reinstalls and go stale (APNs rejects it with
-  /// UNREGISTERED) while getToken() keeps happily returning the same dead
-  /// value. Call this once when the user explicitly grants notification
-  /// permission, so we're guaranteed a token Apple actually recognizes.
-  Future<void> refreshAndSaveToken() async {
-    try {
-      await _fcm.deleteToken();
-    } catch (e) {
-      debugPrint('deleteToken failed (non-fatal): $e');
-    }
-    final token = await _getTokenSafely();
-    debugPrint('FCM Token (refreshed): $token');
-    await _saveTokenForCurrentUser(token);
-  }
-
-  /// Same key used by NotificationPermissionService's in-app toggle.
-  /// Read directly here (rather than importing that service) to avoid a
-  /// circular import — that service already imports this one.
-  static const _pushEnabledKey = 'push_notifications_enabled';
-
   Future<bool> _isPushEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_pushEnabledKey) ?? true;
   }
 
   void _onForegroundMessage(RemoteMessage message) async {
-    if (!await _isPushEnabled()) return; // user turned push off in-app
+    if (!await _isPushEnabled()) return;
     final notification = message.notification;
     if (notification == null) return;
     _localNotifications.show(
@@ -218,24 +232,42 @@ class NotificationService {
 
   void _onNotificationTap(RemoteMessage message) {
     debugPrint('Notification tapped: ${message.data}');
-    // Add navigation logic here if needed
   }
 
   // ── Supabase helpers ───────────────────────────────────────────────────────
   static final _db = Supabase.instance.client;
 
+  /// Read state is per-user (notification_reads). The old code updated the
+  /// shared notifications.is_read column, which marked the notification read
+  /// for every user in the app at once.
   Future<void> markAsRead(String id) async {
-    await _db
-        .from('notifications')
-        .update({'is_read': true})
-        .eq('id', id);
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      await _db.from('notification_reads').upsert(
+        {'notification_id': id, 'user_id': uid},
+        onConflict: 'notification_id,user_id',
+      );
+    } catch (e) {
+      debugPrint('markAsRead failed: $e');
+    }
   }
 
   Future<void> markAllAsRead() async {
-    await _db
-        .from('notifications')
-        .update({'is_read': true})
-        .eq('is_read', false);
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      final rows = await _db.from('notifications').select('id');
+      if (rows.isEmpty) return;
+      await _db.from('notification_reads').upsert(
+        rows
+            .map((r) => {'notification_id': r['id'], 'user_id': uid})
+            .toList(),
+        onConflict: 'notification_id,user_id',
+      );
+    } catch (e) {
+      debugPrint('markAllAsRead failed: $e');
+    }
   }
 
   /// FCM token — send this to your backend to target this device.
