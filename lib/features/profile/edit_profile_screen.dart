@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../shared/widgets/wheel_date_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -120,16 +121,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    // Spinning wheels beat a month grid for a birth year decades back.
+    final picked = await showWheelDatePicker(
       context: context,
       initialDate: _birthDate ?? DateTime(2000),
       firstDate: DateTime(1950),
       lastDate: DateTime.now().subtract(const Duration(days: 365 * 16)),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary)),
-        child: child!,
-      ),
     );
     if (picked != null && mounted) {
       setState(() {

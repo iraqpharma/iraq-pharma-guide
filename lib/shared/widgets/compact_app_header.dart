@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,11 +23,11 @@ class CompactAppHeader extends StatelessWidget implements PreferredSizeWidget {
     final top = MediaQuery.of(context).padding.top;
     return Container(
       padding: EdgeInsets.fromLTRB(16, top + 8, 16, 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(22),
-          bottomRight: Radius.circular(22),
+          bottomLeft: Radius.circular(Platform.isIOS ? 30 : 22),
+          bottomRight: Radius.circular(Platform.isIOS ? 30 : 22),
         ),
       ),
       child: Row(
@@ -85,7 +86,7 @@ class _IconBtn extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.18),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Platform.isIOS ? 20 : 12),
         ),
         child: Icon(icon, color: Colors.white, size: 22),
       ),

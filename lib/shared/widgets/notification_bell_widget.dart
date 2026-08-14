@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/notification_provider.dart';
@@ -17,7 +18,8 @@ class NotificationBellWidget extends ConsumerWidget {
         height: 44,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.18),
-          borderRadius: BorderRadius.circular(14),
+          // iOS conventions favour circular glyph buttons.
+          borderRadius: BorderRadius.circular(Platform.isIOS ? 22 : 14),
         ),
         child: Stack(
           alignment: Alignment.center,

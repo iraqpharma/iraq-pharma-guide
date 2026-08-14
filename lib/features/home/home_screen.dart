@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ import '../../shared/widgets/rating_modal.dart';
 import '../../services/rating_service.dart';
 import '../profile/profile_screen.dart';
 import '../../shared/widgets/notification_bell_widget.dart';
+import '../../shared/widgets/ios_glass_nav_bar.dart';
 import 'widgets/search_bar_widget.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -380,11 +382,11 @@ class _TealHeader extends StatelessWidget {
     final top = MediaQuery.of(context).padding.top;
     return Container(
       padding: EdgeInsets.fromLTRB(20, top + 12, 20, 20),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
+          bottomLeft: Radius.circular(Platform.isIOS ? 38 : 32),
+          bottomRight: Radius.circular(Platform.isIOS ? 38 : 32),
         ),
       ),
       child: Row(
@@ -453,7 +455,8 @@ class _HeaderIconBtn extends StatelessWidget {
         height: 44,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.18),
-          borderRadius: BorderRadius.circular(14),
+          // iOS conventions favour circular glyph buttons.
+          borderRadius: BorderRadius.circular(Platform.isIOS ? 24 : 14),
         ),
         child: Stack(
           alignment: Alignment.center,
@@ -1340,7 +1343,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
                   width: 40, height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Platform.isIOS ? 20 : 12),
                   ),
                   child: const Icon(Icons.menu_rounded, color: Colors.white, size: 22),
                 ),
@@ -1928,6 +1931,41 @@ class _BottomNavBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bottomPad = MediaQuery.of(context).padding.bottom;
+
+    // iOS gets a frosted floating tab bar; Android keeps the original one.
+    if (Platform.isIOS) {
+      return IosGlassNavBar(
+        selectedIndex: selectedIndex,
+        onTap: onTap,
+        items: [
+          IosNavItem(
+            icon: Icons.bookmark_outline_rounded,
+            activeIcon: Icons.bookmark_rounded,
+            label: context.s.navFavorites,
+          ),
+          IosNavItem(
+            icon: Icons.apps_outlined,
+            activeIcon: Icons.apps_rounded,
+            label: context.s.navTools,
+          ),
+          IosNavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: context.s.navHome,
+          ),
+          IosNavItem(
+            icon: Icons.search_rounded,
+            activeIcon: Icons.search_rounded,
+            label: context.s.navSearch,
+          ),
+          IosNavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: context.s.navAccount,
+          ),
+        ],
+      );
+    }
 
     return Container(
       padding: EdgeInsets.only(bottom: bottomPad),
