@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,6 +29,7 @@ class NotificationService {
   static const _pushEnabledKey = 'push_notifications_enabled';
 
   bool _authListenerAttached = false;
+  AppLifecycleListener? _lifecycle;
 
   // ── Init ───────────────────────────────────────────────────────────────────
   Future<void> initialize() async {
@@ -95,7 +98,14 @@ class NotificationService {
     // event instead of only once at startup.
     _attachAuthListener();
 
+    // Coming back to the app is the moment the icon badge is most likely to
+    // be stale (a push arrived while it was closed).
+    _lifecycle ??= AppLifecycleListener(
+      onResume: () => unawaited(syncAppBadge()),
+    );
+
     unawaited(syncToken());
+    unawaited(syncAppBadge());
   }
 
   void _attachAuthListener() {
@@ -108,6 +118,7 @@ class NotificationService {
         case AuthChangeEvent.tokenRefreshed:
         case AuthChangeEvent.userUpdated:
           unawaited(syncToken());
+          unawaited(syncAppBadge());
           break;
         default:
           break;
@@ -224,6 +235,7 @@ class NotificationService {
 
   void _onForegroundMessage(RemoteMessage message) async {
     if (!await _isPushEnabled()) return;
+    unawaited(syncAppBadge());
     final notification = message.notification;
     if (notification == null) return;
     _localNotifications.show(
@@ -269,6 +281,7 @@ class NotificationService {
         onConflict: 'notification_id,user_id',
       );
       await clearDelivered();
+      await syncAppBadge();
     } catch (e) {
       debugPrint('markAsRead failed: $e');
     }
@@ -287,6 +300,7 @@ class NotificationService {
         onConflict: 'notification_id,user_id',
       );
       await clearDelivered();
+      await syncAppBadge();
     } catch (e) {
       debugPrint('markAllAsRead failed: $e');
     }
@@ -302,6 +316,42 @@ class NotificationService {
       await _localNotifications.cancelAll();
     } catch (e) {
       debugPrint('clearDelivered failed: $e');
+    }
+  }
+
+  static const _badgeChannel = MethodChannel('iraqpharma/badge');
+
+  /// Recomputes this user's unread count and pushes it onto the app icon.
+  /// The push payload sets the badge once at delivery time and never updates
+  /// it again, which is why the number survived reading the notification.
+  Future<void> syncAppBadge() async {
+    if (!Platform.isIOS) return;
+    var count = 0;
+    try {
+      final uid = _db.auth.currentUser?.id;
+      if (uid != null) {
+        final notifs = await _db
+            .from('notifications')
+            .select('id')
+            .or('user_id.is.null,user_id.eq.$uid');
+        final reads = await _db
+            .from('notification_reads')
+            .select('notification_id')
+            .eq('user_id', uid);
+        final readIds =
+            reads.map((r) => r['notification_id'].toString()).toSet();
+        count = notifs
+            .where((n) => !readIds.contains(n['id'].toString()))
+            .length;
+      }
+    } catch (e) {
+      debugPrint('syncAppBadge count failed: $e');
+      return;
+    }
+    try {
+      await _badgeChannel.invokeMethod('setBadge', {'count': count});
+    } catch (e) {
+      debugPrint('setBadge failed: $e');
     }
   }
 

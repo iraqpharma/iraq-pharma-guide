@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -73,7 +74,9 @@ class NotificationPermissionService {
     }
 
     if (granted) {
-      await NotificationService.instance.syncToken();
+      // Deliberately not awaited: fetching the APNs + FCM token can take
+      // several seconds, and the user should not sit on a spinner for it.
+      unawaited(NotificationService.instance.syncToken());
     }
 
     await _markAsked();
@@ -115,7 +118,7 @@ class NotificationPermissionService {
     bool granted;
     if (alreadyGranted) {
       granted = true;
-      await NotificationService.instance.syncToken();
+      unawaited(NotificationService.instance.syncToken());
     } else {
       granted = await requestPermission();
     }
