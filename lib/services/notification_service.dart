@@ -119,6 +119,18 @@ class NotificationService {
   /// getToken() earlier throws [firebase_messaging/apns-token-not-set].
   Future<String?> _getTokenSafely() async {
     if (Platform.isIOS) {
+      // Re-issuing the request when permission is already granted shows no
+      // dialog, but it is what makes the plugin register the app with APNs.
+      final s = await _fcm.getNotificationSettings();
+      if (s.authorizationStatus == AuthorizationStatus.authorized ||
+          s.authorizationStatus == AuthorizationStatus.provisional) {
+        try {
+          await _fcm.requestPermission(alert: true, badge: true, sound: true);
+        } catch (e) {
+          debugPrint('re-request permission failed: $e');
+        }
+      }
+
       String? apnsToken = await _fcm.getAPNSToken();
       var attempts = 0;
       while (apnsToken == null && attempts < 20) {

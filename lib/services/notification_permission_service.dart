@@ -19,6 +19,21 @@ class NotificationPermissionService {
   Future<bool> shouldShowScreen() async {
     final prefs = await SharedPreferences.getInstance();
 
+    // Android reports authorizationStatus.denied both when the user has never
+    // been asked and when they refused, so FirebaseMessaging's settings cannot
+    // be used to decide here — doing so skipped the screen forever and
+    // POST_NOTIFICATIONS was never requested on Android 13+.
+    if (Platform.isAndroid) {
+      final status = await Permission.notification.status;
+      if (status.isGranted) {
+        await NotificationService.instance.syncToken();
+        await prefs.setBool(_askedKey, true);
+        return false;
+      }
+      if (status.isPermanentlyDenied) return false;
+      return prefs.getBool(_askedKey) != true;
+    }
+
     final settings = await FirebaseMessaging.instance.getNotificationSettings();
     final granted =
         settings.authorizationStatus == AuthorizationStatus.authorized ||
