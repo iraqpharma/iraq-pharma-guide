@@ -115,7 +115,7 @@ class _HomeBody extends StatelessWidget {
             child: _SectionHeader(
               title: context.s.browseByCategory,
               actionLabel: context.s.viewAll,
-              onAction: () {},
+              onAction: () => context.push('/category/all'),
             ),
           ),
         ),

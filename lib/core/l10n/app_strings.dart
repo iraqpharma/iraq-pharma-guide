@@ -18,6 +18,7 @@ class AppStrings {
   // ── Home ──────────────────────────────────────────────────────────────────
   String get browseByCategory  => isAr ? 'استعراض حسب الفصيلة' : 'Browse by Category';
   String get viewAll           => isAr ? 'عرض الكل'             : 'View All';
+  String get allDrugs          => isAr ? 'كل الأدوية'           : 'All Drugs';
   String get quickTools        => isAr ? 'أدوات سريعة'          : 'Quick Tools';
   String get adSpace           => isAr ? 'مساحة إعلانية'        : 'Ad Space';
   String get ad                => isAr ? 'إعلان'                : 'Ad';

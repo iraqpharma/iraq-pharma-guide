@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../data/models/app_notification.dart';
 import '../../providers/notification_provider.dart';
+import '../../services/notification_service.dart';
 
 // ── Navigation helper ─────────────────────────────────────────────────────────
 // الروابط الداخلية تبدأ بـ app://
@@ -28,11 +29,28 @@ Future<void> handleActionUrl(BuildContext context, String url) async {
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
-class NotificationsScreen extends ConsumerWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Opening this screen IS the act of reading. There is no longer a
+    // "mark all as read" button — anything the user has now seen is marked
+    // read for this user only.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService.instance.markAllAsRead();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final asyncNotifs = ref.watch(notificationsProvider);
     final svc         = ref.watch(notificationActionsProvider);
 
@@ -52,15 +70,13 @@ class NotificationsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error:   (e, _) => _ErrorState(message: e.toString()),
         data: (notifications) {
-          final valid     = notifications.where((n) => !n.isExpired).toList();
-          final hasUnread = valid.any((n) => !n.isRead);
+          final valid = notifications.where((n) => !n.isExpired).toList();
           if (valid.isEmpty) return const _EmptyState();
 
           final grouped = _groupByDate(valid);
 
           return Column(
             children: [
-              if (hasUnread) _MarkAllBanner(onTap: () => svc.markAllAsRead()),
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.only(bottom: 32),
@@ -154,53 +170,6 @@ class _DateHeader extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(width: 8),
           Expanded(child: Divider(color: Theme.of(context).dividerColor, height: 1)),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Mark all banner ───────────────────────────────────────────────────────────
-class _MarkAllBanner extends StatelessWidget {
-  final VoidCallback onTap;
-  const _MarkAllBanner({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.done_all_rounded, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
-          const SizedBox(width: 7),
-          Text(context.s.tapNotifToRead,
-              style: GoogleFonts.cairo(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          const Spacer(),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.done_all_rounded, size: 13, color: Colors.white),
-                  const SizedBox(width: 5),
-                  Text(context.s.markAll,
-                      style: GoogleFonts.cairo(
-                          fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -494,36 +463,34 @@ class _NotificationDetailDialog extends StatelessWidget {
               ),
 
             // ── الفوتر: الوقت + الكود ──────────────────────────────────
-            Container(
-              padding: EdgeInsets.fromLTRB(20, _hasAction ? 12 : 10, 20, 20),
-              child: Row(
-                children: [
-                  Icon(Icons.access_time_rounded,
-                      size: 13,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6)),
-                  const SizedBox(width: 5),
-                  Text(_fullDate(notif.createdAt, context.s),
-                      style: GoogleFonts.cairo(
-                          fontSize: 11,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7))),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Theme.of(context).dividerColor),
-                    ),
-                    child: Text(
-                      '#${notif.id.substring(0, 4).toUpperCase()}',
+            // Metadata is reference information, not something the reader
+            // needs — kept available but visually quiet.
+            Padding(
+              padding: EdgeInsets.fromLTRB(20, _hasAction ? 10 : 6, 20, 14),
+              child: Opacity(
+                opacity: 0.38,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_fullDate(notif.createdAt, context.s),
+                        style: GoogleFonts.cairo(
+                            fontSize: 9,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    const SizedBox(width: 6),
+                    Text('·',
+                        style: TextStyle(
+                            fontSize: 9,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    const SizedBox(width: 6),
+                    Text(
+                      notif.id.substring(0, 4).toUpperCase(),
                       style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9,
                           fontFamily: 'monospace',
                           color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

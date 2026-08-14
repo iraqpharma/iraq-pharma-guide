@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
+import '../../data/database/database_helper.dart';
 import '../../providers/drug_provider.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -26,8 +27,12 @@ bool _isUsefulClass(String cls) {
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────
+/// `all` is a pseudo-category used by the "view all" action on the home
+/// screen. It streams the same local SQLite table, so it adds nothing to the
+/// app size and stays lazy through the existing ListView.builder.
 final _categoryDrugsProvider =
     FutureProvider.family<List<Drug>, String>((ref, key) async {
+  if (key == 'all') return DatabaseHelper.instance.getAllDrugs();
   return ref.read(drugRepositoryProvider).getByAppCategory(key);
 });
 
@@ -52,7 +57,9 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = context.s.categoryLabels[widget.categoryKey] ?? widget.categoryKey;
+    final title = widget.categoryKey == 'all'
+        ? context.s.allDrugs
+        : (context.s.categoryLabels[widget.categoryKey] ?? widget.categoryKey);
     final drugsAsync = ref.watch(_categoryDrugsProvider(widget.categoryKey));
 
     return Scaffold(

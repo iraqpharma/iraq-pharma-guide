@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../shared/router/app_router.dart';
 
 /// Handles FCM background messages — must be a top-level function.
 @pragma('vm:entry-point')
@@ -244,6 +245,13 @@ class NotificationService {
 
   void _onNotificationTap(RemoteMessage message) {
     debugPrint('Notification tapped: ${message.data}');
+    // Opening the notifications screen also marks everything read for this
+    // user (see NotificationsScreen.initState).
+    try {
+      appRouter.push('/notifications');
+    } catch (e) {
+      debugPrint('Could not route to /notifications: $e');
+    }
   }
 
   // ── Supabase helpers ───────────────────────────────────────────────────────

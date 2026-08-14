@@ -11,7 +11,6 @@ import '../../services/admin_access_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/avatar_service.dart';
 import '../../services/notification_permission_service.dart';
-import '../../services/notification_service.dart';
 import '../../services/session_service.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/compact_app_header.dart';
@@ -51,27 +50,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Future<void> _loadPushState() async {
     final enabled = await NotificationPermissionService.instance.isEnabled();
     if (mounted) setState(() => _pushEnabled = enabled);
-  }
-
-  Future<void> _showPushDiagnostics() async {
-    final report = await NotificationService.instance.diagnostics();
-    if (!mounted) return;
-    final text = report.entries.map((e) => '${e.key}: ${e.value}').join('\n');
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Push diagnostics'),
-        content: SingleChildScrollView(
-          child: SelectableText(text, style: const TextStyle(fontSize: 12)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إغلاق'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _togglePush() async {
@@ -658,15 +636,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ),
         ),
         const Spacer(),
-        GestureDetector(
-          // Hidden support tool: long-press the label to inspect why push
-          // registration failed on this device.
-          onLongPress: _showPushDiagnostics,
-          child: Text(
-            context.s.notifications,
-            style: GoogleFonts.ibmPlexSansArabic(
-                fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface),
-          ),
+        Text(
+          context.s.notifications,
+          style: GoogleFonts.ibmPlexSansArabic(
+              fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface),
         ),
         const SizedBox(width: 14),
         _IconBadge(
