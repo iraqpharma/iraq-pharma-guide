@@ -27,6 +27,11 @@ class _NotificationPermissionScreenState
 
   bool _loading = false;
 
+  /// Nothing is painted until shouldShowScreen() has answered. Without this
+  /// the whole screen rendered for a fraction of a second on every launch
+  /// before skipping itself.
+  bool _decided = false;
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +63,11 @@ class _NotificationPermissionScreenState
   Future<void> _checkAndMaybeSkip() async {
     final show = await NotificationPermissionService.instance.shouldShowScreen();
     if (!mounted) return;
-    if (!show) await _goNext();
+    if (!show) {
+      await _goNext();
+    } else {
+      setState(() => _decided = true);
+    }
   }
 
   /// Routes to the one-time profile-completion prompt if it hasn't been
@@ -91,18 +100,29 @@ class _NotificationPermissionScreenState
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
+    const bg = BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFFDDF3F0), Color(0xFFEEF8F7), Color(0xFFF4FAFA)],
+        stops: [0.0, 0.45, 1.0],
+      ),
+    );
+
+    if (!_decided) {
+      return const Scaffold(
+        body: DecoratedBox(
+          decoration: bg,
+          child: SizedBox(width: double.infinity, height: double.infinity),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFDDF3F0), Color(0xFFEEF8F7), Color(0xFFF4FAFA)],
-            stops: [0.0, 0.45, 1.0],
-          ),
-        ),
+        decoration: bg,
         child: SafeArea(
           child: Column(
             children: [
@@ -200,9 +220,9 @@ class _NotificationPermissionScreenState
                           child: Text(
                             context.s.notNow,
                             style: GoogleFonts.ibmPlexSansArabic(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF4A7070),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF4A7070).withOpacity(0.45),
                             ),
                           ),
                         ),

@@ -248,6 +248,7 @@ class NotificationService {
         {'notification_id': id, 'user_id': uid},
         onConflict: 'notification_id,user_id',
       );
+      await clearDelivered();
     } catch (e) {
       debugPrint('markAsRead failed: $e');
     }
@@ -265,6 +266,7 @@ class NotificationService {
             .toList(),
         onConflict: 'notification_id,user_id',
       );
+      await clearDelivered();
     } catch (e) {
       debugPrint('markAllAsRead failed: $e');
     }
@@ -272,4 +274,78 @@ class NotificationService {
 
   /// FCM token — send this to your backend to target this device.
   Future<String?> getToken() => _getTokenSafely();
+
+  /// Removes delivered notifications so the launcher badge / notification
+  /// centre entry disappears once the user has read them in-app.
+  Future<void> clearDelivered() async {
+    try {
+      await _localNotifications.cancelAll();
+    } catch (e) {
+      debugPrint('clearDelivered failed: $e');
+    }
+  }
+
+  /// Hidden support tool (long-press "الإشعارات" in the profile screen).
+  /// Everything needed to explain why a device is not receiving push, without
+  /// needing a Mac or a cable.
+  Future<Map<String, String>> diagnostics() async {
+    final out = <String, String>{};
+    out['platform'] = Platform.operatingSystem;
+
+    try {
+      final s = await _fcm.getNotificationSettings();
+      out['authorization'] = s.authorizationStatus.name;
+      out['alert'] = s.alert.name;
+    } catch (e) {
+      out['authorization'] = 'error: $e';
+    }
+
+    out['inAppToggle'] = (await _isPushEnabled()).toString();
+    out['userId'] = _db.auth.currentUser?.id ?? 'NOT SIGNED IN';
+
+    if (Platform.isIOS) {
+      try {
+        final apns = await _fcm.getAPNSToken();
+        out['apnsToken'] =
+            apns == null ? 'NULL (device never registered with APNs)' : 'ok (${apns.length} chars)';
+      } catch (e) {
+        out['apnsToken'] = 'error: $e';
+      }
+    }
+
+    String? token;
+    try {
+      token = await _fcm.getToken();
+      out['fcmToken'] = token == null
+          ? 'NULL'
+          : '${token.substring(0, token.length < 16 ? token.length : 16)}… (${token.length})';
+    } catch (e) {
+      out['fcmToken'] = 'error: $e';
+    }
+
+    if (token != null) {
+      out['savedToDb'] = (await _persist(token)).toString();
+    } else {
+      out['savedToDb'] = 'skipped (no token)';
+    }
+
+    try {
+      final uid = _db.auth.currentUser?.id;
+      if (uid != null) {
+        final row = await _db
+            .from('profiles')
+            .select('fcm_token')
+            .eq('id', uid)
+            .maybeSingle();
+        final stored = row?['fcm_token'] as String?;
+        out['dbToken'] = stored == null
+            ? 'NULL'
+            : '${stored.substring(0, stored.length < 16 ? stored.length : 16)}… (${stored.length})';
+      }
+    } catch (e) {
+      out['dbToken'] = 'error: $e';
+    }
+
+    return out;
+  }
 }

@@ -11,6 +11,7 @@ import '../../services/admin_access_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/avatar_service.dart';
 import '../../services/notification_permission_service.dart';
+import '../../services/notification_service.dart';
 import '../../services/session_service.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/compact_app_header.dart';
@@ -50,6 +51,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Future<void> _loadPushState() async {
     final enabled = await NotificationPermissionService.instance.isEnabled();
     if (mounted) setState(() => _pushEnabled = enabled);
+  }
+
+  Future<void> _showPushDiagnostics() async {
+    final report = await NotificationService.instance.diagnostics();
+    if (!mounted) return;
+    final text = report.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Push diagnostics'),
+        content: SingleChildScrollView(
+          child: SelectableText(text, style: const TextStyle(fontSize: 12)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('إغلاق'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _togglePush() async {
@@ -586,6 +608,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   // ── Push notifications on/off toggle ─────────────────────────────────────
   Widget _buildPushToggleRow(ColorScheme cs) {
     final isOn = _pushEnabled;
+    // Green when on, neutral grey when off.
+    final onColor = const Color(0xFF10B981);
+    final offColor = cs.outline;
+    final knobColor = isOn ? onColor : offColor;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
@@ -597,29 +623,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             width: 60,
             height: 32,
             decoration: BoxDecoration(
-              color: isOn ? AppColors.primary.withOpacity(0.15) : cs.outline.withOpacity(0.15),
+              color: knobColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isOn ? AppColors.primary : cs.outline,
-                width: 1.5,
-              ),
+              border: Border.all(color: knobColor, width: 1.5),
             ),
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeInOut,
-              alignment: isOn ? Alignment.centerLeft : Alignment.centerRight,
+              // Knob sits on the right when ON, matching the toggle above it.
+              alignment: isOn ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
                 margin: const EdgeInsets.all(3),
                 width: 26,
                 height: 26,
                 decoration: BoxDecoration(
-                  color: isOn ? AppColors.primary : cs.outline,
+                  color: knobColor,
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(
-                      color: (isOn ? AppColors.primary : cs.outline).withOpacity(0.4),
-                      blurRadius: 6,
-                    ),
+                    BoxShadow(color: knobColor.withOpacity(0.4), blurRadius: 6),
                   ],
                 ),
                 child: _pushBusy
@@ -637,15 +658,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ),
         ),
         const Spacer(),
-        Text(
-          context.s.notifications,
-          style: GoogleFonts.ibmPlexSansArabic(
-              fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface),
+        GestureDetector(
+          // Hidden support tool: long-press the label to inspect why push
+          // registration failed on this device.
+          onLongPress: _showPushDiagnostics,
+          child: Text(
+            context.s.notifications,
+            style: GoogleFonts.ibmPlexSansArabic(
+                fontSize: 15, fontWeight: FontWeight.w500, color: cs.onSurface),
+          ),
         ),
         const SizedBox(width: 14),
         _IconBadge(
           icon: isOn ? Icons.notifications_active_outlined : Icons.notifications_off_outlined,
-          color: isOn ? AppColors.primary : cs.outline,
+          color: knobColor,
         ),
       ]),
     );

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../services/auth_service.dart';
+import '../../services/profile_completion_service.dart';
 import '../../services/session_service.dart';
 import '../../services/version_checker_service.dart';
 import '../../shared/widgets/force_update_dialog.dart';
@@ -145,7 +146,13 @@ class _SplashScreenState extends State<SplashScreen>
       final valid = await SessionService.instance.isSessionStillValid();
       if (!mounted) return;
       if (valid) {
-        context.go('/notification-permission');
+        // The notification-permission screen is a one-time, post-login step.
+        // Routing here on every cold start made it flash on screen each time
+        // the app opened. Returning users go straight into the app.
+        final showProfileCompletion =
+            await ProfileCompletionService.instance.shouldShowScreen();
+        if (!mounted) return;
+        context.go(showProfileCompletion ? '/complete-profile' : '/home');
       } else {
         await AuthService.instance.signOut();
         await SessionService.instance.clear();
