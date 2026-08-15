@@ -1201,7 +1201,13 @@ class _PrimaryButton extends StatelessWidget {
       child: loading
           ? const SizedBox(width: 22, height: 22,
               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-          : Text(label, style: GoogleFonts.ibmPlexSansArabic(fontSize: 16, fontWeight: FontWeight.w600)),
+          : FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label,
+                  maxLines: 1,
+                  style: GoogleFonts.ibmPlexSansArabic(
+                      fontSize: 16, fontWeight: FontWeight.w600)),
+            ),
     ),
   );
 }

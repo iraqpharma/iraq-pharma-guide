@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'notification_service.dart';
 
 // ── Input limits ──────────────────────────────────────────────────────────────
 const int kMaxEmailLen    = 254;
@@ -393,7 +394,18 @@ class AuthService {
   }
 
   // ── Sign Out ──────────────────────────────────────────────────────────────
-  Future<void> signOut() async => _client.auth.signOut();
+  Future<void> signOut() async {
+    // Clear the device's push token BEFORE the session goes away. The update
+    // runs under the user's own JWT, and RLS needs auth.uid() to still match
+    // the row — once signOut() returns, auth.uid() is null and the token is
+    // stranded in the profile, so the server keeps pushing to a device whose
+    // owner has logged out. That is exactly the bug where a test notification
+    // still arrived after signing out.
+    try {
+      await NotificationService.instance.clearTokenForCurrentUser();
+    } catch (_) {}
+    await _client.auth.signOut();
+  }
 
   /// Permanently deletes the signed-in user. Required by App Store guideline
   /// 5.1.1(v) and Google Play's data deletion policy: the user must be able to

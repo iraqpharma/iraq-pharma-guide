@@ -31,10 +31,28 @@ class IraqPharmaApp extends ConsumerWidget {
       ],
       // Force RTL/LTR based on active locale — MaterialApp alone isn't
       // always sufficient when widgets use hardcoded Row children ordering.
-      builder: (context, child) => Directionality(
-        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
-        child: child!,
-      ),
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          // Some Android skins (Samsung One UI in particular) ship a display
+          // font scale well above 1.0. Every fixed-height control in this app
+          // — the 52px primary button, the compact header — was laid out for
+          // scale 1.0, so an unclamped scaler clips glyphs instead of growing
+          // the box. Clamping is a no-op at the default scale and only caps
+          // the extremes. Text still grows, just not past what the layout can
+          // hold.
+          data: mq.copyWith(
+            textScaler: mq.textScaler.clamp(
+              minScaleFactor: 0.85,
+              maxScaleFactor: 1.10,
+            ),
+          ),
+          child: Directionality(
+            textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+            child: child!,
+          ),
+        );
+      },
       routerConfig: appRouter,
     );
   }
