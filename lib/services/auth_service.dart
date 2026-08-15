@@ -395,6 +395,34 @@ class AuthService {
   // ── Sign Out ──────────────────────────────────────────────────────────────
   Future<void> signOut() async => _client.auth.signOut();
 
+  /// Permanently deletes the signed-in user. Required by App Store guideline
+  /// 5.1.1(v) and Google Play's data deletion policy: the user must be able to
+  /// do this from inside the app, without contacting support.
+  ///
+  /// The `delete-account` edge function identifies the caller from their own
+  /// JWT and removes the auth user with service-role rights, so no client can
+  /// delete anybody else.
+  Future<bool> deleteAccount() async {
+    try {
+      final res = await _client.functions.invoke('delete-account');
+      final ok = res.status == 200 &&
+          (res.data is Map && (res.data as Map)['deleted'] == true);
+      if (!ok) return false;
+    } catch (e) {
+      return false;
+    }
+    // The user row is gone; clear the local session and every local flag so a
+    // fresh sign-up on this device starts clean.
+    try {
+      await _client.auth.signOut();
+    } catch (_) {}
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+    } catch (_) {}
+    return true;
+  }
+
   // ── Profile ───────────────────────────────────────────────────────────────
   Future<Map<String, dynamic>?> getProfile() async {
     final uid = _client.auth.currentUser?.id;

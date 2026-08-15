@@ -19,6 +19,25 @@ class AppStrings {
   String get browseByCategory  => isAr ? 'استعراض حسب الفصيلة' : 'Browse by Category';
   String get viewAll           => isAr ? 'عرض الكل'             : 'View All';
   String get allDrugs          => isAr ? 'كل الأدوية'           : 'All Drugs';
+
+  // ── Educational tool notice ───────────────────────────────────────────────
+  String get eduNoticeTitle => isAr ? 'أداة تعليمية' : 'Educational tool';
+  String get eduNoticeBody => isAr
+      ? 'هذه الحاسبة أداة تعليمية للتدريب على المعادلات الدوائية المنشورة، وليست أداة لوصف العلاج. تحقّق دائمًا من النشرة الدوائية الرسمية وراجع الطبيب أو الصيدلاني المختص قبل أي قرار علاجي.'
+      : 'This calculator is a teaching aid based on published pharmaceutical formulas. It is not a prescribing tool. Always verify against the official drug leaflet and consult a qualified physician or pharmacist before any treatment decision.';
+  String get eduNoticeDontShow =>
+      isAr ? 'لا تُظهر هذا التنبيه مرة أخرى' : "Don't show this again";
+  String get eduNoticeAgree => isAr ? 'فهمت، متابعة' : 'I understand';
+
+  // ── Account deletion ──────────────────────────────────────────────────────
+  String get deleteAccount => isAr ? 'حذف الحساب نهائيًا' : 'Delete account permanently';
+  String get deleteAccountBody => isAr
+      ? 'سيُحذف حسابك وكل بياناتك نهائيًا ولا يمكن استرجاعها:\n\n• بياناتك الشخصية وصورتك\n• ملاحظاتك في المرجع التفاعلي\n• مفضلاتك وإحصائياتك\n• اشتراكك في الإشعارات\n\nاكتب كلمة "حذف" للتأكيد.'
+      : 'Your account and all your data will be permanently deleted and cannot be recovered:\n\n• Your profile details and photo\n• Your notes in the interactive reference\n• Your favourites and statistics\n• Your notification subscription\n\nType "delete" to confirm.';
+  String get deleteAccountConfirmWord => isAr ? 'حذف' : 'delete';
+  String get deleteAccountConfirm => isAr ? 'حذف نهائيًا' : 'Delete permanently';
+  String get deleteAccountFailed =>
+      isAr ? 'تعذّر حذف الحساب، حاول مرة أخرى' : 'Could not delete the account, please try again';
   String get quickTools        => isAr ? 'أدوات سريعة'          : 'Quick Tools';
   String get adSpace           => isAr ? 'مساحة إعلانية'        : 'Ad Space';
   String get ad                => isAr ? 'إعلان'                : 'Ad';

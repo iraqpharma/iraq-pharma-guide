@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/locale_provider.dart';
@@ -33,6 +34,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool    _isSuperAdmin    = false;
   bool    _pushEnabled     = true;
   bool    _pushBusy        = false;
+  bool    _deleting        = false;
+  String  _appVersion      = '';
 
   late final AnimationController _avatarCtrl;
   late final Animation<double>   _avatarScale;
@@ -45,11 +48,108 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _loadProfile();
     _loadAdminAccess();
     _loadPushState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) setState(() => _appVersion = info.version);
+    } catch (_) {}
   }
 
   Future<void> _loadPushState() async {
     final enabled = await NotificationPermissionService.instance.isEnabled();
     if (mounted) setState(() => _pushEnabled = enabled);
+  }
+
+  /// Kept deliberately quiet in the UI — App Store 5.1.1(v) requires the
+  /// option to be findable, not prominent. Confirmation is typed, not tapped.
+  Future<void> _confirmDeleteAccount() async {
+    if (_deleting) return;
+    final cs = Theme.of(context).colorScheme;
+    final word = context.s.deleteAccountConfirmWord;
+    final ctrl = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dCtx) => StatefulBuilder(
+        builder: (dCtx, setLocal) {
+          final matches = ctrl.text.trim() == word;
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20)),
+            title: Row(children: [
+              const Icon(Icons.warning_amber_rounded,
+                  color: Colors.red, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(context.s.deleteAccount,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            ]),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.s.deleteAccountBody,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontSize: 13, height: 1.7,
+                        color: cs.onSurfaceVariant)),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: ctrl,
+                  onChanged: (_) => setLocal(() {}),
+                  textAlign: TextAlign.center,
+                  decoration: InputDecoration(
+                    hintText: word,
+                    isDense: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dCtx, false),
+                child: Text(context.s.cancel,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        color: cs.onSurfaceVariant)),
+              ),
+              ElevatedButton(
+                onPressed: matches ? () => Navigator.pop(dCtx, true) : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: cs.outline.withOpacity(0.3),
+                  elevation: 0,
+                ),
+                child: Text(context.s.deleteAccountConfirm,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deleting = true);
+    final ok = await AuthService.instance.deleteAccount();
+    if (!mounted) return;
+    setState(() => _deleting = false);
+
+    if (ok) {
+      context.go('/login');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.s.deleteAccountFailed)),
+      );
+    }
   }
 
   Future<void> _togglePush() async {
@@ -349,6 +449,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ],
                 const SizedBox(height: 16),
                 _buildLogoutCard(cs),
+                _buildDeleteAccountLink(cs),
                 const SizedBox(height: 20),
                 _buildFooter(cs),
               ],
@@ -685,13 +786,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   );
 
   // ── Footer ────────────────────────────────────────────────────────────────
+  Widget _buildDeleteAccountLink(ColorScheme cs) => Padding(
+    padding: const EdgeInsets.only(top: 14, bottom: 2),
+    child: Center(
+      child: _deleting
+          ? const SizedBox(
+              width: 16, height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2))
+          : GestureDetector(
+              onTap: _confirmDeleteAccount,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 6),
+                child: Text(
+                  context.s.deleteAccount,
+                  style: GoogleFonts.ibmPlexSansArabic(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: cs.onSurfaceVariant.withOpacity(0.5),
+                    decoration: TextDecoration.underline,
+                    decorationColor: cs.onSurfaceVariant.withOpacity(0.3),
+                  ),
+                ),
+              ),
+            ),
+    ),
+  );
+
   Widget _buildFooter(ColorScheme cs) => Column(children: [
     Text('Iraq Pharma Guide ® 2026',
         style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 12, fontWeight: FontWeight.w600,
             color: cs.onSurfaceVariant.withOpacity(0.7))),
     const SizedBox(height: 3),
-    Text('${context.s.version} v2.2.0',
+    // Read from the binary so it can never drift from pubspec again.
+    Text('${context.s.version} v${_appVersion.isEmpty ? '' : _appVersion}',
         style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 11, color: cs.onSurfaceVariant.withOpacity(0.45))),
   ]);

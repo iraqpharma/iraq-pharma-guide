@@ -18,6 +18,7 @@ import '../../services/rating_service.dart';
 import '../profile/profile_screen.dart';
 import '../../shared/widgets/notification_bell_widget.dart';
 import '../../shared/widgets/ios_glass_nav_bar.dart';
+import '../../shared/widgets/educational_tool_notice.dart';
 import 'widgets/search_bar_widget.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -1013,6 +1014,21 @@ class _ToolsBody extends StatelessWidget {
   }
 }
 
+/// Calculators are teaching aids, so the educational notice is shown before
+/// they open (once, unless the user ticks "don't show again").
+Future<void> _openTool(BuildContext context, _NavToolItem tool) async {
+  const gated = {'/calc': 'dose', '/renal-calc': 'crcl'};
+  final toolId = gated[tool.route];
+  if (toolId != null) {
+    final ok = await EducationalToolNotice.ensureAcknowledged(
+      context,
+      toolId: toolId,
+    );
+    if (!ok || !context.mounted) return;
+  }
+  if (context.mounted) context.push(tool.route);
+}
+
 class _NavToolItem {
   final String ar, en, route;
   final IconData icon;
@@ -1029,7 +1045,7 @@ class _BannerToolCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push(tool.route),
+      onTap: () => _openTool(context, tool),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
         decoration: BoxDecoration(
@@ -1100,7 +1116,7 @@ class _NavToolCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push(tool.route),
+      onTap: () => _openTool(context, tool),
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
