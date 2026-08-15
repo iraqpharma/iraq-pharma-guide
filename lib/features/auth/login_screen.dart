@@ -123,7 +123,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Google / Apple / Facebook never wrote a session timestamp, so
+  /// SessionService.isSessionStillValid() saw `ts == null` and the splash
+  /// screen signed the user out on the very next cold start. Any successful
+  /// sign-in records one here.
+  Future<void> _ensureSessionRecorded() async {
+    if (await SessionService.instance.isSessionStillValid()) return;
+    final email = Supabase.instance.client.auth.currentUser?.email ?? '';
+    await SessionService.instance.onLoginSuccess(
+      rememberMe: true,
+      email: email,
+    );
+  }
+
   void _showLoginSuccess() {
+    unawaited(_ensureSessionRecorded());
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -155,12 +169,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 22, fontWeight: FontWeight.bold,
                             color: cs.onSurface)),
-                    const SizedBox(height: 6),
-                    Text(context.s.loginSubHint,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.ibmPlexSansArabic(
-                            fontSize: 12, color: cs.onSurfaceVariant)),
-                    const SizedBox(height: 24),
+                    // The "email · phone · username" line used to sit here,
+                    // repeating what the field below already says.
+                    const SizedBox(height: 26),
 
                     // Universal identifier field
                     _UniversalLoginField(ctrl: _emailCtrl),

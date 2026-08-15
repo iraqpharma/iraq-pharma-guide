@@ -40,19 +40,12 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Opening this screen IS the act of reading. There is no longer a
-    // "mark all as read" button — anything the user has now seen is marked
-    // read for this user only.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      NotificationService.instance.markAllAsRead();
-    });
-  }
-
-  /// Pull to refresh: drop the cached rows and re-read both streams.
+  /// Pull to refresh re-reads both streams AND clears the unread state —
+  /// merely landing on this screen no longer marks anything read, so a
+  /// notification that arrives while the list is open stays highlighted
+  /// until the user taps it or pulls down.
   Future<void> _refresh() async {
+    await NotificationService.instance.markAllAsRead();
     ref.invalidate(rawNotificationsProvider);
     ref.invalidate(readIdsProvider);
     await Future<void>.delayed(const Duration(milliseconds: 400));

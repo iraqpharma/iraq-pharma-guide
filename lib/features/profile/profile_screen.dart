@@ -365,7 +365,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   );
 
   Widget _buildBody(ColorScheme cs, bool isDark) {
-    final headerHeight = MediaQuery.of(context).padding.top + 8 + 40 + 10;
+    final headerHeight = appHeaderHeight(context);
 
     final scrollView = CustomScrollView(
       controller: _scrollCtrl,
@@ -511,8 +511,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   // ── App Header ────────────────────────────────────────────────────────────
-  Widget _buildAppHeader() => SliverToBoxAdapter(
-    child: Builder(builder: (ctx) => CompactAppHeader(title: ctx.s.myAccount)),
+  // Pinned, not a plain adapter: the scroll edge blur needs a fixed edge to
+  // sit beneath, and the header used to scroll away so the effect had nothing
+  // to attach to and was never visible.
+  Widget _buildAppHeader() => SliverPersistentHeader(
+    pinned: true,
+    delegate: _ProfileHeaderDelegate(
+      height: appHeaderHeight(context),
+    ),
   );
 
   // ── User card ─────────────────────────────────────────────────────────────
@@ -1029,4 +1035,23 @@ class _LangOption extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  const _ProfileHeaderDelegate({required this.height});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
+      Builder(builder: (ctx) => CompactAppHeader(title: ctx.s.myAccount));
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  bool shouldRebuild(covariant _ProfileHeaderDelegate old) =>
+      old.height != height;
 }

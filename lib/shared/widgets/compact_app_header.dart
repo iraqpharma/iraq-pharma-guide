@@ -5,30 +5,45 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import 'notification_bell_widget.dart';
 
+/// Single source of truth for the coloured header height, so every screen
+/// that shows one lines up with the home screen exactly.
+double appHeaderHeight(BuildContext context) =>
+    MediaQuery.of(context).padding.top + 12 + 46 + 20;
+
 /// Compact header used in all tabs except home.
 /// Same teal background, hamburger right, bell left, title + logo center.
 class CompactAppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
-  const CompactAppHeader({super.key, required this.title});
+  /// The search tab nests this inside a taller teal block, so the rounding
+  /// has to move to that outer block instead of cutting through the middle.
+  final bool roundedBottom;
+
+  const CompactAppHeader({
+    super.key,
+    required this.title,
+    this.roundedBottom = true,
+  });
 
   @override
-  Size get preferredSize {
-    // height will be overridden by AppBar but we keep it for PreferredSizeWidget
-    return const Size.fromHeight(64);
-  }
+  Size get preferredSize => const Size.fromHeight(78);
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
+    // Matches the home header exactly — the two used to differ by 20px.
     return Container(
-      padding: EdgeInsets.fromLTRB(16, top + 8, 16, 10),
+      height: appHeaderHeight(context),
+      alignment: Alignment.center,
+      padding: EdgeInsets.fromLTRB(
+          16, MediaQuery.of(context).padding.top + 12, 16, 20),
       decoration: BoxDecoration(
         color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(Platform.isIOS ? 30 : 22),
-          bottomRight: Radius.circular(Platform.isIOS ? 30 : 22),
-        ),
+        borderRadius: roundedBottom
+            ? BorderRadius.only(
+                bottomLeft: Radius.circular(Platform.isIOS ? 30 : 22),
+                bottomRight: Radius.circular(Platform.isIOS ? 30 : 22),
+              )
+            : null,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

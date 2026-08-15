@@ -627,7 +627,7 @@ class AppStrings {
   String get drugSearchHint  => isAr ? 'ابحث عن اسم الدواء...'            : 'Search drug name...';
 
   // Barcode scanner
-  String get barcodeScanHint  => isAr ? 'وجّه الكاميرا نحو باركود البكج'  : 'Point camera at package barcode';
+  String get barcodeScanHint  => isAr ? 'وجّه الكاميرا نحو باركود المنتج أو اسم المنتج للبحث السريع'  : 'Point the camera at the product barcode or its name for a quick search';
   String get flashOn_         => isAr ? 'تشغيل الفلاش'                    : 'Flash on';
   String get flashOff_        => isAr ? 'إطفاء الفلاش'                    : 'Flash off';
 

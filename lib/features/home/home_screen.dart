@@ -20,6 +20,7 @@ import '../profile/profile_screen.dart';
 import '../../shared/widgets/notification_bell_widget.dart';
 import '../../shared/widgets/ios_glass_nav_bar.dart';
 import '../../shared/widgets/educational_tool_notice.dart';
+import '../../shared/widgets/swipe_to_remove.dart';
 import 'widgets/search_bar_widget.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -228,7 +229,7 @@ class _TealHeaderDelegate extends SliverPersistentHeaderDelegate {
   //
   // الارتفاع ثابت عمداً: الانتقال بصري بحت (لون → زجاج) فلا يتحرك
   // أي شيء تحته.
-  double get _height => topPadding + 12 + 46 + 20;
+  double get _height => topPadding + 12 + 46 + 20; // == appHeaderHeight()
 
   @override
   Widget build(
@@ -862,10 +863,19 @@ class _SearchBody extends ConsumerWidget {
       children: [
         // ── Compact header + search bar ────────────────────────────────────
         Container(
-          color: AppColors.primary,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(Platform.isIOS ? 30 : 22),
+              bottomRight: Radius.circular(Platform.isIOS ? 30 : 22),
+            ),
+          ),
           child: Column(
             children: [
-              CompactAppHeader(title: context.s.searchDrug),
+              CompactAppHeader(
+                title: context.s.searchDrug,
+                roundedBottom: false,
+              ),
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
                 child: PharmaSearchBar(),
@@ -1528,21 +1538,32 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
         }
         final drug = item.drug!;
         final isSelected = _selected.contains(drug.id);
+        final card = _FavDrugCard(
+          drug: drug,
+          isSelecting: _selecting,
+          isSelected: isSelected,
+          onTap: () {
+            if (_selecting) {
+              _toggleSelect(drug.id);
+            } else {
+              context.push('/drug/${drug.id}');
+            }
+          },
+          onRemove: () => _confirmDeleteSingle(context, ref, drug),
+        );
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: _FavDrugCard(
-            drug: drug,
-            isSelecting: _selecting,
-            isSelected: isSelected,
-            onTap: () {
-              if (_selecting) {
-                _toggleSelect(drug.id);
-              } else {
-                context.push('/drug/${drug.id}');
-              }
-            },
-            onRemove: () => _confirmDeleteSingle(context, ref, drug),
-          ),
+          // No swiping while multi-selecting — the two gestures would fight.
+          child: _selecting
+              ? card
+              : SwipeToRemove(
+                  key: ValueKey('fav_${drug.id}'),
+                  label: context.s.remove,
+                  onRemove: () =>
+                      ref.read(favoritesProvider.notifier).remove(drug.id),
+                  child: card,
+                ),
         );
       },
     );
@@ -1603,25 +1624,103 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
   // ── Empty state ────────────────────────────────────────────────────────────
 
   Widget _emptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.bookmark_outline_rounded,
-              size: 72,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3)),
-          const SizedBox(height: 16),
-          Text(context.s.noFavorites,
-              style: GoogleFonts.cairo(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface)),
-          const SizedBox(height: 8),
-          Text(context.s.noFavoritesSub,
-              style: GoogleFonts.cairo(
-                  fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              textAlign: TextAlign.center),
-        ],
+    final cs = Theme.of(context).colorScheme;
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: box.maxHeight),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Layered rings behind the mark — softer than a lone grey icon.
+                SizedBox(
+                  width: 148,
+                  height: 148,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary.withOpacity(0.04),
+                        ),
+                      ),
+                      Container(
+                        width: 104,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary.withOpacity(0.07),
+                        ),
+                      ),
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: cs.surface,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.12),
+                              blurRadius: 22,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.bookmark_border_rounded,
+                            size: 32, color: AppColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  context.s.noFavorites,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  context.s.noFavoritesSub,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo(
+                    fontSize: 13.5,
+                    height: 1.9,
+                    color: cs.onSurfaceVariant.withOpacity(0.85),
+                  ),
+                ),
+                const SizedBox(height: 26),
+                // A way out instead of a dead end.
+                TextButton.icon(
+                  onPressed: () => context.push('/category/all'),
+                  icon: const Icon(Icons.search_rounded, size: 18),
+                  label: Text(
+                    context.s.allDrugs,
+                    style: GoogleFonts.cairo(
+                        fontSize: 13.5, fontWeight: FontWeight.w600),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    backgroundColor: AppColors.primary.withOpacity(0.08),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 22, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1784,17 +1883,19 @@ class _FavDrugCard extends StatelessWidget {
               ),
             ),
 
-            // ── Trailing: arrow (normal) or nothing (select mode) ────────
-            if (!isSelecting) ...[
-              Container(width: 1, height: 60, color: Theme.of(context).dividerColor),
-              IconButton(
-                onPressed: onRemove,
-                tooltip: 'إزالة من المفضلة',
-                icon: const Icon(Icons.delete_outline_rounded,
-                    color: Color(0xFFD32F2F), size: 22),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-              ),
-            ] else
+            // Deleting is a swipe now (see _SwipeToRemove), so the card
+            // itself carries no destructive button.
+            if (!isSelecting)
+              Padding(
+                padding: const EdgeInsets.only(left: 14, right: 14),
+                child: Icon(Icons.chevron_left_rounded,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withOpacity(0.4),
+                    size: 20),
+              )
+            else
               Padding(
                 padding: const EdgeInsets.only(left: 14, right: 14),
                 child: Icon(Icons.chevron_right,

@@ -27,7 +27,10 @@ class NotificationPermissionService {
     if (Platform.isAndroid) {
       final status = await Permission.notification.status;
       if (status.isGranted) {
-        await NotificationService.instance.syncToken();
+        // Must not be awaited: fetching the token can take seconds and this
+        // call sits on the post-login navigation path — awaiting it left a
+        // blank screen hanging before the home screen appeared.
+        unawaited(NotificationService.instance.syncToken());
         await prefs.setBool(_askedKey, true);
         return false;
       }
@@ -41,7 +44,7 @@ class NotificationPermissionService {
         settings.authorizationStatus == AuthorizationStatus.provisional;
 
     if (granted) {
-      await NotificationService.instance.syncToken();
+      unawaited(NotificationService.instance.syncToken());
       await prefs.setBool(_askedKey, true);
       return false;
     }
