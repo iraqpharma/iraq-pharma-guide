@@ -45,10 +45,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   /// notification that arrives while the list is open stays highlighted
   /// until the user taps it or pulls down.
   Future<void> _refresh() async {
+    // Only the rows are re-fetched. readIdsProvider is a realtime stream and
+    // picks the new rows up on its own — invalidating it here raced with the
+    // insert above and briefly reported an empty set, which is why pulling
+    // down did not appear to mark anything read.
     await NotificationService.instance.markAllAsRead();
     ref.invalidate(rawNotificationsProvider);
-    ref.invalidate(readIdsProvider);
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
   }
 
   @override

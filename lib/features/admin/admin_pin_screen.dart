@@ -16,7 +16,10 @@ String _hashPin(String pin) =>
     sha256.convert(utf8.encode('ipg_salt_$pin')).toString();
 
 class AdminPinScreen extends StatefulWidget {
-  const AdminPinScreen({super.key});
+  /// Where to go once the code is accepted. Lets the same gate protect the
+  /// statistics screen as well as the drug database.
+  final String destination;
+  const AdminPinScreen({super.key, this.destination = '/admin/drugs'});
   @override
   State<AdminPinScreen> createState() => _AdminPinScreenState();
 }
@@ -58,7 +61,7 @@ class _AdminPinScreenState extends State<AdminPinScreen> {
       setState(() => _error = 'الرمز غير صحيح');
       return;
     }
-    if (mounted) context.push('/admin/drugs');
+    if (mounted) context.pushReplacement(widget.destination);
   }
 
   @override

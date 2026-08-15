@@ -10,6 +10,7 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/drug_provider.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/favorites_provider.dart';
+import '../../providers/recent_searches_provider.dart';
 import '../../data/models/drug_model.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/ad_carousel.dart';
@@ -862,26 +863,12 @@ class _SearchBody extends ConsumerWidget {
     return Column(
       children: [
         // ── Compact header + search bar ────────────────────────────────────
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(Platform.isIOS ? 30 : 22),
-              bottomRight: Radius.circular(Platform.isIOS ? 30 : 22),
-            ),
-          ),
-          child: Column(
-            children: [
-              CompactAppHeader(
-                title: context.s.searchDrug,
-                roundedBottom: false,
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
-                child: PharmaSearchBar(),
-              ),
-            ],
-          ),
+        // Header is identical to every other tab; the field is its own
+        // element on the page below it, always visible and never collapsed.
+        CompactAppHeader(title: context.s.searchDrug),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 6),
+          child: PharmaSearchBar(),
         ),
 
         // ── Body ──────────────────────────────────────────────────────────
@@ -915,29 +902,123 @@ class _SearchBody extends ConsumerWidget {
 }
 
 // ── Idle state (no query typed yet) ──────────────────────────────────────────
-class _SearchIdleState extends StatelessWidget {
+class _SearchIdleState extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recent = ref.watch(recentSearchesProvider);
+    final cs = Theme.of(context).colorScheme;
+
+    if (recent.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_rounded,
+                size: 72, color: cs.onSurfaceVariant.withOpacity(0.25)),
+            const SizedBox(height: 14),
+            Text(context.s.searchHint,
+                style: GoogleFonts.cairo(
+                    color: cs.onSurfaceVariant,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            Text(context.s.searchSubHint,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                    color: cs.onSurfaceVariant.withOpacity(0.7), fontSize: 12)),
+          ],
+        ),
+      );
+    }
+
+    // Stored on the device only — never attached to the account.
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16, 20, 16, Platform.isIOS ? 120 : 32),
+      children: [
+        Row(
+          children: [
+            Icon(Icons.history_rounded,
+                size: 17, color: cs.onSurfaceVariant),
+            const SizedBox(width: 7),
+            Text(context.s.recentSearches,
+                style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurfaceVariant)),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => ref.read(recentSearchesProvider.notifier).clear(),
+              child: Text(context.s.clearAll,
+                  style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: recent
+              .map((q) => _RecentChip(
+                    query: q,
+                    onTap: () =>
+                        ref.read(searchQueryProvider.notifier).state = q,
+                    onRemove: () =>
+                        ref.read(recentSearchesProvider.notifier).remove(q),
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentChip extends StatelessWidget {
+  final String query;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+  const _RecentChip({
+    required this.query,
+    required this.onTap,
+    required this.onRemove,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_rounded,
-              size: 72,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.25)),
-          const SizedBox(height: 14),
-          Text(context.s.searchHint,
-              style: GoogleFonts.cairo(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500)),
-          const SizedBox(height: 6),
-          Text(context.s.searchSubHint,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.cairo(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
-                  fontSize: 12)),
-        ],
+    final cs = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: cs.outline.withOpacity(0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(query,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                      fontSize: 12.5, color: cs.onSurface)),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: onRemove,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(Icons.close_rounded,
+                    size: 14, color: cs.onSurfaceVariant.withOpacity(0.7)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1324,7 +1405,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
     }
   }
 
-  Future<void> _confirmDeleteSingle(
+  Future<bool> _confirmDeleteSingle(
       BuildContext context, WidgetRef ref, Drug drug) async {
     final ok = await _showConfirmDialog(
       context,
@@ -1334,7 +1415,9 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
     );
     if (ok && context.mounted) {
       await ref.read(favoritesProvider.notifier).remove(drug.id);
+      return true;
     }
+    return false;
   }
 
   Future<bool> _showConfirmDialog(
@@ -1410,9 +1493,17 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
     final allSelected = drugs.isNotEmpty && _selected.length == drugs.length;
 
     return Container(
-      color: _selecting ? const Color(0xFF37474F) : AppColors.primary,
+      height: appHeaderHeight(context),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: _selecting ? const Color(0xFF37474F) : AppColors.primary,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(Platform.isIOS ? 30 : 22),
+          bottomRight: Radius.circular(Platform.isIOS ? 30 : 22),
+        ),
+      ),
       padding: EdgeInsets.fromLTRB(
-          16, MediaQuery.of(context).padding.top + 12, 16, 14),
+          16, MediaQuery.of(context).padding.top + 12, 16, 20),
       child: Row(
         children: [
           if (_selecting) ...[
@@ -1560,8 +1651,9 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
               : SwipeToRemove(
                   key: ValueKey('fav_${drug.id}'),
                   label: context.s.remove,
-                  onRemove: () =>
-                      ref.read(favoritesProvider.notifier).remove(drug.id),
+                  // Confirmation is required for the button and for the
+                  // full swipe alike — deleting must never be one gesture.
+                  onRemove: () => _confirmDeleteSingle(context, ref, drug),
                   child: card,
                 ),
         );

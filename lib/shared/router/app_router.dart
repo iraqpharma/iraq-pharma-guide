@@ -96,7 +96,13 @@ final appRouter = GoRouter(
     GoRoute(path: '/legal/disclaimer', builder: (_, __) => const LegalScreen(type: LegalType.disclaimer)),
 
     // Admin (PIN-protected data management)
-    GoRoute(path: '/admin-pin',         builder: (_, __) => const AdminPinScreen()),
+    GoRoute(
+      path: '/admin-pin',
+      builder: (_, state) => AdminPinScreen(
+        destination: state.uri.queryParameters['to'] ?? '/admin/drugs',
+      ),
+    ),
+    // Reached only through /admin-pin?to=… — the same code guards both areas.
     GoRoute(path: '/admin/statistics',  builder: (_, __) => const AdminStatisticsScreen()),
     GoRoute(path: '/admin/drugs',   builder: (_, __) => const AdminDrugListScreen()),
     GoRoute(

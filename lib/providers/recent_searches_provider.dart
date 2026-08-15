@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class RecentSearchesNotifier extends StateNotifier<List<String>> {
   static const _key = 'recent_searches_v1';
-  static const _max = 8;
+  static const _max = 10;
 
   RecentSearchesNotifier() : super([]) {
     _load();

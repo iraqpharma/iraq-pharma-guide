@@ -1,35 +1,42 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// A short gradient blur pinned under a fixed header — Apple calls this the
-/// scroll edge effect. Content sliding beneath the header softens instead of
-/// being cut by a hard line. It fades in with the first few pixels of scroll
-/// so a page sitting at the top looks untouched.
+/// A short progressive blur pinned under a fixed header — Apple's scroll edge
+/// effect. Content sliding beneath the header softens instead of being cut by
+/// a hard line, and it fades in with the first few pixels of scroll.
 ///
-/// Draw it as the last child of a Stack, above the scroll view and below the
-/// header, so the header itself is never blurred.
+/// Built as a stack of thin bands with decreasing blur rather than one blurred
+/// layer behind a gradient mask: a ShaderMask puts the BackdropFilter inside a
+/// new compositing layer, where it has no parent backdrop to sample — which is
+/// why the earlier version rendered nothing at all.
 class ScrollEdgeBlur extends StatelessWidget {
   /// Current scroll offset in pixels.
   final double offset;
 
-  /// Distance from the top of the stack (the header height).
+  /// Distance from the top of the stack (usually the header height).
   final double top;
 
-  /// How tall the softened strip is.
+  /// Total height of the softened strip.
   final double height;
+
+  /// Number of bands. More bands = smoother ramp, slightly more cost.
+  final int bands;
 
   const ScrollEdgeBlur({
     super.key,
     required this.offset,
     required this.top,
-    this.height = 28,
+    this.height = 34,
+    this.bands = 5,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Fully faded in after 40px of scroll.
+    // Fully ramped in after 40px of scroll.
     final t = (offset / 40).clamp(0.0, 1.0);
-    if (t == 0) return const SizedBox.shrink();
+    if (t <= 0.01) return const SizedBox.shrink();
+
+    final bandHeight = height / bands;
 
     return Positioned(
       top: top,
@@ -37,20 +44,20 @@ class ScrollEdgeBlur extends StatelessWidget {
       right: 0,
       height: height,
       child: IgnorePointer(
-        child: ClipRect(
-          child: ShaderMask(
-            blendMode: BlendMode.dstIn,
-            shaderCallback: (rect) => const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.white, Colors.transparent],
-              stops: [0.35, 1.0],
-            ).createShader(rect),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10 * t, sigmaY: 10 * t),
-              child: const SizedBox.expand(),
-            ),
-          ),
+        child: Column(
+          children: List.generate(bands, (i) {
+            // Strongest at the top band, fading to nothing at the bottom.
+            final strength = (bands - i) / bands;
+            return ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: 9 * strength * t,
+                  sigmaY: 9 * strength * t,
+                ),
+                child: SizedBox(height: bandHeight, width: double.infinity),
+              ),
+            );
+          }),
         ),
       ),
     );

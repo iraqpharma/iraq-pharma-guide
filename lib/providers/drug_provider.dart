@@ -5,6 +5,7 @@ import '../data/models/drug_model.dart';
 import '../data/models/suggestion_item.dart';
 import '../data/repositories/drug_repository.dart';
 import '../services/auth_service.dart';
+import 'recent_searches_provider.dart';
 
 export '../data/models/suggestion_item.dart';
 
@@ -44,6 +45,9 @@ final searchResultsProvider = FutureProvider<List<Drug>>((ref) async {
   if (q.trim().length < 2) return [];
   // عدّ كل بحث فعلي
   AuthService.instance.incrementDrugSearch();
+  // Remember it locally (device only — never tied to the account).
+  // Deferred so we are not mutating another provider mid-build.
+  Future.microtask(() => ref.read(recentSearchesProvider.notifier).add(q));
   return ref.read(drugRepositoryProvider).search(q);
 });
 

@@ -470,7 +470,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       icon: Icons.bar_chart_rounded,
                       color: const Color(0xFF6366F1),
                       title: 'إحصائيات التطبيق',
-                      onTap: () => context.push('/admin/statistics'),
+                      onTap: () => context.push('/admin-pin?to=/admin/statistics'),
                     ),
                     _divider(cs),
                     _buildNavTile(cs,
