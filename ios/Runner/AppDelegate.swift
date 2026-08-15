@@ -8,11 +8,19 @@ import UserNotifications
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Without this the device never obtains an APNs device token, so
-    // FirebaseMessaging.getToken() always failed with apns-token-not-set and
-    // no FCM token was ever produced on iOS. This call is silent — the
-    // permission prompt comes from requestAuthorization, not from here.
-    application.registerForRemoteNotifications()
+    // NOTE: registerForRemoteNotifications() must NOT be called here.
+    //
+    // With the implicit-engine lifecycle, GeneratedPluginRegistrant runs in
+    // didInitializeImplicitFlutterEngine — i.e. AFTER this method. Calling
+    // registerForRemoteNotifications() from here asks iOS for the APNs device
+    // token before FirebaseApp.configure() has run and before the Messaging
+    // plugin has installed its app-delegate hooks, so when iOS delivers
+    // didRegisterForRemoteNotificationsWithDeviceToken there is nobody to hand
+    // the token to. Messaging.apnsToken then stays nil for the whole session,
+    // getAPNSToken() returns NULL forever, getToken() never yields an FCM
+    // token, and no row is ever written to profiles.fcm_token — on iOS only,
+    // for every account. The registration call now lives at the end of
+    // didInitializeImplicitFlutterEngine, once the plugins are listening.
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -41,5 +49,11 @@ import UserNotifications
         result(nil)
       }
     }
+
+    // Now that Firebase is configured and FirebaseMessaging's delegate hooks
+    // are in place, it is safe to ask iOS for the APNs device token. This call
+    // is silent: the permission dialog comes from requestAuthorization, never
+    // from here.
+    UIApplication.shared.registerForRemoteNotifications()
   }
 }
