@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -49,6 +51,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     });
   }
 
+  /// Pull to refresh: drop the cached rows and re-read both streams.
+  Future<void> _refresh() async {
+    ref.invalidate(rawNotificationsProvider);
+    ref.invalidate(readIdsProvider);
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncNotifs = ref.watch(notificationsProvider);
@@ -75,28 +84,45 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
           final grouped = _groupByDate(valid);
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 32),
-                  itemCount: _countItems(grouped),
-                  itemBuilder: (ctx, i) {
-                    final item = _itemAt(grouped, i);
-                    if (item is String) return _DateHeader(label: context.s.notifGroupLabel(item));
-                    final notif = item as AppNotification;
-                    return _NotificationTile(
-                      notif: notif,
-                      onTap: () {
-                        svc.markAsRead(notif.id);
-                        _openDetail(ctx, notif);
-                      },
-                    );
-                  },
+          final list = CustomScrollView(
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              if (Platform.isIOS)
+                CupertinoSliverRefreshControl(onRefresh: _refresh),
+              SliverPadding(
+                padding: const EdgeInsets.only(bottom: 32),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) {
+                      final item = _itemAt(grouped, i);
+                      if (item is String) {
+                        return _DateHeader(
+                            label: context.s.notifGroupLabel(item));
+                      }
+                      final notif = item as AppNotification;
+                      return _NotificationTile(
+                        notif: notif,
+                        onTap: () {
+                          svc.markAsRead(notif.id);
+                          _openDetail(ctx, notif);
+                        },
+                      );
+                    },
+                    childCount: _countItems(grouped),
+                  ),
                 ),
               ),
             ],
           );
+
+          return Platform.isIOS
+              ? list
+              : RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: _refresh,
+                  child: list,
+                );
         },
       ),
     );

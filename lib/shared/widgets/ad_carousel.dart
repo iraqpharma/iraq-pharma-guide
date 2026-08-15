@@ -39,6 +39,7 @@ class _CarouselBody extends StatefulWidget {
 class _CarouselBodyState extends State<_CarouselBody> {
   late final PageController _page;
   Timer? _timer;
+  Timer? _resume;
   int _current = 0;
 
   @override
@@ -58,8 +59,16 @@ class _CarouselBodyState extends State<_CarouselBody> {
     });
   }
 
+  void _resumeTimer() {
+    _resume?.cancel();
+    _resume = Timer(const Duration(seconds: 4), () {
+      if (mounted) _startTimer();
+    });
+  }
+
   @override
   void dispose() {
+    _resume?.cancel();
     _timer?.cancel();
     _page.dispose();
     super.dispose();
@@ -82,14 +91,29 @@ class _CarouselBodyState extends State<_CarouselBody> {
       children: [
         SizedBox(
           height: cardH,
-          child: PageView.builder(
+          // The 5s auto-advance used to fire mid-drag and yank the card out
+          // from under the finger. Pause it while the user is interacting and
+          // resume a moment after they let go.
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (n) {
+              if (n is ScrollStartNotification) {
+                _timer?.cancel();
+              } else if (n is ScrollEndNotification) {
+                _timer?.cancel();
+                _resumeTimer();
+              }
+              return false;
+            },
+            child: PageView.builder(
             controller: _page,
+            physics: const BouncingScrollPhysics(),
             itemCount: widget.ads.length,
             onPageChanged: (i) => setState(() => _current = i),
             itemBuilder: (ctx, i) => _AdCard(
               ad:       widget.ads[i],
               isActive: i == _current,
               onTap:    () => _open(widget.ads[i].actionUrl),
+            ),
             ),
           ),
         ),

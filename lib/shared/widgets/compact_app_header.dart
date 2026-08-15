@@ -41,25 +41,20 @@ class CompactAppHeader extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
 
-          // Center: logo + title
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset('assets/images/logo_white.png', width: 28, height: 28,
-                  errorBuilder: (_, __, ___) => const Icon(
-                      Icons.local_pharmacy_rounded,
-                      color: Colors.white, size: 26)),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.cairo(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.2,
-                ),
+          // Center: title only
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.cairo(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
               ),
-            ],
+            ),
           ),
 
           // Notifications bell

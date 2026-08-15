@@ -5,11 +5,22 @@ import '../../providers/notification_provider.dart';
 
 class NotificationBellWidget extends ConsumerWidget {
   final VoidCallback onTap;
-  const NotificationBellWidget({super.key, required this.onTap});
+
+  /// Lets the home header tint the bell as it morphs from teal to glass.
+  final Color? glyphColor;
+  final double? bubbleOpacity;
+
+  const NotificationBellWidget({
+    super.key,
+    required this.onTap,
+    this.glyphColor,
+    this.bubbleOpacity,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unread = ref.watch(unreadCountProvider);
+    final ink = glyphColor ?? Colors.white;
 
     return GestureDetector(
       onTap: onTap,
@@ -17,7 +28,7 @@ class NotificationBellWidget extends ConsumerWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.18),
+          color: ink.withOpacity(bubbleOpacity ?? 0.18),
           // iOS conventions favour circular glyph buttons.
           borderRadius: BorderRadius.circular(Platform.isIOS ? 22 : 14),
         ),
@@ -28,7 +39,7 @@ class NotificationBellWidget extends ConsumerWidget {
               unread > 0
                   ? Icons.notifications_rounded
                   : Icons.notifications_outlined,
-              color: Colors.white,
+              color: ink,
               size: 22,
             ),
             if (unread > 0)

@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ));
 
     return Scaffold(
+      // Without this the body stops at the bar's top edge, so the frosted
+      // bar had nothing behind it to blur and looked opaque.
+      extendBody: Platform.isIOS,
       drawer: const AppDrawer(),
       body: _bodyForIndex(idx),
       bottomNavigationBar: _BottomNavBar(
@@ -90,16 +94,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 // HOME BODY
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _HomeBody extends StatelessWidget {
+class _HomeBody extends StatefulWidget {
+  @override
+  State<_HomeBody> createState() => _HomeBodyState();
+}
+
+class _HomeBodyState extends State<_HomeBody> {
+  final ScrollController _ctrl = ScrollController();
+
+  /// 0 while the page is at rest, 1 once it has scrolled past the header.
+  /// Drives the teal→glass transition; the header never changes height, so
+  /// nothing below it (the ad carousel) ever moves.
+  double _progress = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.addListener(() {
+      final p = (_ctrl.offset / 56).clamp(0.0, 1.0);
+      if ((p - _progress).abs() > 0.01 || p == 0 || p == 1) {
+        setState(() => _progress = p);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
+      controller: _ctrl,
       slivers: [
         // ── Teal Header (pinned — يثبت عند التمرير) ──────────────────────
         SliverPersistentHeader(
           pinned: true,
           delegate: _TealHeaderDelegate(
             topPadding: MediaQuery.of(context).padding.top,
+            progress: Platform.isIOS ? _progress : 0,
           ),
         ),
 
@@ -172,6 +207,9 @@ class _HomeBody extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(16, 12, 16, 28),
           sliver: SliverToBoxAdapter(child: _PriceGuideBanner()),
         ),
+        SliverToBoxAdapter(
+          child: SizedBox(height: Platform.isIOS ? 88 : 0),
+        ),
       ],
     );
   }
@@ -180,19 +218,23 @@ class _HomeBody extends StatelessWidget {
 // ── SliverPersistentHeader delegate for TealHeader ───────────────────────────
 class _TealHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double topPadding;
-  _TealHeaderDelegate({required this.topPadding});
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return _TealHeader();
-  }
+  final double progress;
+  _TealHeaderDelegate({required this.topPadding, this.progress = 0});
 
   // ارتفاع الهيدر يُحسب من safe-area الفعلي للجهاز + مساحة كافية
   // لعنوانين (العربي + الإنجليزي) — كان ثابتاً على 100 بدون مراعاة
   // اختلاف حجم الـ Dynamic Island/notch بين الأجهزة، فكان ينقطع النص
   // على الأجهزة ذات safe-area أكبر (آيفون 14/15/16 Pro مثلاً).
+  //
+  // الارتفاع ثابت عمداً: الانتقال بصري بحت (لون → زجاج) فلا يتحرك
+  // أي شيء تحته.
   double get _height => topPadding + 12 + 46 + 20;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return _TealHeader(progress: progress);
+  }
 
   @override
   double get maxExtent => _height;
@@ -202,8 +244,11 @@ class _TealHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _TealHeaderDelegate old) =>
-      old.topPadding != topPadding;
+      old.topPadding != topPadding || old.progress != progress;
 }
+
+
+
 
 // ── OTC Banner ────────────────────────────────────────────────────────────────
 class _OtcBanner extends StatelessWidget {
@@ -378,60 +423,96 @@ class _PriceGuideBanner extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _TealHeader extends StatelessWidget {
+  /// 0 = solid teal at rest, 1 = frosted glass with dark glyphs once the
+  /// page has scrolled under it. Height never changes, only the material.
+  final double progress;
+  const _TealHeader({this.progress = 0});
+
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(Platform.isIOS ? 38 : 32),
-          bottomRight: Radius.circular(Platform.isIOS ? 38 : 32),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // ── Start: Hamburger (RTL → RIGHT side) ──────────────────────
-          Builder(
-            builder: (ctx) => _HeaderIconBtn(
-              icon: Icons.menu_rounded,
-              onTap: () => Scaffold.of(ctx).openDrawer(),
+    final p = progress.clamp(0.0, 1.0);
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // White on teal → near-black on glass.
+    final ink = Color.lerp(
+      Colors.white,
+      isDark ? Colors.white : const Color(0xFF10221F),
+      p,
+    )!;
+    final radius = Radius.circular(Platform.isIOS ? 38 : 32);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.only(bottomLeft: radius, bottomRight: radius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22 * p, sigmaY: 22 * p),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(20, top + 12, 20, 20),
+          decoration: BoxDecoration(
+            // Fading the teal out is what lets the blurred page show through.
+            color: Color.lerp(
+              AppColors.primary,
+              (isDark ? Colors.black : cs.surface).withOpacity(0.55),
+              p,
             ),
           ),
-
-          // ── Center: Title ─────────────────────────────────────────────
-          Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'دليل الصيدلة العراقي',
-                style: GoogleFonts.cairo(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
+              // ── Start: Hamburger (RTL → RIGHT side) ──────────────────
+              // Stays fully opaque and tappable at every scroll position.
+              Builder(
+                builder: (ctx) => _HeaderIconBtn(
+                  icon: Icons.menu_rounded,
+                  color: ink,
+                  progress: p,
+                  onTap: () => Scaffold.of(ctx).openDrawer(),
                 ),
               ),
-              Text(
-                'Iraq Pharma Guide',
-                style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.75),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 0.5,
+
+              // ── Center: Title — stays, just changes colour ───────────
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'دليل الصيدلة العراقي',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.cairo(
+                        color: ink,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    Text(
+                      'Iraq Pharma Guide',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: ink.withOpacity(0.75),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── End: Bell with live unread badge ────────────────────
+              Builder(
+                builder: (ctx) => NotificationBellWidget(
+                  glyphColor: ink,
+                  bubbleOpacity: 0.18 - 0.11 * p,
+                  onTap: () => context.push('/notifications'),
                 ),
               ),
             ],
           ),
-
-          // ── End: Bell with live unread badge ─────────────────────────
-          Builder(
-            builder: (ctx) => NotificationBellWidget(
-              onTap: () => context.push('/notifications'),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -441,10 +522,14 @@ class _HeaderIconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool badge;
+  final Color color;
+  final double progress;
   const _HeaderIconBtn({
     required this.icon,
     required this.onTap,
     this.badge = false,
+    this.color = Colors.white,
+    this.progress = 0,
   });
 
   @override
@@ -455,14 +540,14 @@ class _HeaderIconBtn extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.18),
+          color: color.withOpacity(0.18 - 0.11 * progress),
           // iOS conventions favour circular glyph buttons.
           borderRadius: BorderRadius.circular(Platform.isIOS ? 24 : 14),
         ),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 22),
+            Icon(icon, color: color, size: 22),
             if (badge)
               Positioned(
                 top: 8,
@@ -804,7 +889,8 @@ class _SearchBody extends ConsumerWidget {
                   data: (drugs) => drugs.isEmpty
                       ? _NoResultsState(query: query)
                       : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                          padding: EdgeInsets.fromLTRB(
+                              16, 16, 16, Platform.isIOS ? 108 : 32),
                           itemCount: drugs.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 10),
@@ -986,7 +1072,8 @@ class _ToolsBody extends StatelessWidget {
             final bannerTools = _getBannerTools(ctx);
             final gridTools   = _getGridTools(ctx);
             return ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                  16, 16, 16, Platform.isIOS ? 104 : 16),
               children: [
                 // Banner cards
                 ...bannerTools.map((t) => Padding(
@@ -1421,7 +1508,7 @@ class _FavoritesBodyState extends State<_FavoritesBody> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, Platform.isIOS ? 150 : 80),
       itemCount: items.length,
       itemBuilder: (ctx, i) {
         final item = items[i];

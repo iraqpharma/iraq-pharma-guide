@@ -12,7 +12,8 @@ final authUidProvider = StreamProvider<String?>((ref) async* {
 });
 
 // ── Raw notification rows (realtime) ─────────────────────────────────────────
-final _rawNotificationsProvider =
+// Public so the notifications screen can invalidate it on pull-to-refresh.
+final rawNotificationsProvider =
     StreamProvider<List<Map<String, dynamic>>>((ref) {
   return _db
       .from('notifications')
@@ -21,7 +22,7 @@ final _rawNotificationsProvider =
 });
 
 // ── Ids this user has already read ───────────────────────────────────────────
-final _readIdsProvider = StreamProvider<Set<String>>((ref) {
+final readIdsProvider = StreamProvider<Set<String>>((ref) {
   final uid = ref.watch(authUidProvider).value;
   if (uid == null) return Stream.value(<String>{});
   return _db
@@ -40,8 +41,8 @@ final _readIdsProvider = StreamProvider<Set<String>>((ref) {
 // is merged in here, so no screen had to change.
 final notificationsProvider =
     Provider<AsyncValue<List<AppNotification>>>((ref) {
-  final raw   = ref.watch(_rawNotificationsProvider);
-  final reads = ref.watch(_readIdsProvider).value ?? <String>{};
+  final raw   = ref.watch(rawNotificationsProvider);
+  final reads = ref.watch(readIdsProvider).value ?? <String>{};
   final uid   = ref.watch(authUidProvider).value;
 
   return raw.whenData((rows) => rows

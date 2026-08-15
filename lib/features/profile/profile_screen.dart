@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +17,7 @@ import '../../services/notification_permission_service.dart';
 import '../../services/session_service.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/compact_app_header.dart';
+import '../../shared/widgets/scroll_edge_blur.dart';
 import '../../core/l10n/app_strings.dart';
 // ignore: unused_import
 import 'interactive_reference_screen.dart';
@@ -37,6 +40,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   bool    _deleting        = false;
   String  _appVersion      = '';
 
+  final ScrollController _scrollCtrl = ScrollController();
+  double _scrollOffset = 0;
+
   late final AnimationController _avatarCtrl;
   late final Animation<double>   _avatarScale;
 
@@ -49,6 +55,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _loadAdminAccess();
     _loadPushState();
     _loadAppVersion();
+    _scrollCtrl.addListener(() {
+      final o = _scrollCtrl.hasClients ? _scrollCtrl.offset : 0.0;
+      // Only rebuild while the effect is actually ramping (0-48px).
+      if (o < 48 || _scrollOffset < 48) {
+        setState(() => _scrollOffset = o);
+      }
+    });
   }
 
   Future<void> _loadAppVersion() async {
@@ -125,10 +138,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: cs.outline.withOpacity(0.3),
                   elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18, vertical: 10),
                 ),
                 child: Text(context.s.deleteAccountConfirm,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.ibmPlexSansArabic(
-                        fontWeight: FontWeight.bold)),
+                        fontSize: 13.5, fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -208,7 +225,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   @override
-  void dispose() { _avatarCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _scrollCtrl.dispose();
+    _avatarCtrl.dispose();
+    super.dispose();
+  }
 
   String _formatStat(int n) {
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}k';
@@ -295,7 +316,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(context.s.cancel,
-                style: GoogleFonts.ibmPlexSansArabic(color: cs.onSurfaceVariant)),
+                maxLines: 1,
+                style: GoogleFonts.ibmPlexSansArabic(
+                    fontSize: 13.5, color: cs.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -303,8 +326,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 backgroundColor: Colors.red.shade400,
                 foregroundColor: Colors.white,
                 elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: Text(context.s.signOut, style: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w600)),
+            child: Text(context.s.signOut,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.ibmPlexSansArabic(
+                    fontSize: 13.5, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -337,10 +365,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   );
 
   Widget _buildBody(ColorScheme cs, bool isDark) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
+    final headerHeight = MediaQuery.of(context).padding.top + 8 + 40 + 10;
+
+    final scrollView = CustomScrollView(
+      controller: _scrollCtrl,
+      physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         _buildAppHeader(),
+        if (Platform.isIOS)
+          CupertinoSliverRefreshControl(onRefresh: _refresh),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
@@ -452,12 +486,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 _buildDeleteAccountLink(cs),
                 const SizedBox(height: 20),
                 _buildFooter(cs),
+                // Clears the floating glass tab bar on iOS.
+                if (Platform.isIOS) const SizedBox(height: 88),
               ],
             ),
           ),
         ),
       ],
     );
+
+    if (!Platform.isIOS) return scrollView;
+
+    return Stack(
+      children: [
+        scrollView,
+        ScrollEdgeBlur(offset: _scrollOffset, top: headerHeight),
+      ],
+    );
+  }
+
+  Future<void> _refresh() async {
+    await _loadProfile();
+    await _loadPushState();
   }
 
   // ── App Header ────────────────────────────────────────────────────────────

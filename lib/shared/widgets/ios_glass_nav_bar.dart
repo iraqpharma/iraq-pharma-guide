@@ -29,20 +29,24 @@ class IosGlassNavBar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(34),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
           child: Container(
             height: 68,
             decoration: BoxDecoration(
-              color: (isDark ? Colors.black : Colors.white).withOpacity(0.62),
+              // Low enough that the page genuinely reads through the blur.
+              // The Scaffold must set extendBody:true or there is nothing
+              // behind this to blur and it renders as a solid slab.
+              color: (isDark ? Colors.black : Colors.white)
+                  .withOpacity(isDark ? 0.42 : 0.50),
               borderRadius: BorderRadius.circular(34),
               border: Border.all(
                 color: (isDark ? Colors.white : Colors.black).withOpacity(0.07),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.35 : 0.10),
-                  blurRadius: 24,
-                  offset: const Offset(0, 6),
+                  color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+                  blurRadius: 26,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),

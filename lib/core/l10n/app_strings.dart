@@ -27,7 +27,7 @@ class AppStrings {
       : 'This calculator is a teaching aid based on published pharmaceutical formulas. It is not a prescribing tool. Always verify against the official drug leaflet and consult a qualified physician or pharmacist before any treatment decision.';
   String get eduNoticeDontShow =>
       isAr ? 'لا تُظهر هذا التنبيه مرة أخرى' : "Don't show this again";
-  String get eduNoticeAgree => isAr ? 'فهمت، متابعة' : 'I understand';
+  String get eduNoticeAgree => isAr ? 'فهمت' : 'Got it';
 
   // ── Account deletion ──────────────────────────────────────────────────────
   String get deleteAccount => isAr ? 'حذف الحساب نهائيًا' : 'Delete account permanently';

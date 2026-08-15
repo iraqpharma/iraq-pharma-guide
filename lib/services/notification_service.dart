@@ -33,6 +33,9 @@ class NotificationService {
 
   // ── Init ───────────────────────────────────────────────────────────────────
   Future<void> initialize() async {
+    // Reconcile the icon badge before anything that can fail, so a fresh
+    // install never starts with a number on it.
+    unawaited(syncAppBadge());
     try {
       await _setupLocalNotifications();
       await _setupFCM();
@@ -118,6 +121,9 @@ class NotificationService {
         case AuthChangeEvent.tokenRefreshed:
         case AuthChangeEvent.userUpdated:
           unawaited(syncToken());
+          unawaited(syncAppBadge());
+          break;
+        case AuthChangeEvent.signedOut:
           unawaited(syncAppBadge());
           break;
         default:
@@ -329,7 +335,15 @@ class NotificationService {
     var count = 0;
     try {
       final uid = _db.auth.currentUser?.id;
-      if (uid != null) {
+      if (uid == null) {
+        // Signed out or a fresh install: nothing can be unread, so the icon
+        // must show nothing. iOS keeps whatever number was last written, so
+        // staying silent here is what left a stale "1" on a clean install.
+        await _setBadge(0);
+        await clearDelivered();
+        return;
+      }
+      {
         final notifs = await _db
             .from('notifications')
             .select('id')
@@ -345,9 +359,15 @@ class NotificationService {
             .length;
       }
     } catch (e) {
+      // Never leave a stale number on the icon because a query failed.
       debugPrint('syncAppBadge count failed: $e');
+      await _setBadge(0);
       return;
     }
+    await _setBadge(count);
+  }
+
+  Future<void> _setBadge(int count) async {
     try {
       await _badgeChannel.invokeMethod('setBadge', {'count': count});
     } catch (e) {

@@ -125,7 +125,9 @@ class _NoticeDialogState extends State<_NoticeDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context, false),
           child: Text(context.s.cancel,
-              style: GoogleFonts.cairo(color: cs.onSurfaceVariant)),
+              maxLines: 1,
+              style: GoogleFonts.cairo(
+                  fontSize: 13.5, color: cs.onSurfaceVariant)),
         ),
         ElevatedButton(
           onPressed: () async {
@@ -140,11 +142,16 @@ class _NoticeDialogState extends State<_NoticeDialog> {
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             elevation: 0,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: Text(context.s.eduNoticeAgree,
-              style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.cairo(
+                  fontSize: 13.5, fontWeight: FontWeight.bold)),
         ),
       ],
     );
