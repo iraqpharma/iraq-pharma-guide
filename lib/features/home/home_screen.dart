@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/drug_provider.dart';
 import '../../providers/filter_provider.dart';
@@ -1141,16 +1142,34 @@ class _NoResultsState extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _ToolsBody extends StatelessWidget {
-  List<_NavToolItem> _getBannerTools(BuildContext context) => [
-    _NavToolItem(context.s.doseCalc,    context.s.doseCalcSub, Icons.calculate_outlined,     const Color(0xFF5C6BC0), '/calc'),
-    _NavToolItem(context.s.crcl,        context.s.crclSub,     Icons.monitor_heart_outlined,  const Color(0xFF0097A7), '/renal-calc'),
-  ];
-  List<_NavToolItem> _getGridTools(BuildContext context) => [
-    _NavToolItem(context.s.interactions,  context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
-    _NavToolItem(context.s.notebook,      context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
-    _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
-    _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
-  ];
+  // App Review rejected 2.3.0 under guideline 1.4.1: a dose calculator needs
+  // regulatory clearance we do not hold. On iOS the two dose tools are removed
+  // entirely — tiles here and routes in app_router — and the two reference
+  // tools move up into the banner slot so the tab is not left half empty.
+  // Android keeps them: see FeatureFlags.doseToolsOnThisPlatform.
+  List<_NavToolItem> _getBannerTools(BuildContext context) =>
+      FeatureFlags.doseToolsOnThisPlatform
+          ? [
+              _NavToolItem(context.s.doseCalc,     context.s.doseCalcSub,     Icons.calculate_outlined,    const Color(0xFF5C6BC0), '/calc'),
+              _NavToolItem(context.s.crcl,         context.s.crclSub,         Icons.monitor_heart_outlined, const Color(0xFF0097A7), '/renal-calc'),
+            ]
+          : [
+              _NavToolItem(context.s.interactions, context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
+              _NavToolItem(context.s.notebook,     context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
+            ];
+
+  List<_NavToolItem> _getGridTools(BuildContext context) =>
+      FeatureFlags.doseToolsOnThisPlatform
+          ? [
+              _NavToolItem(context.s.interactions,  context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
+              _NavToolItem(context.s.notebook,      context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
+              _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+              _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
+            ]
+          : [
+              _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+              _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
+            ];
 
   @override
   Widget build(BuildContext context) {

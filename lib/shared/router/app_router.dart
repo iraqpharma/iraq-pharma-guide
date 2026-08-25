@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/feature_flags.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/drug_detail/drug_detail_screen.dart';
@@ -77,8 +78,12 @@ final appRouter = GoRouter(
 
     // Tools & screens
     GoRoute(path: '/settings',      builder: (_, __) => const SettingsScreen()),
-    GoRoute(path: '/calc',          builder: (_, __) => const DosageCalculatorScreen()),
-    GoRoute(path: '/renal-calc',    builder: (_, __) => const RenalCalculatorScreen()),
+    // Removed on iOS under guideline 1.4.1 — second layer, so a stale deep
+    // link cannot reach a screen whose tile is already gone.
+    if (FeatureFlags.doseToolsOnThisPlatform)
+      GoRoute(path: '/calc',        builder: (_, __) => const DosageCalculatorScreen()),
+    if (FeatureFlags.doseToolsOnThisPlatform)
+      GoRoute(path: '/renal-calc',  builder: (_, __) => const RenalCalculatorScreen()),
     GoRoute(path: '/interactions',  builder: (_, __) => const InteractionsScreen()),
     GoRoute(path: '/notebook',      builder: (_, __) => const NotebookScreen()),
     GoRoute(path: '/price-guide',   builder: (_, __) => const CommercialPriceGuideScreen()),
