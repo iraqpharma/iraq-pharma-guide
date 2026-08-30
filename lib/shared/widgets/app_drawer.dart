@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -24,20 +25,24 @@ class AppDrawer extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 6),
                   child: _SectionLabel(s.clinicalTools),
                 ),
-                _DrawerTile(
-                  icon: Icons.calculate_outlined,
-                  color: const Color(0xFF5C6BC0),
-                  title: s.doseCalc,
-                  subtitle: s.doseCalcSub,
-                  onTap: () { Navigator.pop(context); context.push('/calc'); },
-                ),
-                _DrawerTile(
-                  icon: Icons.monitor_heart_outlined,
-                  color: const Color(0xFF0097A7),
-                  title: s.crcl,
-                  subtitle: 'Cockcroft-Gault',
-                  onTap: () { Navigator.pop(context); context.push('/renal-calc'); },
-                ),
+                // Removed on iOS under guideline 1.4.1 — their routes are gone
+                // too, so leaving the tiles here would push onto nothing.
+                if (FeatureFlags.doseToolsOnThisPlatform) ...[
+                  _DrawerTile(
+                    icon: Icons.calculate_outlined,
+                    color: const Color(0xFF5C6BC0),
+                    title: s.doseCalc,
+                    subtitle: s.doseCalcSub,
+                    onTap: () { Navigator.pop(context); context.push('/calc'); },
+                  ),
+                  _DrawerTile(
+                    icon: Icons.monitor_heart_outlined,
+                    color: const Color(0xFF0097A7),
+                    title: s.crcl,
+                    subtitle: 'Cockcroft-Gault',
+                    onTap: () { Navigator.pop(context); context.push('/renal-calc'); },
+                  ),
+                ],
                 _DrawerTile(
                   icon: Icons.science_outlined,
                   color: const Color(0xFFE65100),
@@ -78,6 +83,17 @@ class AppDrawer extends StatelessWidget {
                   title: s.priceGuide,
                   subtitle: s.priceGuideSubtitle,
                   onTap: () { Navigator.pop(context); context.push('/price-guide'); },
+                ),
+
+                // ── المصادر والمراجع ──────────────────────────────────
+                _DrawerTile(
+                  icon: Icons.menu_book_outlined,
+                  color: const Color(0xFF455A64),
+                  title: s.isAr ? 'المصادر والمراجع' : 'Sources & References',
+                  subtitle: s.isAr
+                      ? 'مراجع المعلومات الدوائية'
+                      : 'References for the drug information',
+                  onTap: () { Navigator.pop(context); context.push('/sources'); },
                 ),
               ],
             ),

@@ -26,6 +26,7 @@ import '../../features/profile/edit_profile_screen.dart';
 import '../../features/profile/interactive_reference_screen.dart';
 import '../../features/profile/support_screen.dart';
 import '../../features/profile/suggestion_screen.dart';
+import '../../features/legal/sources_screen.dart';
 import '../../features/legal/legal_screen.dart';
 import '../../features/otc/otc_screen.dart';
 import '../../features/admin/admin_pin_screen.dart';
@@ -85,6 +86,7 @@ final appRouter = GoRouter(
     if (FeatureFlags.doseToolsOnThisPlatform)
       GoRoute(path: '/renal-calc',  builder: (_, __) => const RenalCalculatorScreen()),
     GoRoute(path: '/interactions',  builder: (_, __) => const InteractionsScreen()),
+    GoRoute(path: '/sources',       builder: (_, __) => const SourcesScreen()),
     GoRoute(path: '/notebook',      builder: (_, __) => const NotebookScreen()),
     GoRoute(path: '/price-guide',   builder: (_, __) => const CommercialPriceGuideScreen()),
     GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),

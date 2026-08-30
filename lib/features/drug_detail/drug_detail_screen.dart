@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../legal/sources_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
 import '../../providers/drug_provider.dart';
@@ -169,6 +170,10 @@ class _DrugDetailView extends StatelessWidget {
                 // Iraq market note
                 if (drug.iraqMarketNote.isNotEmpty)
                   _IraqNoteCard(note: drug.iraqMarketNote),
+
+                // Citations required by App Store guideline 1.4.1 — reachable
+                // from the medical content itself, not only from a menu.
+                const SourcesFooterLink(),
 
                 const SizedBox(height: 80),
               ],
