@@ -1,7 +1,7 @@
 name: iraq_pharma_guide
 description: Iraq Pharma Guide - دليل الدواء العراقي
 publish_to: 'none'
-version: 2.3.0+26
+version: 2.3.0+27
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -45,6 +45,10 @@ dependencies:
 
   # Image picker
   image_picker: ^1.1.2
+  # Pinned explicitly so the Android Photo Picker can be switched on in
+  # main.dart - required by Google Play's photo/video picker policy.
+  image_picker_android: ^0.8.13
+  image_picker_platform_interface: ^2.11.1
 
   # Version check
   package_info_plus: ^8.1.3
