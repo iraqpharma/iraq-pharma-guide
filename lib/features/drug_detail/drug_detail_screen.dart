@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../legal/sources_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
+import 'widgets/preparation_card.dart';
 import '../../providers/drug_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/interaction_provider.dart';
@@ -72,6 +73,9 @@ class _DrugDetailView extends StatelessWidget {
                 // Trade names & class
                 _HeaderSection(drug: drug, isArabic: isArabic),
                 const SizedBox(height: 12),
+
+                // شارات السلامة والتخزين — 3.0
+                SafetyBadges(drug: drug),
 
                 // Dosage form & route
                 if (drug.dosageForm.isNotEmpty) _DosageFormCard(text: drug.dosageForm),
@@ -160,8 +164,10 @@ class _DrugDetailView extends StatelessWidget {
                 if (drug.blackBox.isNotEmpty)
                   _BlackBoxCard(text: drug.blackBox),
 
-                // IV Reconstitution
-                if (drug.ivReconstitution.isNotEmpty)
+                // تعليمات التحضير — 3.0 (بطاقة مُهيكلة لأدوية الأورام والحقن)
+                if (drug.hasPreparationData || drug.ppeRequired.isNotEmpty)
+                  PreparationCard(drug: drug)
+                else if (drug.ivReconstitution.isNotEmpty)
                   _IvCard(info: drug.ivReconstitution),
 
                 // Pregnancy & Lactation
@@ -173,6 +179,9 @@ class _DrugDetailView extends StatelessWidget {
 
                 // Citations required by App Store guideline 1.4.1 — reachable
                 // from the medical content itself, not only from a menu.
+                // مصدر هذا الدواء تحديداً — 3.0
+                DrugSourceCard(drug: drug),
+
                 const SourcesFooterLink(),
 
                 const SizedBox(height: 80),

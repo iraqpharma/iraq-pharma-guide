@@ -149,6 +149,9 @@ class _HomeBodyState extends State<_HomeBody> {
           ),
         ),
 
+        // ── الجديد في 3.0 ─────────────────────────────────────────────────
+        const SliverToBoxAdapter(child: _NewInV3Section()),
+
         // ── Categories Section ────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
@@ -686,37 +689,169 @@ class _CatItem {
 }
 
 const _categories = [
-  // RTL index 0 → RIGHT column
-  _CatItem('قلب وأوعية',       'Cardiovascular',
-      Icons.favorite_rounded,       AppColors.catCardio,      'cardiovascular'),
-  // RTL index 1 → LEFT column
-  _CatItem('مضادات حيوية',     'Antibiotics & Antivirals',
-      Icons.coronavirus_outlined,   AppColors.catAntibiotics, 'antibiotics'),
-  // RTL index 2 → RIGHT column
-  _CatItem('سكري',             'Antidiabetics & Glucose',
-      Icons.all_inclusive,          AppColors.catDiabetes,    'diabetes'),
-  // RTL index 3 → LEFT column
-  _CatItem('مسكنات وألم',      'Analgesics & pain',
-      Icons.do_not_disturb_alt,     AppColors.catPain,        'analgesics'),
-  // RTL index 4 → RIGHT column
-  _CatItem('جهاز هضمي',        'Gastroenterology',
-      Icons.adjust,                 AppColors.catGastro,      'gastrointestinal'),
-  // RTL index 5 → LEFT column
-  _CatItem('أعصاب ونفسية',     'Neurology & Psychiatry',
-      Icons.lightbulb_outline_rounded, AppColors.catNeuro,   'neurology'),
-  // RTL index 6 → RIGHT column
-  _CatItem('فيتامينات ومقويات', 'Vitamins & Supplements',
-      Icons.egg_alt_outlined,       AppColors.catVitamins,    'vitamins'),
-  // RTL index 7 → LEFT column
-  _CatItem('كوزمتك وجلدية',    'Cosmetic & Dermatology',
-      Icons.face_retouching_natural, AppColors.catCosmetic,   'cosmetic'),
-  // RTL index 8 → RIGHT column
-  _CatItem('أدوية مخدرة',       'Controlled & Narcotics',
-      Icons.warning_amber_rounded,   AppColors.catNarcotics,  'narcotics'),
-  // RTL index 9 → LEFT column
+  _CatItem('قلب وأوعية',        'Cardiovascular',
+      Icons.favorite_rounded,            AppColors.catCardio,      'cardiovascular'),
+  _CatItem('مضادات حيوية',      'Antibiotics & Antivirals',
+      Icons.coronavirus_outlined,        AppColors.catAntibiotics, 'antibiotics'),
+  _CatItem('أورام',             'Oncology',
+      Icons.bloodtype_outlined,          Color(0xFF7B1FA2),        'oncology'),
+  _CatItem('مسكنات وألم',       'Analgesics & pain',
+      Icons.do_not_disturb_alt,          AppColors.catPain,        'analgesics'),
+  _CatItem('جهاز هضمي',         'Gastroenterology',
+      Icons.adjust,                      AppColors.catGastro,      'gastrointestinal'),
+  _CatItem('جهاز تنفسي',        'Respiratory',
+      Icons.air_outlined,                AppColors.catRespiratory, 'respiratory'),
+  _CatItem('أعصاب',             'Neurology',
+      Icons.lightbulb_outline_rounded,   AppColors.catNeuro,       'neurology'),
+  _CatItem('نفسية',             'Psychiatry',
+      Icons.psychology_outlined,         Color(0xFF5E35B1),        'psychiatry'),
+  _CatItem('سكري',              'Antidiabetics & Glucose',
+      Icons.all_inclusive,               AppColors.catDiabetes,    'diabetes'),
+  _CatItem('غدد صمّاء',          'Endocrine',
+      Icons.hub_outlined,                AppColors.catEndocrine,   'endocrine'),
+  _CatItem('دم',                'Hematology',
+      Icons.water_drop_outlined,         Color(0xFFC62828),        'hematology'),
+  _CatItem('مناعة',             'Immunology',
+      Icons.shield_outlined,             Color(0xFF00897B),        'immunology'),
+  _CatItem('جلدية',             'Dermatology',
+      Icons.healing_outlined,            Color(0xFFD81B60),        'dermatology'),
+  _CatItem('عيون',              'Ophthalmology',
+      Icons.remove_red_eye_outlined,     Color(0xFF1E88E5),        'ophthalmology'),
+  _CatItem('بولية',             'Urology',
+      Icons.opacity_outlined,            Color(0xFF00ACC1),        'urology'),
+  _CatItem('صحة المرأة',        "Women's Health",
+      Icons.pregnant_woman_outlined,     Color(0xFFEC407A),        'womens_health'),
+  _CatItem('مطاعيم',            'Vaccines',
+      Icons.vaccines_outlined,           Color(0xFF43A047),        'vaccines'),
+  _CatItem('فيتامينات ومقويات',  'Vitamins & Supplements',
+      Icons.egg_alt_outlined,            AppColors.catVitamins,    'vitamins'),
+  _CatItem('سوائل وشوارد',      'Fluids & Electrolytes',
+      Icons.science_outlined,            Color(0xFF26A69A),        'fluids_electrolytes'),
+  _CatItem('تخدير',             'Anesthesia',
+      Icons.bedtime_outlined,            Color(0xFF546E7A),        'anesthesia'),
+  _CatItem('أدوية مخدرة',        'Controlled & Narcotics',
+      Icons.warning_amber_rounded,       AppColors.catNarcotics,   'narcotics'),
+  _CatItem('تجميلية',           'Cosmetic',
+      Icons.face_retouching_natural,     AppColors.catCosmetic,    'cosmetic'),
   _CatItem('أخرى',              'Other',
-      Icons.category_outlined,       AppColors.catOther,      'other'),
+      Icons.category_outlined,           AppColors.catOther,       'other'),
 ];
+
+/// شريط «الجديد في 3.0» — يُبرز الأقسام الجديدة في الشاشة الرئيسية.
+class _NewInV3Section extends StatelessWidget {
+  const _NewInV3Section();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <List<dynamic>>[
+      [
+        'عيادتك اليوم',
+        'خمسة أسئلة سريرية',
+        Icons.medical_services_outlined,
+        const Color(0xFF0F6B4F),
+        '/clinic-today',
+      ],
+      [
+        'فرص عمل',
+        'وظائف الصيادلة',
+        Icons.work_outline_rounded,
+        const Color(0xFF2E7D32),
+        '/jobs',
+      ],
+      [
+        'فيديوهات',
+        'محتوى تعليمي',
+        Icons.ondemand_video_outlined,
+        const Color(0xFFC62828),
+        '/videos',
+      ],
+    ];
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+        child: Row(children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text('جديد',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 8),
+          Text('في هذا الإصدار',
+              style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface)),
+        ]),
+      ),
+      SizedBox(
+        height: 104,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: items.length,
+          itemBuilder: (ctx, i) {
+            final it = items[i];
+            final color = it[3] as Color;
+            return Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => ctx.push(it[4] as String),
+                child: Container(
+                  width: 158,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [color.withOpacity(0.16), color.withOpacity(0.04)],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: color.withOpacity(0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(it[2] as IconData, color: color, size: 26),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(it[0] as String,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: color)),
+                          const SizedBox(height: 2),
+                          Text(it[1] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Theme.of(ctx)
+                                      .colorScheme
+                                      .onSurfaceVariant)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+}
 
 class _CategoryCard extends StatelessWidget {
   final _CatItem cat;

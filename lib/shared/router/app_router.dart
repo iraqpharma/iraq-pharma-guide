@@ -34,6 +34,11 @@ import '../../features/auth/reset_password_screen.dart';
 import '../../features/admin/admin_statistics_screen.dart';
 import '../../features/admin/admin_drug_list_screen.dart';
 import '../../features/admin/admin_drug_edit_screen.dart';
+import '../../features/jobs/jobs_screen.dart';
+import '../../features/jobs/job_form_screen.dart';
+import '../../features/jobs/jobs_admin_screen.dart';
+import '../../features/clinic_today/clinic_today_screen.dart';
+import '../../features/videos/videos_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
@@ -93,6 +98,16 @@ final appRouter = GoRouter(
     GoRoute(path: '/pricing-calc',  builder: (_, __) => const PricingCalculatorScreen()),
     GoRoute(path: '/substitution',  builder: (_, __) => const SubstitutionScreen()),
     GoRoute(path: '/otc',           builder: (_, __) => const OtcScreen()),
+
+    // ── فرص عمل للصيادلة ──────────────────────────────────────────────────
+    GoRoute(path: '/jobs',        builder: (_, __) => const JobsScreen()),
+    GoRoute(path: '/jobs/new',    builder: (_, __) => const JobFormScreen()),
+    GoRoute(path: '/jobs/mine',   builder: (_, __) => const MyJobsScreen()),
+    GoRoute(path: '/jobs/review', builder: (_, __) => const JobsAdminScreen()),
+
+    // ── عيادتك اليوم ──────────────────────────────────────────────────────
+    GoRoute(path: '/clinic-today', builder: (_, __) => const ClinicTodayScreen()),
+    GoRoute(path: '/videos',       builder: (_, __) => const VideosScreen()),
     GoRoute(path: '/profile',        builder: (_, __) => const ProfileScreen()),
     GoRoute(path: '/edit-profile',          builder: (_, __) => const EditProfileScreen()),
     GoRoute(path: '/interactive-reference', builder: (_, __) => const InteractiveReferenceScreen()),

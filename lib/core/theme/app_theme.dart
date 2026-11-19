@@ -52,6 +52,11 @@ class AppTheme {
     );
 
     return base.copyWith(
+      // السحب من الحافة للرجوع — يعمل على أندرويد وآيفون معاً
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS:     CupertinoPageTransitionsBuilder(),
+      }),
       textTheme:        _lightTextTheme,
       primaryTextTheme: _lightTextTheme,
       appBarTheme: AppBarTheme(
@@ -224,6 +229,11 @@ class AppTheme {
     );
 
     return base.copyWith(
+      // السحب من الحافة للرجوع — يعمل على أندرويد وآيفون معاً
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS:     CupertinoPageTransitionsBuilder(),
+      }),
       textTheme:        _darkTextTheme,
       primaryTextTheme: _darkTextTheme,
       appBarTheme: AppBarTheme(

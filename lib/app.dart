@@ -17,7 +17,7 @@ class IraqPharmaApp extends ConsumerWidget {
     final isAr = locale.languageCode == 'ar';
 
     return MaterialApp.router(
-      title: 'Iraq Pharma Guide',
+      title: 'دليل الأدوية العراقي',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
@@ -49,7 +49,16 @@ class IraqPharmaApp extends ConsumerWidget {
           ),
           child: Directionality(
             textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
-            child: child!,
+            // أي لمسة على مكان فارغ تُغلق الكيبورد، فلا يبقى مغطّياً
+            // على زر الرجوع أو على أزرار أسفل الشاشة.
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                final focus = FocusManager.instance.primaryFocus;
+                if (focus != null && focus.hasFocus) focus.unfocus();
+              },
+              child: child!,
+            ),
           ),
         );
       },

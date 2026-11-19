@@ -12,7 +12,7 @@ class DatabaseHelper {
   static Database? _db;
 
   // Increment this whenever assets/database/drugs.db is updated
-  static const int _kAssetDbVersion = 6;
+  static const int _kAssetDbVersion = 7;
 
   DatabaseHelper._();
   static DatabaseHelper get instance => _instance ??= DatabaseHelper._();
@@ -226,6 +226,123 @@ class DatabaseHelper {
       args,
     );
     return rows.map(Drug.fromMap).toList();
+  }
+
+  // ── الإصدار 3.0 ─────────────────────────────────────────────────────────
+
+  /// خريطة ترحيل المعرّفات من قاعدة 2.3 إلى 3.0 (تُستعمل لترحيل المفضّلات).
+  Future<Map<int, int>> legacyIdMap() async {
+    final db = await database;
+    try {
+      final rows = await db.query('legacy_id_map');
+      return {for (final r in rows) r['old_id'] as int: r['new_id'] as int};
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  /// أدوية الأورام فقط.
+  Future<List<Drug>> getOncologyDrugs() async {
+    final db = await database;
+    final rows = await db.query('drugs',
+        where: 'is_oncology = 1', orderBy: 'generic_name');
+    return rows.map(Drug.fromMap).toList();
+  }
+
+  /// بدائل الدواء: نفس المادة الفعّالة، ثم نفس الزمرة (ATC-4)، ثم آلية مشابهة.
+  Future<List<Map<String, dynamic>>> alternativesFor(Drug d) async {
+    final db = await database;
+    final atc = (d.atcCode.length >= 5) ? d.atcCode.substring(0, 5) : d.atcCode;
+    final out = <Map<String, dynamic>>[];
+
+    final same = await db.query('drugs',
+        where: 'generic_name = ? AND id <> ?',
+        whereArgs: [d.genericName, d.id],
+        limit: 20);
+    for (final m in same) {
+      out.add({'drug': Drug.fromMap(m), 'kind': 'generic'});
+    }
+
+    if (atc.isNotEmpty) {
+      final cls = await db.query('drugs',
+          where: 'atc_code LIKE ? AND generic_name <> ?',
+          whereArgs: ['$atc%', d.genericName],
+          limit: 20);
+      for (final m in cls) {
+        out.add({'drug': Drug.fromMap(m), 'kind': 'class'});
+      }
+    }
+
+    if (d.subclassEn.isNotEmpty) {
+      final rows = atc.isNotEmpty
+          ? await db.query('drugs',
+              where: 'subclass_en = ? AND generic_name <> ? '
+                  'AND (atc_code IS NULL OR atc_code NOT LIKE ?)',
+              whereArgs: [d.subclassEn, d.genericName, '$atc%'],
+              limit: 20)
+          : await db.query('drugs',
+              where: 'subclass_en = ? AND generic_name <> ?',
+              whereArgs: [d.subclassEn, d.genericName],
+              limit: 20);
+      for (final m in rows) {
+        out.add({'drug': Drug.fromMap(m), 'kind': 'mechanism'});
+      }
+    }
+    return out;
+  }
+
+  /// أسئلة «عيادتك اليوم»: حالة سريرية + سؤالان عاليا الأثر + سؤالان من البقية.
+  Future<List<Map<String, dynamic>>> dailyQuiz({int count = 5}) async {
+    final db = await database;
+    try {
+      return await db.rawQuery(
+        'SELECT * FROM quiz_questions WHERE is_active = 1 '
+        "ORDER BY (CASE qtype WHEN 'case' THEN 0 "
+        "WHEN 'lasa' THEN 1 WHEN 'diluent' THEN 1 WHEN 'vesicant' THEN 1 "
+        'ELSE 2 END), RANDOM() LIMIT ?',
+        [count],
+      );
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// أسئلة بعينها بالمعرّفات — لتثبيت أسئلة اليوم.
+  Future<List<Map<String, dynamic>>> quizByIds(List<String> qids) async {
+    if (qids.isEmpty) return const [];
+    final db = await database;
+    try {
+      final marks = List.filled(qids.length, '?').join(',');
+      final rows = await db.rawQuery(
+        'SELECT * FROM quiz_questions WHERE qid IN ($marks)',
+        qids,
+      );
+      // رتّبها بترتيب المعرّفات المحفوظ
+      final byId = {for (final r in rows) (r['qid'] ?? '').toString(): r};
+      return [
+        for (final id in qids)
+          if (byId[id] != null) byId[id]!,
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<int> quizCount() async {
+    final db = await database;
+    try {
+      final r = await db.rawQuery('SELECT COUNT(*) c FROM quiz_questions');
+      return (r.first['c'] as int?) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// عدد السجلات الفعلي (للتحقق بعد التحديث).
+  Future<int> recordCount() async {
+    final db = await database;
+    final r = await db.rawQuery('SELECT COUNT(*) c FROM drugs');
+    return (r.first['c'] as int?) ?? 0;
   }
 
   // ── Admin CRUD ──────────────────────────────────────────────────────────

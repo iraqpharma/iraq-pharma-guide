@@ -65,6 +65,33 @@ class AppDrawer extends StatelessWidget {
                   onTap: () { Navigator.pop(context); context.push('/pricing-calc'); },
                 ),
                 _DrawerTile(
+                  icon: Icons.ondemand_video_outlined,
+                  color: const Color(0xFFC62828),
+                  title: s.isAr ? 'فيديوهات تعليمية' : 'Training Videos',
+                  subtitle: s.isAr
+                      ? 'محتوى أسبوعي للصيادلة'
+                      : 'Weekly content for pharmacists',
+                  onTap: () { Navigator.pop(context); context.push('/videos'); },
+                ),
+                _DrawerTile(
+                  icon: Icons.medical_services_outlined,
+                  color: const Color(0xFF0F6B4F),
+                  title: s.isAr ? 'عيادتك اليوم' : 'Your Clinic Today',
+                  subtitle: s.isAr
+                      ? 'خمسة أسئلة سريرية كل يوم'
+                      : 'Five clinical questions a day',
+                  onTap: () { Navigator.pop(context); context.push('/clinic-today'); },
+                ),
+                _DrawerTile(
+                  icon: Icons.work_outline_rounded,
+                  color: const Color(0xFF2E7D32),
+                  title: s.isAr ? 'فرص عمل' : 'Pharmacy Jobs',
+                  subtitle: s.isAr
+                      ? 'وظائف الصيادلة في العراق'
+                      : 'Pharmacist vacancies in Iraq',
+                  onTap: () { Navigator.pop(context); context.push('/jobs'); },
+                ),
+                _DrawerTile(
                   icon: Icons.swap_horiz_rounded,
                   color: const Color(0xFF0097A7),
                   title: s.substitution,
