@@ -51,6 +51,8 @@ class Drug {
   final String atcCode;
   final String familyEn;
   final String subclassEn;
+  /// توفّر الدواء في السوق العراقية: 0 متوفّر · 1 غير محدّد · 2 محدود · 3 غير متوفّر
+  final int iraqAvailability;
   final String maxDailyDose;
   final String storageCondition;
   final bool lightProtection;         // حماية من الضوء
@@ -118,6 +120,7 @@ class Drug {
     this.atcCode = '',
     this.familyEn = '',
     this.subclassEn = '',
+    this.iraqAvailability = 1,
     this.maxDailyDose = '',
     this.storageCondition = '',
     this.lightProtection = false,
@@ -152,6 +155,12 @@ class Drug {
     final m = RegExp(r'L(\d)').firstMatch(lactationSafety);
     return m != null ? int.tryParse(m.group(1)!) ?? 0 : 0;
   }
+
+  /// متوفّر فعلياً في السوق العراقية؟
+  bool get isAvailableInIraq => iraqAvailability <= 1;
+
+  /// نادر أو غير مسجّل — يُعرض بوسم باهت في القوائم.
+  bool get isScarceInIraq => iraqAvailability >= 2;
 
   /// ملاحظة السوق العراقي — العربية أولاً ثم الإنجليزية.
   String get marketNote =>
@@ -219,6 +228,9 @@ class Drug {
         atcCode: _str(m['atc_code']),
         familyEn: _str(m['family_en']),
         subclassEn: _str(m['subclass_en']),
+        iraqAvailability: m['iraq_availability'] == null
+            ? 1
+            : (m['iraq_availability'] as num).toInt(),
         maxDailyDose: _str(m['max_daily_dose']),
         storageCondition: _str(m['storage_condition']),
         lightProtection: _flag(m['light_protection']),

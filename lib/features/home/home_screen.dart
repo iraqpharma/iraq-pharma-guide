@@ -483,7 +483,7 @@ class _TealHeader extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'دليل الصيدلة العراقي',
+                      'دليل الأدوية العراقي',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.cairo(
@@ -689,52 +689,55 @@ class _CatItem {
 }
 
 const _categories = [
+  // الأيقونات كلها من عائلة outlined/rounded بسماكة واحدة، والألوان من لوحة
+  // AppColors الموحّدة (تشبّع متوسط) حتى تبدو الشبكة كمجموعة واحدة لا كألوان
+  // متفرّقة.
   _CatItem('قلب وأوعية',        'Cardiovascular',
-      Icons.favorite_rounded,            AppColors.catCardio,      'cardiovascular'),
+      Icons.monitor_heart_outlined,        AppColors.cCardio,      'cardiovascular'),
   _CatItem('مضادات حيوية',      'Antibiotics & Antivirals',
-      Icons.coronavirus_outlined,        AppColors.catAntibiotics, 'antibiotics'),
+      Icons.biotech_outlined,              AppColors.cAntibiotics, 'antibiotics'),
   _CatItem('أورام',             'Oncology',
-      Icons.bloodtype_outlined,          Color(0xFF7B1FA2),        'oncology'),
+      Icons.radio_button_checked,          AppColors.cOncology,    'oncology'),
   _CatItem('مسكنات وألم',       'Analgesics & pain',
-      Icons.do_not_disturb_alt,          AppColors.catPain,        'analgesics'),
+      Icons.healing_outlined,              AppColors.cAnalgesics,  'analgesics'),
   _CatItem('جهاز هضمي',         'Gastroenterology',
-      Icons.adjust,                      AppColors.catGastro,      'gastrointestinal'),
+      Icons.restaurant_outlined,           AppColors.cGastro,      'gastrointestinal'),
   _CatItem('جهاز تنفسي',        'Respiratory',
-      Icons.air_outlined,                AppColors.catRespiratory, 'respiratory'),
+      Icons.air_outlined,                  AppColors.cRespiratory, 'respiratory'),
   _CatItem('أعصاب',             'Neurology',
-      Icons.lightbulb_outline_rounded,   AppColors.catNeuro,       'neurology'),
+      Icons.psychology_alt_outlined,       AppColors.cNeuro,       'neurology'),
   _CatItem('نفسية',             'Psychiatry',
-      Icons.psychology_outlined,         Color(0xFF5E35B1),        'psychiatry'),
+      Icons.self_improvement_outlined,     AppColors.cPsych,       'psychiatry'),
   _CatItem('سكري',              'Antidiabetics & Glucose',
-      Icons.all_inclusive,               AppColors.catDiabetes,    'diabetes'),
+      Icons.water_drop_outlined,           AppColors.cDiabetes,    'diabetes'),
   _CatItem('غدد صمّاء',          'Endocrine',
-      Icons.hub_outlined,                AppColors.catEndocrine,   'endocrine'),
+      Icons.hub_outlined,                  AppColors.cEndocrine,   'endocrine'),
   _CatItem('دم',                'Hematology',
-      Icons.water_drop_outlined,         Color(0xFFC62828),        'hematology'),
+      Icons.bloodtype_outlined,            AppColors.cHematology,  'hematology'),
   _CatItem('مناعة',             'Immunology',
-      Icons.shield_outlined,             Color(0xFF00897B),        'immunology'),
+      Icons.shield_outlined,               AppColors.cImmunology,  'immunology'),
   _CatItem('جلدية',             'Dermatology',
-      Icons.healing_outlined,            Color(0xFFD81B60),        'dermatology'),
+      Icons.spa_outlined,                  AppColors.cDerma,       'dermatology'),
   _CatItem('عيون',              'Ophthalmology',
-      Icons.remove_red_eye_outlined,     Color(0xFF1E88E5),        'ophthalmology'),
+      Icons.visibility_outlined,           AppColors.cOphtha,      'ophthalmology'),
   _CatItem('بولية',             'Urology',
-      Icons.opacity_outlined,            Color(0xFF00ACC1),        'urology'),
+      Icons.opacity_outlined,              AppColors.cUrology,     'urology'),
   _CatItem('صحة المرأة',        "Women's Health",
-      Icons.pregnant_woman_outlined,     Color(0xFFEC407A),        'womens_health'),
+      Icons.pregnant_woman_outlined,       AppColors.cWomens,      'womens_health'),
   _CatItem('مطاعيم',            'Vaccines',
-      Icons.vaccines_outlined,           Color(0xFF43A047),        'vaccines'),
+      Icons.vaccines_outlined,             AppColors.cVaccines,    'vaccines'),
   _CatItem('فيتامينات ومقويات',  'Vitamins & Supplements',
-      Icons.egg_alt_outlined,            AppColors.catVitamins,    'vitamins'),
+      Icons.eco_outlined,                  AppColors.cVitamins,    'vitamins'),
   _CatItem('سوائل وشوارد',      'Fluids & Electrolytes',
-      Icons.science_outlined,            Color(0xFF26A69A),        'fluids_electrolytes'),
+      Icons.science_outlined,              AppColors.cFluids,      'fluids_electrolytes'),
   _CatItem('تخدير',             'Anesthesia',
-      Icons.bedtime_outlined,            Color(0xFF546E7A),        'anesthesia'),
+      Icons.airline_seat_flat_outlined,    AppColors.cAnesthesia,  'anesthesia'),
   _CatItem('أدوية مخدرة',        'Controlled & Narcotics',
-      Icons.warning_amber_rounded,       AppColors.catNarcotics,   'narcotics'),
+      Icons.lock_outline_rounded,          AppColors.cNarcotics,   'narcotics'),
   _CatItem('تجميلية',           'Cosmetic',
-      Icons.face_retouching_natural,     AppColors.catCosmetic,    'cosmetic'),
+      Icons.auto_awesome_outlined,         AppColors.cCosmetic,    'cosmetic'),
   _CatItem('أخرى',              'Other',
-      Icons.category_outlined,           AppColors.catOther,       'other'),
+      Icons.category_outlined,             AppColors.cOtherCat,    'other'),
 ];
 
 /// شريط «الجديد في 3.0» — يُبرز الأقسام الجديدة في الشاشة الرئيسية.
@@ -772,19 +775,15 @@ class _NewInV3Section extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
         child: Row(children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            width: 4,
+            height: 18,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('جديد',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(width: 8),
-          Text('في هذا الإصدار',
+          const SizedBox(width: 9),
+          Text('استكشف',
               style: GoogleFonts.cairo(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -859,45 +858,60 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/category/${cat.routeKey}'),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, 2),
+    final cs     = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // بطاقة هادئة: حدٌّ رفيع بلون القسم بدل الظل الثقيل، ومربّع أيقونة
+    // بزوايا ناعمة (squircle) بدل الدائرة — أقرب لمظهر الأنظمة الحديثة.
+    return Material(
+      color: isDark ? cs.surface : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/category/${cat.routeKey}'),
+        splashColor: cat.color.withOpacity(0.10),
+        highlightColor: cat.color.withOpacity(0.06),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.07)
+                  : cat.color.withOpacity(0.14),
+              width: 1,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                color: cat.color.withOpacity(0.12),
-                shape: BoxShape.circle,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: cat.color.withOpacity(isDark ? 0.18 : 0.10),
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: Icon(cat.icon, color: cat.color, size: 26),
               ),
-              child: Icon(cat.icon, color: cat.color, size: 32),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              context.s.isAr ? cat.ar : cat.en,
-              style: GoogleFonts.cairo(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
+              const SizedBox(height: 11),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Text(
+                  context.s.isAr ? cat.ar : cat.en,
+                  style: GoogleFonts.cairo(
+                    fontSize: 12.5,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.1,
+                    color: cs.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

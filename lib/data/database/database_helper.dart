@@ -7,12 +7,24 @@ import 'dart:io';
 import '../models/drug_model.dart';
 import '../models/suggestion_item.dart';
 
+/// عائلة دوائية داخل قسم (مثل Beta blockers داخل القلب والأوعية).
+class DrugFamily {
+  final String name;
+  final int total;
+  final int available;
+  const DrugFamily({
+    required this.name,
+    required this.total,
+    required this.available,
+  });
+}
+
 class DatabaseHelper {
   static DatabaseHelper? _instance;
   static Database? _db;
 
   // Increment this whenever assets/database/drugs.db is updated
-  static const int _kAssetDbVersion = 7;
+  static const int _kAssetDbVersion = 8;
 
   DatabaseHelper._();
   static DatabaseHelper get instance => _instance ??= DatabaseHelper._();
@@ -178,10 +190,60 @@ class DatabaseHelper {
   Future<List<Drug>> getByAppCategory(String category) async {
     final db = await database;
     final rows = await db.rawQuery(
-      'SELECT * FROM drugs WHERE app_category = ? ORDER BY pharmacological_class, generic_name',
+      'SELECT * FROM drugs WHERE app_category = ? '
+      'ORDER BY $_availOrder, generic_name COLLATE NOCASE',
       [category],
     );
     return rows.map(Drug.fromMap).toList();
+  }
+
+  // ── التصفّح الهرمي: قسم ← عائلة دوائية ← أدوية ─────────────────────────────
+  // الأدوية المتوفّرة في السوق العراقية تتقدّم على النادرة وغير المسجّلة،
+  // وعمود `iraq_availability` يُبنى مع قاعدة البيانات لا وقت التشغيل.
+  // 0 = متوفّر · 1 = غير محدّد · 2 = محدود/نادر · 3 = غير متوفّر
+  static const String _availOrder =
+      'CASE WHEN iraq_availability IS NULL THEN 1 ELSE iraq_availability END';
+
+  /// عوائل القسم مرتّبة بعدد الأدوية المتوفّرة محلياً ثم بالاسم.
+  Future<List<DrugFamily>> familiesOf(String category) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      '''SELECT subclass_en AS name,
+                COUNT(*)    AS total,
+                SUM(CASE WHEN $_availOrder <= 1 THEN 1 ELSE 0 END) AS available
+           FROM drugs
+          WHERE app_category = ?
+            AND TRIM(COALESCE(subclass_en, '')) <> ''
+          GROUP BY subclass_en
+          ORDER BY available DESC, total DESC, name COLLATE NOCASE''',
+      [category],
+    );
+    return rows
+        .map((r) => DrugFamily(
+              name: (r['name'] ?? '').toString(),
+              total: (r['total'] as num?)?.toInt() ?? 0,
+              available: (r['available'] as num?)?.toInt() ?? 0,
+            ))
+        .where((f) => f.name.isNotEmpty)
+        .toList();
+  }
+
+  /// أدوية عائلة واحدة داخل قسم.
+  Future<List<Drug>> getByFamily(String category, String family) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT * FROM drugs WHERE app_category = ? AND subclass_en = ? '
+      'ORDER BY $_availOrder, generic_name COLLATE NOCASE',
+      [category, family],
+    );
+    return rows.map(Drug.fromMap).toList();
+  }
+
+  /// هل عمود التوفّر موجود؟ (قواعد قديمة قبل الإصدار ٨ لا تحتويه)
+  Future<bool> hasAvailabilityColumn() async {
+    final db = await database;
+    final cols = await db.rawQuery('PRAGMA table_info(drugs)');
+    return cols.any((c) => (c['name'] ?? '').toString() == 'iraq_availability');
   }
 
   Future<List<Drug>> getByPharmClass(String pharmClass) async {

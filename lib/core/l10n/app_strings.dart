@@ -5,8 +5,8 @@ class AppStrings {
   const AppStrings(this.isAr);
 
   // ── App ───────────────────────────────────────────────────────────────────
-  String get appName       => isAr ? 'دليل الصيدلة العراقي' : 'Iraq Pharma Guide';
-  String get appSubtitle   => isAr ? 'Iraq Pharma Guide'    : 'دليل الصيدلة العراقي';
+  String get appName       => isAr ? 'دليل الأدوية العراقي' : 'Iraq Pharma Guide';
+  String get appSubtitle   => isAr ? 'Iraq Pharma Guide'    : 'دليل الأدوية العراقي';
 
   // ── Bottom Nav ────────────────────────────────────────────────────────────
   String get navFavorites  => isAr ? 'المفضلة'  : 'Favorites';
@@ -215,7 +215,7 @@ class AppStrings {
   String get phoneOptional     => isAr ? 'رقم الهاتف (اختياري)'   : 'Phone Number (Optional)';
   String get profession        => isAr ? 'المهنة'                  : 'Profession';
   String get newAccount        => isAr ? 'إنشاء حساب جديد'        : 'Create New Account';
-  String get newAccountSub     => isAr ? 'أدخل بياناتك للتسجيل في دليل الصيدلة العراقي'
+  String get newAccountSub     => isAr ? 'أدخل بياناتك للتسجيل في دليل الأدوية العراقي'
                                        : 'Enter your details to register in Iraq Pharma Guide';
   String get agreePrefix       => isAr ? 'أوافق على ' : 'I agree to the ';
   String get agreeAnd          => isAr ? ' و'          : ' and ';
@@ -727,7 +727,7 @@ class AppStrings {
   String get commercial_          => isAr ? 'تجاري'                        : 'Trade';
 
   // Splash
-  String get splashTitle     => isAr ? 'دليل الصيدلة العراقي'             : 'Iraq Pharma Guide';
+  String get splashTitle     => isAr ? 'دليل الأدوية العراقي'             : 'Iraq Pharma Guide';
 
   // ── Common ────────────────────────────────────────────────────────────────
   String get loading           => isAr ? 'جاري التحميل...' : 'Loading...';

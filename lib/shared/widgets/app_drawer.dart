@@ -44,6 +44,15 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ],
                 _DrawerTile(
+                  icon: Icons.vaccines_outlined,
+                  color: AppColors.cOncology,
+                  title: s.isAr ? 'تخفيض جرعات الكيماوي' : 'Chemo Dose Adjustment',
+                  subtitle: s.isAr
+                      ? 'تعديل الجرعة حسب الكبد والكلى'
+                      : 'Hepatic & renal dose reduction',
+                  onTap: () { Navigator.pop(context); context.push('/chemo-dose'); },
+                ),
+                _DrawerTile(
                   icon: Icons.science_outlined,
                   color: const Color(0xFFE65100),
                   title: s.interactions,
@@ -169,33 +178,47 @@ class _DrawerHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Image.asset(
-            'assets/images/logo_white.png',
-            width: 52,
-            height: 52,
-            errorBuilder: (_, __, ___) => Container(
-              width: 52, height: 52,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.local_pharmacy_outlined,
-                  color: Colors.white, size: 28),
+          // شعار التطبيق داخل مربّع أبيض ناعم — يبقى محايداً فوق التدرّج
+          // الأخضر ولا يزاحم ألوان الواجهة.
+          Container(
+            width: 56,
+            height: 56,
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(17),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                  Icons.local_pharmacy_outlined,
+                  color: AppColors.primary,
+                  size: 26),
             ),
           ),
           const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Iraq Pharma Guide',
+              Text('دليل الأدوية العراقي',
                   style: GoogleFonts.ibmPlexSansArabic(
                       color: Colors.white,
-                      fontSize: 17,
+                      fontSize: 16.5,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 3),
-              Text('دليل الدواء العراقي',
+              Text('Iraq Pharma Guide',
                   style: GoogleFonts.ibmPlexSansArabic(
-                      color: Colors.white70, fontSize: 13)),
+                      color: Colors.white70,
+                      fontSize: 12,
+                      letterSpacing: 0.4)),
             ],
           ),
         ],

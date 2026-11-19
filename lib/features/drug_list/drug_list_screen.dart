@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/category_style.dart';
 import '../../data/models/drug_model.dart';
 import '../../data/database/database_helper.dart';
 import '../../providers/drug_provider.dart';
@@ -26,7 +27,7 @@ bool _isUsefulClass(String cls) {
   return true;
 }
 
-// ── Provider ──────────────────────────────────────────────────────────────────
+// ── Providers ─────────────────────────────────────────────────────────────────
 /// `all` is a pseudo-category used by the "view all" action on the home
 /// screen. It streams the same local SQLite table, so it adds nothing to the
 /// app size and stays lazy through the existing ListView.builder.
@@ -36,10 +37,26 @@ final _categoryDrugsProvider =
   return ref.read(drugRepositoryProvider).getByAppCategory(key);
 });
 
+/// أدوية عائلة واحدة داخل قسم — المفتاح `category|family`.
+final _familyDrugsProvider =
+    FutureProvider.family<List<Drug>, String>((ref, key) async {
+  final i = key.indexOf('|');
+  return DatabaseHelper.instance
+      .getByFamily(key.substring(0, i), key.substring(i + 1));
+});
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 class DrugListScreen extends ConsumerStatefulWidget {
   final String categoryKey;
-  const DrugListScreen({super.key, required this.categoryKey});
+
+  /// عند تمريرها تُعرض أدوية هذه العائلة فقط (Beta blockers مثلاً).
+  final String? familyName;
+
+  const DrugListScreen({
+    super.key,
+    required this.categoryKey,
+    this.familyName,
+  });
 
   @override
   ConsumerState<DrugListScreen> createState() => _DrugListScreenState();
@@ -57,17 +74,36 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.categoryKey == 'all'
+    final fam   = widget.familyName;
+    final style = CategoryStyle.of(widget.categoryKey);
+    final catTitle = widget.categoryKey == 'all'
         ? context.s.allDrugs
         : (context.s.categoryLabels[widget.categoryKey] ?? widget.categoryKey);
-    final drugsAsync = ref.watch(_categoryDrugsProvider(widget.categoryKey));
+    final title = fam ?? catTitle;
+
+    final drugsAsync = fam == null
+        ? ref.watch(_categoryDrugsProvider(widget.categoryKey))
+        : ref.watch(_familyDrugsProvider('${widget.categoryKey}|$fam'));
+
+    final headColor =
+        widget.categoryKey == 'all' ? AppColors.primary : style.color;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: AppColors.primaryBlue,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 17)),
+            if (fam != null)
+              Text(catTitle,
+                  style: const TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w400)),
+          ],
+        ),
+        backgroundColor: headColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -75,11 +111,13 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
         children: [
           // ── Search bar ───────────────────────────────────────────────────
           Container(
-            color: AppColors.primaryBlue,
+            color: headColor,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => FocusScope.of(context).unfocus(),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: '${context.s.searchInCategory} $title...',
@@ -91,6 +129,7 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _query = '');
+                          FocusScope.of(context).unfocus();
                         },
                       )
                     : null,
@@ -113,7 +152,6 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
               error: (e, _) =>
                   Center(child: Text('${context.s.error}: $e')),
               data: (drugs) {
-                // Filter by search query
                 final filtered = _query.isEmpty
                     ? drugs
                     : drugs.where((d) {
@@ -142,29 +180,46 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
                   );
                 }
 
-                // Sort alphabetically
+                // الترتيب: المتوفّر محلياً أولاً ثم الأبجدي — الاستعلام يرتّب
+                // أصلاً، وهذا يحفظ الترتيب بعد التصفية بالبحث.
                 final sorted = List<Drug>.from(filtered)
-                  ..sort((a, b) => a.genericName
-                      .toLowerCase()
-                      .compareTo(b.genericName.toLowerCase()));
+                  ..sort((a, b) {
+                    final r = a.iraqAvailability.compareTo(b.iraqAvailability);
+                    if (r != 0) return r;
+                    return a.genericName
+                        .toLowerCase()
+                        .compareTo(b.genericName.toLowerCase());
+                  });
 
-                // Count label
+                final availableCount =
+                    sorted.where((d) => d.isAvailableInIraq).length;
+
                 return Column(
                   children: [
-                    // Count bar
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
-                      color: AppColors.primaryLight,
-                      child: Text(
-                        context.s.drugCount(filtered.length),
-                        style: TextStyle(
-                          color: AppColors.primaryBlue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      color: headColor.withOpacity(0.08),
+                      child: Row(children: [
+                        Text(
+                          context.s.drugCount(filtered.length),
+                          style: TextStyle(
+                            color: headColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
+                        const Spacer(),
+                        Text(
+                          '$availableCount متوفّر محلياً',
+                          style: const TextStyle(
+                            color: AppColors.successGreen,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ]),
                     ),
                     Expanded(
                       child: ListView.separated(
@@ -173,7 +228,7 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
                         separatorBuilder: (_, __) => const Divider(
                             height: 1, indent: 72, endIndent: 16),
                         itemBuilder: (ctx, i) =>
-                            _DrugTile(drug: sorted[i]),
+                            _DrugTile(drug: sorted[i], accent: headColor),
                       ),
                     ),
                   ],
@@ -190,12 +245,14 @@ class _DrugListScreenState extends ConsumerState<DrugListScreen> {
 // ─── Drug tile ─────────────────────────────────────────────────────────────────
 class _DrugTile extends StatelessWidget {
   final Drug drug;
-  const _DrugTile({required this.drug});
+  final Color accent;
+  const _DrugTile({required this.drug, required this.accent});
 
   @override
   Widget build(BuildContext context) {
     final cls = drug.drugClass;
     final showClass = _isUsefulClass(cls);
+    final scarce = drug.isScarceInIraq;
 
     return ListTile(
       contentPadding:
@@ -204,17 +261,44 @@ class _DrugTile extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: AppColors.primaryLight,
-          borderRadius: BorderRadius.circular(12),
+          color: accent.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(13),
         ),
-        child: const Icon(Icons.medication_rounded,
-            color: AppColors.primaryBlue, size: 22),
+        child: Icon(Icons.medication_outlined, color: accent, size: 21),
       ),
-      title: Text(
-        drug.genericName,
-        style: const TextStyle(
-            fontWeight: FontWeight.w700, fontSize: 15),
-      ),
+      title: Row(children: [
+        Flexible(
+          child: Text(
+            drug.genericName,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: scarce
+                  ? Theme.of(context).colorScheme.onSurface.withOpacity(0.72)
+                  : null,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (scarce) ...[
+          const SizedBox(width: 7),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.warningAmber.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              drug.iraqAvailability >= 3 ? 'غير متوفّر' : 'نادر',
+              style: const TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF9A6207),
+              ),
+            ),
+          ),
+        ],
+      ]),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -231,14 +315,14 @@ class _DrugTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.08),
+                  color: accent.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   cls,
                   style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.primaryBlue.withOpacity(0.75),
+                    color: accent.withOpacity(0.85),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -280,7 +364,7 @@ class _DrugTile extends StatelessWidget {
       case 'C': return Colors.orange.shade600;
       case 'D': return Colors.deepOrange.shade600;
       case 'X': return Colors.red.shade700;
-      default:  return AppColors.primaryBlue;
+      default:  return AppColors.primary;
     }
   }
 }

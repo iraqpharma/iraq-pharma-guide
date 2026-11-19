@@ -6,6 +6,69 @@ import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'shared/router/app_router.dart';
 
+void _dismissKeyboard() {
+  final focus = FocusManager.instance.primaryFocus;
+  if (focus != null && focus.hasFocus) focus.unfocus();
+}
+
+/// زر عائم صغير يظهر فوق الكيبورد ويُخفيه بضغطة واحدة.
+class _KeyboardDismissBar extends StatelessWidget {
+  const _KeyboardDismissBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final insets = MediaQuery.of(context).viewInsets.bottom;
+    if (insets < 80) return const SizedBox.shrink();
+
+    return Positioned(
+      left: 14,
+      right: 14,
+      bottom: insets + 8,
+      child: IgnorePointer(
+        ignoring: false,
+        child: Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(22),
+              onTap: _dismissKeyboard,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00695C),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.22),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.keyboard_hide_rounded,
+                        color: Colors.white, size: 18),
+                    SizedBox(width: 7),
+                    Text('إخفاء الكيبورد',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class IraqPharmaApp extends ConsumerWidget {
   const IraqPharmaApp({super.key});
 
@@ -53,11 +116,16 @@ class IraqPharmaApp extends ConsumerWidget {
             // على زر الرجوع أو على أزرار أسفل الشاشة.
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onTap: () {
-                final focus = FocusManager.instance.primaryFocus;
-                if (focus != null && focus.hasFocus) focus.unfocus();
-              },
-              child: child!,
+              onTap: _dismissKeyboard,
+              child: Stack(
+                children: [
+                  child!,
+                  // شريط «إخفاء الكيبورد»: يظهر فقط حين يكون الكيبورد مفتوحاً،
+                  // فوقه مباشرة، فلا يبقى المستخدم محاصراً حين يغطّي الكيبورد
+                  // زر الرجوع أو أزرار أسفل الشاشة.
+                  const _KeyboardDismissBar(),
+                ],
+              ),
             ),
           ),
         );

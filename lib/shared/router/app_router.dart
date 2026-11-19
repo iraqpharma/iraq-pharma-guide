@@ -5,6 +5,8 @@ import '../../features/splash/splash_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/drug_detail/drug_detail_screen.dart';
 import '../../features/drug_list/drug_list_screen.dart';
+import '../../features/drug_list/category_families_screen.dart';
+import '../../features/oncology/chemo_dose_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/dosage_calculator/dosage_calculator_screen.dart';
 import '../../features/renal_calculator/renal_calculator_screen.dart';
@@ -73,9 +75,29 @@ final appRouter = GoRouter(
         drugId: int.parse(state.pathParameters['id']!),
       ),
     ),
+    // قسم ← عوائل دوائية ← أدوية. المفتاح `all` يتجاوز العوائل ويعرض
+    // كل الأدوية مباشرة (يُستعمل من زر «عرض الكل» في الرئيسية).
     GoRoute(
       path: '/category/:key',
-      builder: (_, state) => DrugListScreen(categoryKey: state.pathParameters['key']!),
+      builder: (_, state) {
+        final key = state.pathParameters['key']!;
+        return key == 'all'
+            ? const DrugListScreen(categoryKey: 'all')
+            : CategoryFamiliesScreen(categoryKey: key);
+      },
+    ),
+    GoRoute(
+      path: '/category/:key/all',
+      builder: (_, state) =>
+          DrugListScreen(categoryKey: state.pathParameters['key']!),
+    ),
+    GoRoute(
+      path: '/category/:key/family/:fam',
+      builder: (_, state) => DrugListScreen(
+        categoryKey: state.pathParameters['key']!,
+        familyName:
+            Uri.decodeComponent(state.pathParameters['fam']!),
+      ),
     ),
     GoRoute(
       path: '/quick-filter/:key',
@@ -91,6 +113,7 @@ final appRouter = GoRouter(
     if (FeatureFlags.doseToolsOnThisPlatform)
       GoRoute(path: '/renal-calc',  builder: (_, __) => const RenalCalculatorScreen()),
     GoRoute(path: '/interactions',  builder: (_, __) => const InteractionsScreen()),
+    GoRoute(path: '/chemo-dose',    builder: (_, __) => const ChemoDoseScreen()),
     GoRoute(path: '/sources',       builder: (_, __) => const SourcesScreen()),
     GoRoute(path: '/notebook',      builder: (_, __) => const NotebookScreen()),
     GoRoute(path: '/price-guide',   builder: (_, __) => const CommercialPriceGuideScreen()),

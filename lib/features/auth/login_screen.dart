@@ -310,7 +310,7 @@ class _LoginHeader extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5)),
           const SizedBox(height: 4),
-          Text('دليل الصيدلة العراقي',
+          Text('دليل الأدوية العراقي',
               style: GoogleFonts.ibmPlexSansArabic(
                   color: Colors.white.withOpacity(0.85), fontSize: 13)),
         ],
@@ -915,7 +915,7 @@ class _AppLogo extends StatelessWidget {
     const SizedBox(height: 12),
     Text('Iraq Pharma Guide',
         style: GoogleFonts.ibmPlexSansArabic(fontSize: 17, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-    Text('دليل الصيدلة العراقي',
+    Text('دليل الأدوية العراقي',
         style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
   ]);
 }
