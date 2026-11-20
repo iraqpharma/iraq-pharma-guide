@@ -11,9 +11,8 @@ workflows:
       flutter: 3.41.8
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.iraqpharmaguide.iraqPharmaGuide
+      vars:
+        BUNDLE_ID: "com.iraqpharmaguide.iraqPharmaGuide"
 
     triggering:
       events:
@@ -24,6 +23,17 @@ workflows:
           source: true
 
     scripts:
+      # ينشئ شهادة التوزيع وبروفايل App Store إن لم يكونا موجودين،
+      # ثم يضعهما في سلسلة المفاتيح ويربطهما بمشروع Xcode.
+      - name: Set up code signing
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain initialize
+          keychain add-certificates
+          xcode-project use-profiles
+
       - name: Flutter packages get
         script: flutter packages pub get
 
@@ -43,7 +53,7 @@ workflows:
       app_store_connect:
         auth: integration
         # TestFlight فقط — لا إرسال لمراجعة App Store.
-        # بعد موافقة د. حميد على أداء التطبيق نُحوّل submit_to_app_store إلى true.
+        # بعد موافقة د. حميد نُحوّل submit_to_app_store إلى true.
         submit_to_testflight: true
         submit_to_app_store: false
       email:
