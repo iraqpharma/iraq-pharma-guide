@@ -23,14 +23,14 @@ workflows:
           source: true
 
     scripts:
-      # ينشئ شهادة التوزيع وبروفايل App Store إن لم يكونا موجودين،
-      # ثم يضعهما في سلسلة المفاتيح ويربطهما بمشروع Xcode.
+      # الترتيب مهم: تُهيَّأ سلسلة المفاتيح أولاً، ثم تُجلب/تُنشأ شهادة التوزيع
+      # وبروفايل App Store، ثم تُضاف الشهادة للسلسلة ويُربط البروفايل بالمشروع.
       - name: Set up code signing
         script: |
+          keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
-          keychain initialize
           keychain add-certificates
           xcode-project use-profiles
 
