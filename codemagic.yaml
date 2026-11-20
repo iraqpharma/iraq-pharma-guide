@@ -23,11 +23,16 @@ workflows:
           source: true
 
     scripts:
-      # الترتيب مهم: تُهيَّأ سلسلة المفاتيح أولاً، ثم تُجلب/تُنشأ شهادة التوزيع
-      # وبروفايل App Store، ثم تُضاف الشهادة للسلسلة ويُربط البروفايل بالمشروع.
+      # شهادة التوزيع القديمة مفتاحها الخاص على جهاز ماك آخر، فلا يستطيع
+      # Codemagic استعمالها. هنا يُنشئ شهادة توزيع خاصة به بمفتاحها، ثم
+      # يجلب/يُنشئ بروفايل App Store ويربطه بالمشروع.
       - name: Set up code signing
         script: |
+          set -e
           keychain initialize
+          app-store-connect certificates create \
+            --type IOS_DISTRIBUTION \
+            --save || echo "certificate already exists — continuing"
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
