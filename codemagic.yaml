@@ -1,57 +1,54 @@
-# ════════════════════════════════════════════════════════════════════════════
-# دليل الأدوية العراقي — بناء iOS في السحابة (Codemagic)
-# سبب الحاجة: بناء iOS يتطلّب macOS وXcode، ولا يمكن تنفيذه على ويندوز إطلاقاً.
-#
-# الإعداد مرة واحدة على codemagic.io (مجاني ٥٠٠ دقيقة شهرياً):
-#   1) اربط مستودع المشروع (GitHub) بـCodemagic
-#   2) Teams → Integrations → Developer Portal: ارفع مفتاح App Store Connect
-#      ios_signing\AuthKey_44Z469J3TS.p8  مع Issuer ID و Key ID من
-#      appstoreconnect.apple.com → Users and Access → Integrations → Keys
-#   3) أنشئ مجموعة متغيّرات باسم appstore_credentials وضع فيها:
-#        APP_STORE_CONNECT_ISSUER_ID
-#        APP_STORE_CONNECT_KEY_IDENTIFIER
-#        APP_STORE_CONNECT_PRIVATE_KEY   (محتوى ملف .p8 كاملاً)
-#      ولا تضع أي مفتاح داخل هذا الملف ولا في المستودع
-#   4) شغّل الـworkflow أدناه — يبني ويوقّع ويرفع إلى TestFlight
-# ════════════════════════════════════════════════════════════════════════════
-
 workflows:
-  ios-release:
-    name: iOS Release 3.0.0
+  ios-testflight:
+    name: iOS — TestFlight only
     instance_type: mac_mini_m2
     max_build_duration: 90
+
+    integrations:
+      app_store_connect: Iraq Pharma Guide
+
     environment:
       flutter: 3.41.8
       xcode: latest
       cocoapods: default
-      groups:
-        - appstore_credentials
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.iraqpharmaguide.app   # عدّله إن اختلف
+        bundle_identifier: com.iraqpharmaguide.iraqPharmaGuide
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: release/3.0
+          include: true
+          source: true
+
     scripts:
-      - name: تثبيت الحزم
-        script: flutter pub get
-      - name: تثبيت CocoaPods
-        script: |
-          cd ios
-          pod install --repo-update
-      - name: إعداد التوقيع التلقائي
-        script: xcode-project use-profiles
-      - name: التحقّق من قاعدة البيانات داخل الحزمة
-        script: |
-          test -f assets/database/drugs.db || { echo "drugs.db مفقود"; exit 1; }
-          echo "حجم القاعدة: $(du -h assets/database/drugs.db | cut -f1)"
-      - name: بناء IPA
+      - name: Flutter packages get
+        script: flutter packages pub get
+
+      - name: Install CocoaPods dependencies
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: Flutter build ipa
         script: |
           flutter build ipa --release \
             --export-options-plist=/Users/builder/export_options.plist
+
     artifacts:
       - build/ios/ipa/*.ipa
-      - flutter_drive.log
+      - /tmp/xcodebuild_logs/*.log
+
     publishing:
       app_store_connect:
         auth: integration
+        # TestFlight فقط — لا إرسال لمراجعة App Store.
+        # بعد موافقة د. حميد على أداء التطبيق نُحوّل submit_to_app_store إلى true.
         submit_to_testflight: true
-        # اتركه false حتى تختبر على TestFlight أولاً
         submit_to_app_store: false
+      email:
+        recipients:
+          - hameedalkubaisi96@gmail.com
+        notify:
+          success: true
+          failure: true
