@@ -353,19 +353,55 @@ class DatabaseHelper {
     return out;
   }
 
-  /// أسئلة «عيادتك اليوم»: حالة سريرية + سؤالان عاليا الأثر + سؤالان من البقية.
-  Future<List<Map<String, dynamic>>> dailyQuiz({int count = 5}) async {
+  /// أسئلة «عيادتك اليوم».
+  ///
+  /// الاختيار ليس عشوائياً: بنك الأسئلة يُرتَّب ترتيباً ثابتاً مخلوطاً
+  /// مرة واحدة (بالبذرة نفسها عند كل المستخدمين)، ثم تُؤخذ منه نافذة
+  /// مقدارها خمسة أسئلة موضعها مشتقّ من تاريخ اليوم. النتيجة:
+  ///   • كل المستخدمين يرون الأسئلة نفسها في اليوم نفسه
+  ///   • تتبدّل عند منتصف الليل
+  ///   • لا تتكرّر مجموعة اليوم إلا بعد أن يدور البنك كاملاً (نحو 70 يوماً)
+  ///   • الخلط الثابت يمنع تجاور أسئلة النوع الواحد
+  Future<List<Map<String, dynamic>>> dailyQuiz({
+    int count = 5,
+    int daySeed = 0,
+  }) async {
     final db = await database;
     try {
-      return await db.rawQuery(
-        'SELECT * FROM quiz_questions WHERE is_active = 1 '
-        "ORDER BY (CASE qtype WHEN 'case' THEN 0 "
-        "WHEN 'lasa' THEN 1 WHEN 'diluent' THEN 1 WHEN 'vesicant' THEN 1 "
-        'ELSE 2 END), RANDOM() LIMIT ?',
-        [count],
+      final all = await db.rawQuery(
+        'SELECT qid FROM quiz_questions WHERE is_active = 1 ORDER BY qid',
       );
+      if (all.isEmpty) return const [];
+
+      final qids = [for (final r in all) (r['qid'] ?? '').toString()];
+      _stableShuffle(qids, 0x5EED1A9);
+
+      final start = (daySeed * count) % qids.length;
+      final pick = <String>[];
+      for (var i = 0; i < count && i < qids.length; i++) {
+        pick.add(qids[(start + i) % qids.length]);
+      }
+      return quizByIds(pick);
     } catch (_) {
       return const [];
+    }
+  }
+
+  /// خلط ثابت البذرة (xorshift32) — يعطي الترتيب نفسه على كل جهاز.
+  static void _stableShuffle(List<String> list, int seed) {
+    var s = seed & 0x7FFFFFFF;
+    if (s == 0) s = 1;
+    int next() {
+      s ^= (s << 13) & 0x7FFFFFFF;
+      s ^= s >> 17;
+      s ^= (s << 5) & 0x7FFFFFFF;
+      return s & 0x7FFFFFFF;
+    }
+    for (var i = list.length - 1; i > 0; i--) {
+      final j = next() % (i + 1);
+      final t = list[i];
+      list[i] = list[j];
+      list[j] = t;
     }
   }
 
@@ -444,6 +480,25 @@ class DatabaseHelper {
         'FROM drugs '
         "WHERE drug_interactions <> '' AND LENGTH(drug_interactions) > 40 "
         '  AND (iraq_availability IS NULL OR iraq_availability <= 1) '
+        // قاعدة البيانات فيها مداخل ليست أدوية مفردة: بروتوكولات
+        // علاجية و«تدبير» حالات ومجموعات دوائية. وضْعها في زوج تداخل
+        // يُنتج سؤالاً بلا معنى مثل «قطرة ديكلوفيناك + تدبير التهاب
+        // البربخ»، فتُستبعد هنا.
+        "  AND generic_name NOT LIKE '%management%' "
+        "  AND generic_name NOT LIKE '%therapy%' "
+        "  AND generic_name NOT LIKE '%prophylax%' "
+        "  AND generic_name NOT LIKE '%regimen%' "
+        "  AND generic_name NOT LIKE '%syndrome%' "
+        "  AND generic_name NOT LIKE '%protocol%' "
+        "  AND generic_name NOT LIKE '%guideline%' "
+        "  AND generic_name NOT LIKE '%screening%' "
+        "  AND generic_name NOT LIKE '%counsel%' "
+        "  AND generic_name NOT LIKE '%ladder%' "
+        "  AND generic_name NOT LIKE '%pack%' "
+        "  AND generic_name NOT LIKE '%recognition%' "
+        // اسم الدواء المفرد كلمة أو كلمتان؛ ما زاد غالباً وصف أو تركيبة
+        "  AND LENGTH(generic_name) - LENGTH(REPLACE(generic_name,' ','')) <= 2 "
+        "  AND subclass_en <> '' "
         'ORDER BY RANDOM() LIMIT 220',
       );
       if (rows.length < 6) return const [];
@@ -496,9 +551,10 @@ class DatabaseHelper {
           'a': an,
           'b': bn,
           'interacts': 0,
-          'explain': 'لا تداخل مُدرج بين هذين الدوائين في مصدر التطبيق. '
-              'هذا لا يعني أماناً مطلقاً — راجع المصدر عند الجرعات العالية '
-              'أو اختلال الكبد والكلى.',
+          'explain': 'لا يُذكر تداخل مُعتبَر بين هذين الدوائين في المراجع '
+              'المعتمدة، ولا يستدعي الجمع بينهما تعديل جرعة أو مراقبة خاصة\n\n'
+              'غياب التداخل المُدرج لا يعني أماناً مطلقاً: راجع المرجع عند '
+              'الجرعات العالية أو اختلال الكبد والكلى',
         });
       }
 

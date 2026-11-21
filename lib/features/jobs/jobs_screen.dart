@@ -7,6 +7,7 @@ import '../../core/constants/governorate_style.dart';
 import '../../data/models/job_post.dart';
 import '../../services/admin_access_service.dart';
 import '../../services/jobs_service.dart';
+import '../../shared/widgets/section_intro.dart';
 
 /// ألوان أنواع الدوام — خط رفيع متدرّج على حافة البطاقة يميّز النوع
 /// قبل قراءة النص.
@@ -43,13 +44,20 @@ class _JobsScreenState extends State<JobsScreen> {
 
   late Future<List<JobPost>> _future;
   late Future<Map<String, int>> _counts;
+  Set<int> _myLikes = const {};
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SectionIntro.showOnce(context, id: 'jobs');
+    });
     _future = JobsService.instance.listLive();
     _counts = JobsService.instance.cityCounts();
     _checkAdmin();
+    JobsService.instance.myLikes().then((v) {
+      if (mounted) setState(() => _myLikes = v);
+    });
   }
 
   Future<void> _checkAdmin() async {
@@ -80,9 +88,8 @@ class _JobsScreenState extends State<JobsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0.5,
-        backgroundColor: theme.scaffoldBackgroundColor,
+        // لا نلمس لون الهيدر: ثيم التطبيق يضعه أخضر بكتابة بيضاء. تغييره
+        // إلى لون الخلفية كان يجعل العنوان وزر الرجوع أبيضَ على أبيض.
         title: const Text('فرص عمل للصيادلة',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
@@ -194,7 +201,7 @@ class _JobsScreenState extends State<JobsScreen> {
                     child: _Empty(
                       icon: Icons.wifi_off_rounded,
                       title: 'تعذّر تحميل الإعلانات',
-                      body: 'تأكّد من الاتصال بالإنترنت ثم أعد المحاولة.',
+                      body: 'تأكّد من الاتصال بالإنترنت ثم أعد المحاولة',
                       onRetry: () => _reload(withCounts: true),
                     ),
                   );
@@ -208,11 +215,11 @@ class _JobsScreenState extends State<JobsScreen> {
                           ? Icons.filter_alt_off_rounded
                           : Icons.work_outline_rounded,
                       title: filtered
-                          ? 'لا إعلانات بهذا الفلتر'
+                          ? 'لا توجد نتائج'
                           : 'لا توجد إعلانات حالياً',
                       body: filtered
-                          ? 'جرّب محافظة أخرى أو ألغِ الفلتر لترى كل الإعلانات.'
-                          : 'كن أول من ينشر فرصة عمل — اضغط «أضف إعلاناً».',
+                          ? 'جرّب محافظة أخرى أو ألغِ الفلاتر'
+                          : 'كن أول من ينشر فرصة عمل',
                       onRetry: filtered
                           ? () {
                               setState(() {
@@ -230,7 +237,19 @@ class _JobsScreenState extends State<JobsScreen> {
                   padding: const EdgeInsets.fromLTRB(14, 4, 14, 96),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => JobCard(job: jobs[i]),
+                      (_, i) => JobCard(
+                        job: jobs[i],
+                        liked: _myLikes.contains(jobs[i].id),
+                        onLikeChanged: (v) {
+                          final next = {..._myLikes};
+                          if (v) {
+                            next.add(jobs[i].id);
+                          } else {
+                            next.remove(jobs[i].id);
+                          }
+                          setState(() => _myLikes = next);
+                        },
+                      ),
                       childCount: jobs.length,
                     ),
                   ),
@@ -334,7 +353,6 @@ class _GovBoard extends StatelessWidget {
                 ),
                 ...all.map((c) => _GovTile(
                       label: c,
-                      icon: GovStyle.of(c).icon,
                       color: GovStyle.of(c).color,
                       count: counts[c] ?? 0,
                       active: selected == c,
@@ -365,7 +383,6 @@ class _GovBoard extends StatelessWidget {
                 for (final c in strip) ...[
                   _GovTile(
                     label: c,
-                    icon: GovStyle.of(c).icon,
                     color: GovStyle.of(c).color,
                     count: counts[c] ?? 0,
                     active: selected == c,
@@ -384,7 +401,8 @@ class _GovBoard extends StatelessWidget {
 
 class _GovTile extends StatelessWidget {
   final String label;
-  final IconData icon;
+  /// فارغ للمحافظات (تُرسم بعلامة حرفية)، ويُملأ لحبّة «الكل» وحدها.
+  final IconData? icon;
   final Color color;
   final int count;
   final bool active;
@@ -393,7 +411,7 @@ class _GovTile extends StatelessWidget {
 
   const _GovTile({
     required this.label,
-    required this.icon,
+    this.icon,
     required this.color,
     required this.count,
     required this.active,
@@ -417,7 +435,7 @@ class _GovTile extends StatelessWidget {
           onTap: onTap,
           splashColor: color.withOpacity(0.10),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               gradient: active
@@ -442,71 +460,49 @@ class _GovTile extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            color.withOpacity(dim ? 0.08 : 0.20),
-                            color.withOpacity(dim ? 0.04 : 0.09),
-                          ],
-                        ),
-                      ),
-                      child: Icon(icon,
-                          size: 19,
-                          color: dim ? color.withOpacity(0.45) : color),
+                // حبّة «الكل» وحدها تحمل أيقونة. المحافظات تُعرف باسمها
+                // كاملاً، بلا اختصار بحرفين ولا رمز.
+                if (icon != null) ...[
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color.withOpacity(0.14),
                     ),
-                    if (count > 0)
-                      Positioned(
-                        top: -3,
-                        left: -4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 1),
-                          constraints: const BoxConstraints(minWidth: 17),
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: BorderRadius.circular(9),
-                            border: Border.all(
-                                color: isDark ? cs.surface : Colors.white,
-                                width: 1.5),
-                          ),
-                          child: Text('$count',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  fontSize: 9.5,
-                                  height: 1.25,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
+                    child: Icon(icon, size: 18, color: color),
+                  ),
+                  const SizedBox(height: 7),
+                ],
                 Text(label,
                     textAlign: TextAlign.center,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 10.5,
-                      height: 1.15,
-                      fontWeight: active ? FontWeight.bold : FontWeight.w600,
+                      fontSize: icon != null ? 11.5 : 13.5,
+                      height: 1.2,
+                      fontWeight: FontWeight.bold,
                       color: dim
                           ? cs.onSurfaceVariant.withOpacity(0.6)
-                          : cs.onSurface,
+                          : (active ? color : cs.onSurface),
                     )),
-                const SizedBox(height: 1),
-                Text(count == 0 ? '—' : 'وظيفة',
-                    style: TextStyle(
-                        fontSize: 8.5,
-                        color: cs.onSurfaceVariant.withOpacity(0.75))),
+                const SizedBox(height: 5),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(dim ? 0.07 : 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                      count == 0 ? 'لا يوجد' : '$count وظيفة',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.2,
+                        fontWeight: FontWeight.bold,
+                        color: dim ? color.withOpacity(0.5) : color,
+                      )),
+                ),
               ],
             ),
           ),
@@ -527,11 +523,13 @@ class _WorkTypeFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 50,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
+    // Wrap بدل القائمة الأفقية: خمس حبّات لا تحتاج تمريراً، والتمرير
+    // الأفقي في الواجهة العربية كان يقصّ «كل الأنواع» خارج الشاشة.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
+      child: Wrap(
+        spacing: 7,
+        runSpacing: 7,
         children: [
           _FilterPill(
             label: 'كل الأنواع',
@@ -540,8 +538,7 @@ class _WorkTypeFilter extends StatelessWidget {
             active: value.isEmpty,
             onTap: () => onChanged(''),
           ),
-          const SizedBox(width: 7),
-          for (final e in JobPost.workTypeLabels.entries) ...[
+          for (final e in JobPost.workTypeLabels.entries)
             _FilterPill(
               label: e.value,
               icon: _workTypeIcons[e.key] ?? Icons.schedule_rounded,
@@ -549,8 +546,6 @@ class _WorkTypeFilter extends StatelessWidget {
               active: value == e.key,
               onTap: () => onChanged(value == e.key ? '' : e.key),
             ),
-            const SizedBox(width: 7),
-          ],
         ],
       ),
     );
@@ -629,10 +624,79 @@ class _FilterPill extends StatelessWidget {
 // بطاقة الإعلان
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class JobCard extends StatelessWidget {
+class JobCard extends StatefulWidget {
   final JobPost job;
   final bool showStatus;
-  const JobCard({super.key, required this.job, this.showStatus = false});
+  /// أعجب المستخدم الحالي بهذا الإعلان مسبقاً.
+  final bool liked;
+  final ValueChanged<bool>? onLikeChanged;
+  const JobCard({
+    super.key,
+    required this.job,
+    this.showStatus = false,
+    this.liked = false,
+    this.onLikeChanged,
+  });
+
+  @override
+  State<JobCard> createState() => _JobCardState();
+}
+
+class _JobCardState extends State<JobCard> {
+  /// الإعلانات التي احتُسبت مشاهدتها في هذه الجلسة — فلا يتضخّم العدّاد
+  /// بتمرير القائمة صعوداً ونزولاً.
+  static final Set<int> _counted = <int>{};
+
+  late bool _liked = widget.liked;
+  late int _likes = widget.job.likes;
+  bool _busy = false;
+
+  JobPost get job => widget.job;
+  bool get showStatus => widget.showStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.showStatus && _counted.add(widget.job.id)) {
+      JobsService.instance.bumpView(widget.job.id);
+    }
+  }
+
+  @override
+  void didUpdateWidget(JobCard old) {
+    super.didUpdateWidget(old);
+    if (old.liked != widget.liked) _liked = widget.liked;
+    if (old.job.likes != widget.job.likes) _likes = widget.job.likes;
+  }
+
+  Future<void> _toggleLike() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      // تفاؤلي: الواجهة تستجيب فوراً ثم تُصحَّح عند الفشل
+      _liked = !_liked;
+      _likes += _liked ? 1 : -1;
+      if (_likes < 0) _likes = 0;
+    });
+    try {
+      final now = await JobsService.instance.toggleLike(job.id, !_liked);
+      if (!mounted) return;
+      setState(() => _liked = now);
+      widget.onLikeChanged?.call(now);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _liked = !_liked;
+        _likes += _liked ? 1 : -1;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('سجّل الدخول لتتمكّن من الإعجاب'),
+        behavior: SnackBarBehavior.floating,
+      ));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Future<void> _dial(String raw) async {
     final uri = Uri.parse('tel:${raw.replaceAll(RegExp(r'[^0-9+]'), '')}');
@@ -702,35 +766,24 @@ class JobCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                     child: Row(children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(13),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              gov.color.withOpacity(isDark ? 0.30 : 0.17),
-                              gov.color.withOpacity(isDark ? 0.14 : 0.07),
-                            ],
-                          ),
-                        ),
-                        child: Icon(gov.icon, color: gov.color, size: 20),
-                      ),
-                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(job.pharmacyName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    height: 1.2,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 3),
+                            Row(children: [
+                              Expanded(
+                                child: Text(job.pharmacyName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        height: 1.2,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              const SizedBox(width: 8),
+                              GovMark(city: job.city, compact: true),
+                            ]),
+                            const SizedBox(height: 5),
                             Row(children: [
                               Icon(Icons.place_outlined,
                                   size: 12.5, color: gov.color),
@@ -853,9 +906,36 @@ class JobCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 4, 6, 4),
                     child: Row(children: [
-                      Icon(Icons.schedule_rounded,
-                          size: 12, color: cs.onSurfaceVariant),
-                      const SizedBox(width: 4),
+                      // زرّ الإعجاب — الأكثر إعجاباً يتصدّر القائمة
+                      InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: _toggleLike,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 6),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(
+                                _liked
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                size: 17,
+                                color: _liked
+                                    ? const Color(0xFFD1476B)
+                                    : cs.onSurfaceVariant),
+                            if (_likes > 0) ...[
+                              const SizedBox(width: 4),
+                              Text('$_likes',
+                                  style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: _liked
+                                          ? const Color(0xFFD1476B)
+                                          : cs.onSurfaceVariant)),
+                            ],
+                          ]),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       Text(job.agoAr,
                           style: TextStyle(
                               fontSize: 11, color: cs.onSurfaceVariant)),
@@ -865,15 +945,18 @@ class JobCard extends StatelessWidget {
                           icon: Icons.chat_rounded,
                           label: 'واتساب',
                           color: const Color(0xFF25A366),
-                          onTap: () => _whatsapp(job.contactWhatsapp),
+                          onTap: () {
+                            JobsService.instance.bumpContact(job.id);
+                            _whatsapp(job.contactWhatsapp);
+                          },
                         ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 2),
                       _FooterAction(
                         icon: Icons.phone_rounded,
                         label: 'اتصال',
                         color: AppColors.primary,
                         onTap: () {
-                          JobsService.instance.bumpView(job.id);
+                          JobsService.instance.bumpContact(job.id);
                           _dial(job.contactPhone);
                         },
                       ),
@@ -884,6 +967,46 @@ class JobCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// رقم صغير مع تسميته — لإحصاءات صاحب الإعلان.
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final int value;
+  final String label;
+  final Color? color;
+  const _MiniStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final c  = color ?? AppColors.primary;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+        decoration: BoxDecoration(
+          color: c.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: c.withOpacity(0.16)),
+        ),
+        child: Column(children: [
+          Icon(icon, size: 16, color: c),
+          const SizedBox(height: 3),
+          Text('$value',
+              style: TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.bold, color: c)),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 9.5, color: cs.onSurfaceVariant)),
+        ]),
       ),
     );
   }
@@ -1029,11 +1152,16 @@ class _Empty extends StatelessWidget {
               const SizedBox(height: 16),
               OutlinedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: Text(retryLabel ?? 'إعادة المحاولة'),
+                icon: const Icon(Icons.refresh_rounded, size: 17),
+                label: Text(retryLabel ?? 'إعادة المحاولة',
+                    style: const TextStyle(
+                        fontSize: 13.5, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  visualDensity: VisualDensity.standard,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
@@ -1071,7 +1199,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
             return const _Empty(
               icon: Icons.inbox_outlined,
               title: 'لم تنشر إعلاناً بعد',
-              body: 'إعلاناتك ستظهر هنا مع حالة كل واحد منها.',
+              body: 'إعلاناتك تظهر هنا مع حالة كل واحد منها',
             );
           }
           return ListView(
@@ -1079,6 +1207,28 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
             children: [
               for (final j in jobs) ...[
                 JobCard(job: j, showStatus: true),
+                // ما يراه صاحب الإعلان عن أداء إعلانه
+                if (j.status == 'approved')
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12, top: 2),
+                    child: Row(children: [
+                      _MiniStat(
+                          icon: Icons.visibility_outlined,
+                          value: j.views,
+                          label: 'مشاهدة'),
+                      const SizedBox(width: 8),
+                      _MiniStat(
+                          icon: Icons.phone_in_talk_outlined,
+                          value: j.contactClicks,
+                          label: 'محاولة تواصل'),
+                      const SizedBox(width: 8),
+                      _MiniStat(
+                          icon: Icons.favorite_border_rounded,
+                          value: j.likes,
+                          label: 'إعجاب',
+                          color: const Color(0xFFD1476B)),
+                    ]),
+                  ),
                 if (j.status == 'rejected' && j.rejectReason.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12, right: 6),

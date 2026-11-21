@@ -90,8 +90,8 @@ class _DrugRequestsAdminScreenState extends State<DrugRequestsAdminScreen> {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(28),
-                    child: Text('تعذّر التحميل — تأكّد أن حسابك مدرج '
-                        'في database_admins.\n\n${snap.error}',
+                    child: Text('تعذّر التحميل، تأكّد أن حسابك مدرج '
+                        'في database_admins\n\n${snap.error}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 12.5,

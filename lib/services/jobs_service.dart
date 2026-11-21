@@ -27,9 +27,55 @@ class JobsService {
       q = q.eq('work_type', workType);
     }
     final rows = await q.order('created_at', ascending: false).limit(200);
-    return (rows as List)
+    final list = (rows as List)
         .map((e) => JobPost.fromMap(e as Map<String, dynamic>))
         .toList();
+    // الأكثر إعجاباً أولاً ثم الأحدث. الترتيب هنا لا في الاستعلام حتى
+    // يبقى التطبيق عاملاً لو لم يُضَف عمود الإعجابات بعد.
+    list.sort((a, b) {
+      final l = b.likes.compareTo(a.likes);
+      return l != 0 ? l : b.createdAt.compareTo(a.createdAt);
+    });
+    return list;
+  }
+
+  // ── الإعجاب ────────────────────────────────────────────────────────────
+
+  /// معرّفات الإعلانات التي أعجب بها المستخدم الحالي.
+  Future<Set<int>> myLikes() async {
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) return <int>{};
+    try {
+      final rows =
+          await _db.from('job_likes').select('job_id').eq('user_id', uid);
+      return {
+        for (final r in (rows as List)) ((r as Map)['job_id'] as num).toInt(),
+      };
+    } catch (_) {
+      return <int>{};
+    }
+  }
+
+  /// يُبدّل الإعجاب ويُرجع الحالة الجديدة.
+  Future<bool> toggleLike(int jobId, bool liked) async {
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) throw Exception('سجّل الدخول لتتمكّن من الإعجاب');
+    if (liked) {
+      await _db.from('job_likes').delete().match({
+        'job_id': jobId,
+        'user_id': uid,
+      });
+      return false;
+    }
+    await _db.from('job_likes').insert({'job_id': jobId, 'user_id': uid});
+    return true;
+  }
+
+  /// يُسجّل أن أحدهم ضغط اتصال أو واتساب.
+  Future<void> bumpContact(int id) async {
+    try {
+      await _db.rpc('bump_job_contact', params: {'p_id': id});
+    } catch (_) {/* العدّاد ليس حرجاً */}
   }
 
   /// عدد الإعلانات المنشورة في كل محافظة — يُظهر الرقم تحت أيقونة المحافظة.

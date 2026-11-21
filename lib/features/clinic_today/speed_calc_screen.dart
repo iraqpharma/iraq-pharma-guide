@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../services/haptics_service.dart';
 
 /// سؤال حساب سريع مولَّد عشوائياً.
 class _Q {
@@ -69,7 +70,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
         final kg = 4 + _rnd.nextInt(57);
         final mgkg = [5, 10, 15, 20, 25][_rnd.nextInt(5)];
         return _Q(
-          'طفل وزنه $kg kg، والجرعة $mgkg mg/kg.\nكم الجرعة الكلية؟',
+          'طفل وزنه $kg kg، والجرعة $mgkg mg/kg\nكم الجرعة الكلية؟',
           (kg * mgkg).toDouble(),
           'mg',
           '$kg × $mgkg = ${kg * mgkg} mg',
@@ -81,7 +82,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
         final mult = [0.5, 1, 1.5, 2, 3][_rnd.nextInt(5)];
         final dose = (mgPer5 * mult).round();
         return _Q(
-          'الشراب $mgPer5 mg / 5 mL، والمطلوب $dose mg.\nكم مِلّيلتراً تُعطي؟',
+          'الشراب $mgPer5 mg / 5 mL، والمطلوب $dose mg\nكم مِلّيلتراً تُعطي؟',
           dose * 5 / mgPer5,
           'mL',
           '($dose ÷ $mgPer5) × 5 = ${_fmt(dose * 5 / mgPer5)} mL',
@@ -90,7 +91,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
         final vol = [250, 500, 1000][_rnd.nextInt(3)];
         final hrs = [2, 4, 5, 8, 10][_rnd.nextInt(5)];
         return _Q(
-          'كيس $vol mL يُسرَّب على $hrs ساعات.\nكم mL/hr؟',
+          'كيس $vol mL يُسرَّب على $hrs ساعات\nكم mL/hr؟',
           vol / hrs,
           'mL/hr',
           '$vol ÷ $hrs = ${_fmt(vol / hrs)} mL/hr',
@@ -99,7 +100,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
         final mlh = [50, 75, 100, 125, 150][_rnd.nextInt(5)];
         const gtt = 20;
         return _Q(
-          'المعدل $mlh mL/hr ومعامل القطرة $gtt gtt/mL.\nكم قطرة في الدقيقة؟',
+          'المعدل $mlh mL/hr ومعامل القطرة $gtt gtt/mL\nكم قطرة في الدقيقة؟',
           mlh * gtt / 60,
           'قطرة/د',
           '($mlh × $gtt) ÷ 60 = ${_fmt(mlh * gtt / 60)} قطرة/دقيقة',
@@ -109,7 +110,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
         final c2 = [1, 2, 5][_rnd.nextInt(3)];
         final v2 = [50, 100, 250][_rnd.nextInt(3)];
         return _Q(
-          'عيار $c1 mg/mL، والمطلوب $c2 mg/mL بحجم $v2 mL.\n'
+          'عيار $c1 mg/mL، والمطلوب $c2 mg/mL بحجم $v2 mL\n'
               'كم مِلّيلتراً تسحب من العيار؟',
           c2 * v2 / c1,
           'mL',
@@ -154,6 +155,11 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
     // هامش 2٪ أو 0.1 — الحساب الذهني لا يُطالَب بدقّة أربع منازل.
     final ok = given != null &&
         (given - want).abs() <= max(0.1, want.abs() * 0.02);
+    if (ok) {
+      Haptics.success();
+    } else {
+      Haptics.error();
+    }
     setState(() {
       _lastOk = ok;
       if (ok) _correct++;
@@ -174,6 +180,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
 
   Future<void> _finish() async {
     _timer?.cancel();
+    Haptics.celebrate();
     // النقاط: 100 لكل جواب صحيح + 5 لكل ثانية متبقّية.
     final score = _correct * 100 + _left * 5;
     final p = await SharedPreferences.getInstance();
@@ -317,9 +324,9 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                 const SizedBox(height: 10),
                 Text(
                     'عشرة حسابات صيدلانية في دقيقتين: جرعة بالوزن، حجم من '
-                    'شراب، معدل تسريب، قطرات في الدقيقة، وتخفيف.\n\n'
-                    'النقاط = 100 لكل جواب صحيح + 5 لكل ثانية متبقّية. '
-                    'الهامش المقبول 2٪ فلا حاجة لدقّة المنازل العشرية.',
+                    'شراب، معدل تسريب، قطرات في الدقيقة، وتخفيف\n\n'
+                    'النقاط = 100 لكل جواب صحيح + 5 لكل ثانية متبقّية'
+                    'الهامش المقبول 2٪ فلا حاجة لدقّة المنازل العشرية',
                     style: TextStyle(
                         fontSize: 12.5,
                         height: 1.85,
@@ -370,8 +377,14 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 22),
-        const _Leaderboard(),
+        const SizedBox(height: 18),
+        Text(
+            'نتيجتك تُنشر في لوحة المتصدّرين داخل «عيادتك اليوم»',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 11.5,
+                height: 1.6,
+                color: theme.colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -489,153 +502,5 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
           ),
       ],
     );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// لوحة المتصدّرين
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _Leaderboard extends StatefulWidget {
-  const _Leaderboard();
-
-  @override
-  State<_Leaderboard> createState() => _LeaderboardState();
-}
-
-class _LeaderboardState extends State<_Leaderboard> {
-  late Future<List<Map<String, dynamic>>> _future = _load();
-
-  Future<List<Map<String, dynamic>>> _load() async {
-    try {
-      final rows = await Supabase.instance.client
-          .from('speed_scores')
-          .select('display_name, score, correct, total')
-          .order('score', ascending: false)
-          .limit(15);
-      return (rows as List).cast<Map<String, dynamic>>();
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Container(
-          width: 3,
-          height: 14,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD08A3E),
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        const Text('لوحة المتصدّرين',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
-        const Spacer(),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () => setState(() => _future = _load()),
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-        ),
-      ]),
-      const SizedBox(height: 8),
-      FutureBuilder<List<Map<String, dynamic>>>(
-        future: _future,
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Padding(
-              padding: EdgeInsets.all(18),
-              child: Center(
-                child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.2)),
-              ),
-            );
-          }
-          final rows = snap.data ?? const <Map<String, dynamic>>[];
-          if (rows.isEmpty) {
-            return Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border:
-                    Border.all(color: theme.dividerColor.withOpacity(0.35)),
-              ),
-              child: Text(
-                  'لا نتائج منشورة بعد — كن أول المتصدّرين. '
-                  '(النشر يحتاج تسجيل دخول واتصالاً بالإنترنت)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 12,
-                      height: 1.7,
-                      color: theme.colorScheme.onSurfaceVariant)),
-            );
-          }
-          return Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: theme.dividerColor.withOpacity(0.35)),
-            ),
-            child: Column(children: [
-              for (var i = 0; i < rows.length; i++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 13, vertical: 9),
-                  child: Row(children: [
-                    Container(
-                      width: 25,
-                      height: 25,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i < 3
-                            ? const Color(0xFFD08A3E).withOpacity(0.15)
-                            : theme.dividerColor.withOpacity(0.18),
-                      ),
-                      child: Text('${i + 1}',
-                          style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                              color: i < 3
-                                  ? const Color(0xFFB8762A)
-                                  : theme.colorScheme.onSurfaceVariant)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                          (rows[i]['display_name'] ?? '').toString().isEmpty
-                              ? 'صيدلاني'
-                              : rows[i]['display_name'].toString(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
-                    ),
-                    Text('${rows[i]['correct']}/${rows[i]['total']}',
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: theme.colorScheme.onSurfaceVariant)),
-                    const SizedBox(width: 10),
-                    Text('${rows[i]['score']}',
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFB8762A))),
-                  ]),
-                ),
-            ]),
-          );
-        },
-      ),
-    ]);
   }
 }

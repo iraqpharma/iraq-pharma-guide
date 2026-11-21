@@ -97,8 +97,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _originalUsername  = uname;
         _usernameCtrl.text = uname;
         _selectedRole      = _roles.contains(data['role']) ? data['role'] as String? : null;
+        // قيمة محفوظة لا توجد في القائمة الحالية تُسقِط القائمة المنسدلة،
+        // فتُهمَل بدل أن تُعطّل الشاشة.
         final sp = (data['specialty'] ?? '').toString();
-        _specialty = sp.isEmpty ? null : sp;
+        _specialty = _knownSpecialty(sp);
         _selectedGovernorate = _governorates.contains(data['address']) ? data['address'] as String? : null;
         final bd = data['birth_date'] as String?;
         if (bd != null && bd.isNotEmpty) {
@@ -215,19 +217,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      // كانت الألوان مثبّتة بالأبيض فتبقى الشاشة نهارية في الوضع الليلي
+      // وتختفي الكتابة على خلفيتها. صارت تتبع الثيم.
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
-          onPressed: () => context.pop(),
-        ),
         title: Text(context.s.editProfile,
             style: GoogleFonts.ibmPlexSansArabic(
-                fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                fontSize: 18, fontWeight: FontWeight.bold)),
       ),
       body: _profileLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -331,7 +328,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         DropdownButtonFormField<String>(
                           value: _selectedRole,
                           decoration: _deco(label: context.s.profession, icon: Icons.work_outline),
-                          style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: AppColors.textPrimary),
+                          style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: _onSurface),
                           items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                           onChanged: (v) => setState(() {
                             _selectedRole = v;
@@ -352,7 +349,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 label: context.s.specialtyLabel,
                                 icon: Icons.medical_services_outlined),
                             style: GoogleFonts.ibmPlexSansArabic(
-                                fontSize: 14, color: AppColors.textPrimary),
+                                fontSize: 14, color: _onSurface),
                             items: context.s.medicalSpecialties
                                 .map((sp) => DropdownMenuItem(
                                     value: sp,
@@ -372,7 +369,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           value: _selectedGovernorate,
                           isExpanded: true,
                           decoration: _deco(label: context.s.governorate, icon: Icons.location_on_outlined),
-                          style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: AppColors.textPrimary),
+                          style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: _onSurface),
                           items: _governorates.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                           onChanged: (v) => setState(() => _selectedGovernorate = v),
                         ),
@@ -391,10 +388,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   hint: context.s.birthDateHint).copyWith(
                                 suffixIcon: _birthDate != null
                                     ? IconButton(
-                                        icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
+                                        icon: Icon(Icons.close_rounded, size: 18, color: _muted),
                                         onPressed: () => setState(() { _birthDate = null; _dateCtrl.clear(); }),
                                       )
-                                    : const Icon(Icons.calendar_today_outlined, color: AppColors.textSecondary, size: 18),
+                                    : Icon(Icons.calendar_today_outlined, color: _muted, size: 18),
                               ),
                             ),
                           ),
@@ -477,7 +474,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       const SizedBox(width: 8),
       Text(title,
           style: GoogleFonts.ibmPlexSansArabic(
-              fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              fontSize: 15, fontWeight: FontWeight.bold, color: _onSurface)),
     ],
   );
 
@@ -485,11 +482,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   /// «نسيت كلمة المرور» ظاهراً دائماً لمن لا يتذكّر كلمته الحالية.
   Widget _passHeader() => Container(
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: _surface,
       borderRadius: BorderRadius.circular(18),
       boxShadow: [
         BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(_dark ? 0.25 : 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4)),
       ],
@@ -511,7 +508,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary)),
+                        color: _onSurface)),
               ),
               Icon(
                   _showPassSection
@@ -541,12 +538,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     ]),
   );
 
+  String? _knownSpecialty(String v) {
+    if (v.trim().isEmpty) return null;
+    final list = context.s.medicalSpecialties;
+    if (list.contains(v)) return v;
+    // توافق مع قيم قديمة فُصلت بشرطة طويلة
+    final head = v.split(RegExp(r'[،·—–]')).first.trim();
+    for (final e in list) {
+      if (e.split('·').first.trim() == head) return e;
+    }
+    return null;
+  }
+
+  Color get _onSurface => Theme.of(context).colorScheme.onSurface;
+  Color get _muted     => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _surface   => Theme.of(context).colorScheme.surface;
+  bool  get _dark      => Theme.of(context).brightness == Brightness.dark;
+
   Widget _card({required Widget child}) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: _surface,
       borderRadius: BorderRadius.circular(18),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4))],
+      boxShadow: [BoxShadow(color: Colors.black.withOpacity(_dark ? 0.25 : 0.05), blurRadius: 12, offset: const Offset(0, 4))],
     ),
     child: child,
   );
@@ -579,7 +593,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     decoration: _deco(label: label, icon: Icons.lock_outline).copyWith(
       suffixIcon: IconButton(
         icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            color: AppColors.textSecondary),
+            color: _muted),
         onPressed: onToggle,
       ),
     ),
@@ -589,13 +603,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   InputDecoration _deco({required String label, required IconData icon, String? hint}) =>
       InputDecoration(
         labelText: label, hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
-        filled: true, fillColor: const Color(0xFFF8F9FA),
-        labelStyle: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary, fontSize: 14),
-        hintStyle: GoogleFonts.ibmPlexSansArabic(color: AppColors.textSecondary.withOpacity(0.5), fontSize: 13),
+        prefixIcon: Icon(icon, color: _muted, size: 20),
+        filled: true, fillColor: _dark ? Colors.white.withOpacity(0.05) : const Color(0xFFF8F9FA),
+        labelStyle: GoogleFonts.ibmPlexSansArabic(color: _muted, fontSize: 14),
+        hintStyle: GoogleFonts.ibmPlexSansArabic(color: _muted.withOpacity(0.5), fontSize: 13),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border:             OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
-        enabledBorder:      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
+        border:             OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark ? Colors.white24 : const Color(0xFFE0E0E0))),
+        enabledBorder:      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _dark ? Colors.white24 : const Color(0xFFE0E0E0))),
         focusedBorder:      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
         errorBorder:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
         focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
@@ -604,7 +618,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _errorBanner(String msg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     decoration: BoxDecoration(
-      color: const Color(0xFFFFEBEE),
+      color: _dark ? const Color(0xFF4A1F22) : const Color(0xFFFFEBEE),
       borderRadius: BorderRadius.circular(10),
       border: Border.all(color: Colors.red.shade200),
     ),
@@ -619,7 +633,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _successBanner(String msg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     decoration: BoxDecoration(
-      color: const Color(0xFFE8F5E9),
+      color: _dark ? const Color(0xFF1C3B22) : const Color(0xFFE8F5E9),
       borderRadius: BorderRadius.circular(10),
       border: Border.all(color: Colors.green.shade200),
     ),

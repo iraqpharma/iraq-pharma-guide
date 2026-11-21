@@ -86,12 +86,12 @@ class _VideosScreenState extends State<VideosScreen> {
           }
           if (snap.hasError) {
             return _msg(Icons.wifi_off_rounded, 'تعذّر تحميل الفيديوهات',
-                'تأكّد من الاتصال بالإنترنت.');
+                'تأكّد من الاتصال بالإنترنت');
           }
           final vids = snap.data ?? const <TrainingVideo>[];
           if (vids.isEmpty) {
             return _msg(Icons.ondemand_video_outlined, 'لا توجد فيديوهات بعد',
-                'سيُضاف محتوى تعليمي أسبوعياً.');
+                'سيُضاف محتوى تعليمي أسبوعياً');
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),

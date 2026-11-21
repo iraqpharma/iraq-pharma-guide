@@ -12,6 +12,7 @@ import 'core/config/supabase_config.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
 import 'shared/router/app_router.dart';
+import 'services/haptics_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -92,7 +93,7 @@ void main() async {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'أرسل صورة لهذه الرسالة إلى فريق التطبيق ليُصلح السبب.',
+                  'أرسل صورة لهذه الرسالة إلى فريق التطبيق ليُصلح السبب',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12.5, color: Color(0xFF6E7B88)),
                 ),
@@ -124,6 +125,10 @@ void main() async {
       ),
     );
   };
+
+  // تفضيلات الاهتزاز والصوت تُقرأ قبل أول شاشة كي لا تهتزّ قبل أن
+  // نعرف أن المستخدم أوقفها.
+  await Haptics.load();
 
   runApp(const ProviderScope(child: IraqPharmaApp()));
 }

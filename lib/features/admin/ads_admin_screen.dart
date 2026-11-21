@@ -63,8 +63,8 @@ class _AdsAdminScreenState extends State<AdsAdminScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(28),
                 child: Text(
-                    'لا إعلانات بعد.\nارفع الصورة إلى bucket «ads» في سوبابيس '
-                    'ثم أضف صفاً في جدول advertisements.',
+                    'لا إعلانات بعد\nارفع الصورة إلى bucket «ads» في سوبابيس '
+                    'ثم أضف صفاً في جدول advertisements',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 12.5,

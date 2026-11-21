@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/admin_access_service.dart';
+import '../../services/admin_session.dart';
 
 /// The admin code is fixed. It used to be created on first use and stored in
 /// SharedPreferences, so every fresh install — and every account deletion,
@@ -14,6 +15,8 @@ const _kAdminPinHash =
 
 String _hashPin(String pin) =>
     sha256.convert(utf8.encode('ipg_salt_$pin')).toString();
+
+
 
 class AdminPinScreen extends StatefulWidget {
   /// Where to go once the code is accepted. Lets the same gate protect the
@@ -45,6 +48,15 @@ class _AdminPinScreenState extends State<AdminPinScreen> {
       if (mounted) context.pop();
       return;
     }
+    // أُدخل الرمز مرة في هذا التشغيل: ادخل مباشرة
+    if (!AdminSession.needsPin) {
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.pushReplacement(widget.destination);
+        });
+      }
+      return;
+    }
     setState(() {
       _hasPin = true; // always "existing": there is nothing to set up
       _loading = false;
@@ -61,6 +73,7 @@ class _AdminPinScreenState extends State<AdminPinScreen> {
       setState(() => _error = 'الرمز غير صحيح');
       return;
     }
+    AdminSession.unlock();
     if (mounted) context.pushReplacement(widget.destination);
   }
 

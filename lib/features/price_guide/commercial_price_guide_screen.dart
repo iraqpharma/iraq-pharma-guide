@@ -7,6 +7,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../data/models/pricing_entry.dart';
 import '../../providers/supabase_pricing_provider.dart';
+import '../barcode/barcode_resolver.dart';
+import '../../shared/widgets/section_intro.dart';
 
 const _green = Color(0xFF10B981);
 const _gold  = Color(0xFFF59E0B);
@@ -31,6 +33,9 @@ class _CommercialPriceGuideScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SectionIntro.showOnce(context, id: 'price_guide');
+    });
     _loadCache();
   }
 
@@ -57,6 +62,20 @@ class _CommercialPriceGuideScreenState
   void _clearSearch() {
     _searchCtrl.clear();
     ref.read(supabasePricingQueryProvider.notifier).state = '';
+  }
+
+  /// قراءة الباركود ثم البحث بالاسم.
+  ///
+  /// حقل الباركود في جدول الأسعار فارغ تماماً (3598 صفاً بلا رقم واحد)،
+  /// فالبحث بالرقم وحده لا يعطي نتيجة أبداً. لذلك يُترجم الرقم إلى اسم
+  /// عبر قاعدة الربط أولاً، ثم يُبحث بالاسم.
+  Future<void> _scan() async {
+    final name = await BarcodeResolver.scanAndResolve(context);
+    if (name == null || name.isEmpty || !mounted) return;
+    _searchCtrl.text = name;
+    _searchCtrl.selection = TextSelection.collapsed(offset: name.length);
+    ref.read(supabasePricingQueryProvider.notifier).state = name;
+    setState(() {});
   }
 
   Future<void> _refresh() async {
@@ -171,12 +190,19 @@ class _CommercialPriceGuideScreenState
                     color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                 prefixIcon:
                     Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: _clearSearch,
-                      )
-                    : null,
+                suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (_searchCtrl.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: _clearSearch,
+                    ),
+                  IconButton(
+                    tooltip: context.s.addByScan,
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
+                    color: AppColors.primary,
+                    onPressed: _scan,
+                  ),
+                ]),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surfaceVariant,
                 border: OutlineInputBorder(

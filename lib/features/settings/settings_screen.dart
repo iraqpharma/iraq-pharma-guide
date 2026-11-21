@@ -5,11 +5,19 @@ import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/locale_provider.dart';
-class SettingsScreen extends ConsumerWidget {
+import '../../shared/widgets/section_intro.dart';
+import '../../services/haptics_service.dart';
+
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
     final isDark = themeMode == ThemeMode.dark;
@@ -28,6 +36,40 @@ class SettingsScreen extends ConsumerWidget {
               value: isDark,
               onChanged: (_) => ref.read(themeProvider.notifier).toggle(),
             ),
+          ),
+          const SizedBox(height: 8),
+          // الردّ اللمسي والصوتي: يُشعر الصيدلاني أن الإجابة سُجّلت دون
+          // أن ينظر إلى الشاشة، ويُطفأ لمن يعمل في مكان يحتاج الهدوء.
+          Card(
+            child: Column(children: [
+              SwitchListTile(
+                title: const Text('الاهتزاز اللمسي'),
+                subtitle: const Text(
+                    'نبضة خفيفة عند الإجابة والاختيار وقراءة الباركود',
+                    style: TextStyle(fontSize: 12)),
+                secondary: const Icon(Icons.vibration_rounded),
+                value: Haptics.hapticsOn,
+                onChanged: (v) async {
+                  await Haptics.setHaptics(v);
+                  if (v) Haptics.select();
+                  setState(() {});
+                },
+              ),
+              const Divider(height: 1),
+              SwitchListTile(
+                title: const Text('أصوات التفاعل'),
+                subtitle: const Text(
+                    'نقرة عند الإجابة الصحيحة وتنبيه عند الخاطئة',
+                    style: TextStyle(fontSize: 12)),
+                secondary: const Icon(Icons.volume_up_outlined),
+                value: Haptics.soundsOn,
+                onChanged: (v) async {
+                  await Haptics.setSounds(v);
+                  if (v) Haptics.success();
+                  setState(() {});
+                },
+              ),
+            ]),
           ),
           const SizedBox(height: 16),
           _SectionTitle(s.language_),
@@ -76,6 +118,22 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
+          // من فاتته شاشات التعريف أو أراد مراجعتها
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.school_outlined),
+              title: const Text('أعِد شرح الأقسام'),
+              subtitle: const Text('تظهر شاشة التعريف مرّة أخرى عند فتح كل قسم',
+                  style: TextStyle(fontSize: 12)),
+              onTap: () async {
+                await SectionIntro.resetAll();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('سيظهر شرح كل قسم عند فتحه مجدّداً')));
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
           Card(
             child: ListTile(
               leading: const Icon(Icons.medication, color: AppColors.primaryBlue),
@@ -84,8 +142,9 @@ class SettingsScreen extends ConsumerWidget {
               trailing: IconButton(
                 icon: Icon(Icons.admin_panel_settings_outlined,
                     color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
-                tooltip: 'إدارة قاعدة البيانات',
-                onPressed: () => context.push('/admin-pin'),
+                tooltip: 'إعدادات التطبيق',
+                onPressed: () =>
+                    context.push('/admin-pin?to=/admin/app-settings'),
               ),
             ),
           ),

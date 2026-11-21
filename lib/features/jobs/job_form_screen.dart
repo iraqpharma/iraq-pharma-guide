@@ -85,8 +85,8 @@ class _JobFormScreenState extends State<JobFormScreen> {
               color: AppColors.successGreen, size: 42),
           title: const Text('تم إرسال الإعلان'),
           content: const Text(
-              'سيظهر إعلانك للصيادلة بعد مراجعته من الإدارة. '
-              'تجد حالته في «إعلاناتي».'),
+              'سيظهر إعلانك للصيادلة بعد مراجعته من الإدارة'
+              'تجد حالته في «إعلاناتي»'),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -157,9 +157,9 @@ class _JobFormScreenState extends State<JobFormScreen> {
             _Field(
               controller: _hours,
               label: 'ساعات التواجد المطلوبة *',
-              hint: 'مثال: 9 صباحاً – 5 مساءً (8 ساعات)',
+              hint: 'مثال: 9 صباحاً، 5 مساءً (8 ساعات)',
               validator: (v) => (v == null || v.trim().length < 3)
-                  ? 'حدّد ساعات التواجد المطلوبة — الباحث عن عمل يحتاجها'
+                  ? 'حدّد ساعات التواجد المطلوبة، الباحث عن عمل يحتاجها'
                   : null,
             ),
             Padding(
@@ -168,11 +168,11 @@ class _JobFormScreenState extends State<JobFormScreen> {
                 spacing: 6,
                 runSpacing: 6,
                 children: const [
-                  '8 ساعات: 9 ص – 5 م',
-                  '6 ساعات: 4 م – 10 م',
-                  '12 ساعة: 9 ص – 9 م',
-                  'وردية صباحية: 8 ص – 2 م',
-                  'وردية مسائية: 4 م – 11 م',
+                  '8 ساعات: 9 ص، 5 م',
+                  '6 ساعات: 4 م، 10 م',
+                  '12 ساعة: 9 ص، 9 م',
+                  'وردية صباحية: 8 ص، 2 م',
+                  'وردية مسائية: 4 م، 11 م',
                 ]
                     .map((p) => ActionChip(
                           label: Text(p, style: const TextStyle(fontSize: 11.5)),
@@ -185,7 +185,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
             _Field(
                 controller: _days,
                 label: 'أيام العمل',
-                hint: 'مثال: السبت – الخميس'),
+                hint: 'مثال: السبت، الخميس'),
 
             const _SectionTitle('الراتب', Icons.payments_outlined),
             SwitchListTile(
@@ -292,7 +292,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'الإعلان لا يظهر للصيادلة إلا بعد مراجعته من الإدارة.',
+                    'الإعلان لا يظهر للصيادلة إلا بعد مراجعته من الإدارة',
                     style: TextStyle(fontSize: 12.5),
                   ),
                 ),

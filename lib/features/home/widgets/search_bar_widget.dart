@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../providers/drug_provider.dart';
 import '../../../providers/recent_searches_provider.dart';
-import '../../barcode/barcode_scanner_screen.dart';
+import '../../../services/barcode_service.dart';
+import '../../barcode/barcode_resolver.dart';
 
 // ═════════════════════════════════════════════════════════════════════════════
 // PharmaSearchBar
@@ -133,41 +133,20 @@ class _PharmaSearchBarState extends ConsumerState<PharmaSearchBar> {
   }
 
   // ── Scanner logic ─────────────────────────────────────────────────────────
+  //
+  // الباركود رقم تسلسلي لا يحمل اسم الدواء. كان الرقم يُدفع كما هو إلى
+  // البحث فلا يطابق شيئاً. الآن يمرّ على قاعدة الربط أولاً: إن كان الرقم
+  // معروفاً يُستبدل باسم الدواء ويُبحث عنه، وإن كان مجهولاً يُطلب من
+  // الصيدلاني إسناده مرّة واحدة.
   Future<void> _onScanTap() async {
-    final status = await Permission.camera.status;
-    if (status.isGranted) {
-      _openScanner();
-      return;
-    }
-    if (!mounted) return;
-    final allow = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _CameraPermissionDialog(),
-    );
-    if (allow != true) return;
-    final result = await Permission.camera.request();
-    if (result.isGranted) {
-      _openScanner();
-    } else if (result.isPermanentlyDenied && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(context.s.allowCameraSettings,
-            style: GoogleFonts.cairo()),
-        backgroundColor: AppColors.errorRed,
-        action: SnackBarAction(
-            label: context.s.settingsTitle,
-            textColor: Colors.white,
-            onPressed: openAppSettings),
-      ));
-    }
+    final name = await BarcodeResolver.scanAndResolve(context);
+    if (name != null && name.isNotEmpty && mounted) _applyQuery(name);
   }
 
-  Future<void> _openScanner() async {
-    if (!mounted) return;
-    final code = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
-    );
-    if (code != null && code.isNotEmpty && mounted) _applyQuery(code);
+  /// الرقم المكتوب باليد يُعامل مثل المقروء بالكاميرا.
+  Future<void> _resolveTypedBarcode(String code) async {
+    final name = await BarcodeResolver.resolve(context, code);
+    if (name != null && name.isNotEmpty && mounted) _applyQuery(name);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -203,6 +182,12 @@ class _PharmaSearchBarState extends ConsumerState<PharmaSearchBar> {
                 textInputAction: TextInputAction.search,
                 style: GoogleFonts.cairo(fontSize: 14),
                 onSubmitted: (v) {
+                  // رقم بحت بثماني خانات أو أكثر لا يكون اسم دواء، فهو
+                  // باركود كُتب باليد أو لُصق: نمرّره على قاعدة الربط.
+                  if (BarcodeService.looksLikeBarcode(v)) {
+                    _resolveTypedBarcode(v);
+                    return;
+                  }
                   if (v.trim().length >= 2) {
                     ref.read(recentSearchesProvider.notifier).add(v.trim());
                   }
@@ -574,94 +559,5 @@ class _HighlightedText extends StatelessWidget {
             style: GoogleFonts.inter(
                 fontSize: 13.5, color: Theme.of(context).colorScheme.onSurface)),
     ]));
-  }
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Camera Permission Dialog
-// ═════════════════════════════════════════════════════════════════════════════
-
-class _CameraPermissionDialog extends StatelessWidget {
-  const _CameraPermissionDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.10),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.qr_code_scanner_rounded,
-                  color: AppColors.primary, size: 44),
-            ),
-            const SizedBox(height: 20),
-            Text(context.s.cameraPermission,
-                style: GoogleFonts.cairo(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface)),
-            const SizedBox(height: 10),
-            Text(
-              context.s.cameraPermissionReason,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.cairo(
-                  fontSize: 13.5,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.65),
-            ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      side: BorderSide(
-                          color: AppColors.textSecondary.withOpacity(0.35)),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(context.s.cancel,
-                        style: GoogleFonts.cairo(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(context.s.allow_,
-                        style: GoogleFonts.cairo(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

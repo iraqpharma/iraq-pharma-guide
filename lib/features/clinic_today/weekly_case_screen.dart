@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/database/database_helper.dart';
+import 'quiz_shuffle.dart';
+import '../../services/haptics_service.dart';
 
 /// حروف ترقيم الخيارات بالعربية.
 const _letters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
@@ -38,10 +40,20 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
         DateTime(n.year, n.month, n.day).difference(DateTime(2020)).inDays ~/ 7;
     final q = await DatabaseHelper.instance.caseOfTheWeek(weeks);
     List<String> opts = const [];
+    var ans = -1;
     if (q != null) {
       try {
         final raw = jsonDecode((q['options_json'] ?? '[]').toString());
-        opts = (raw as List).map((e) => e.toString()).toList();
+        final list = (raw as List).map((e) => e.toString()).toList();
+        // كل الحالات السريرية في البيانات إجابتها الخيار الأول، فالخلط
+        // الثابت ضروري هنا أكثر من أي مكان آخر.
+        final sh = shuffleOptions(
+          (q['qid'] ?? '').toString(),
+          list,
+          (q['answer_index'] as num?)?.toInt() ?? 0,
+        );
+        opts = sh.options;
+        ans = sh.answer;
       } catch (_) {
         opts = const [];
       }
@@ -50,7 +62,7 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
     setState(() {
       _q = q;
       _options = opts;
-      _answer = q == null ? -1 : ((q['answer_index'] as num?)?.toInt() ?? 0);
+      _answer = ans;
       _loading = false;
     });
   }
@@ -216,7 +228,16 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
         borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: shown ? null : () => setState(() => _chosen = i),
+          onTap: shown
+              ? null
+              : () {
+                  if (i == _answer) {
+                    Haptics.success();
+                  } else {
+                    Haptics.error();
+                  }
+                  setState(() => _chosen = i);
+                },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
             decoration: BoxDecoration(

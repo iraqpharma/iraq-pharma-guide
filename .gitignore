@@ -64,3 +64,11 @@ key.properties
 # ── Symbolication / Obfuscation ───────────────────────────────────────────────
 app.*.symbols
 app.*.map.json
+
+# ملفات مساعدة محلّية لا تُرفع
+*.bat
+analyze_output.txt
+git_output*.txt
+commitmsg.txt
+BARCODES*.csv
+BARCODES_LOG.txt

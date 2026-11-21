@@ -6,6 +6,7 @@ import '../../core/constants/governorate_style.dart';
 import '../../data/models/availability_post.dart';
 import '../../services/availability_service.dart';
 import '../../services/jobs_service.dart';
+import '../../shared/widgets/section_intro.dart';
 
 /// «وين أحصّله؟» — دليل توفّر الأدوية في الصيدليات.
 ///
@@ -29,6 +30,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SectionIntro.showOnce(context, id: 'availability');
+    });
     _future = AvailabilityService.instance.listLive();
     _counts = AvailabilityService.instance.cityCounts();
   }
@@ -56,8 +60,6 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: theme.scaffoldBackgroundColor,
         title: const Text('توفّر الأدوية',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
@@ -153,7 +155,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                   _cityPill('الكل', Icons.public_rounded, AppColors.primary,
                       counts.values.fold<int>(0, (p, v) => p + v), ''),
                   for (final c in shown)
-                    _cityPill(c, GovStyle.of(c).icon, GovStyle.of(c).color,
+                    _cityPill(c, null, GovStyle.of(c).color,
                         counts[c] ?? 0, c),
                 ],
               ),
@@ -171,7 +173,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
               }
               if (snap.hasError) {
                 return _msg(Icons.wifi_off_rounded, 'تعذّر التحميل',
-                    'تأكّد من الاتصال بالإنترنت.');
+                    'تأكّد من الاتصال بالإنترنت');
               }
               final list = snap.data ?? const <AvailabilityPost>[];
               if (list.isEmpty) {
@@ -180,8 +182,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                   _query.isEmpty
                       ? 'لا إعلانات توفّر حالياً'
                       : 'لا أحد أعلن عن «$_query»',
-                  'إن كان الدواء متوفّراً عندك فأعلن عنه — يصل خبره لكل '
-                      'صيدلاني يبحث عنه.',
+                  'إن كان الدواء متوفّراً عندك فأعلن عنه، يصل خبره لكل '
+                      'صيدلاني يبحث عنه',
                 );
               }
               return RefreshIndicator(
@@ -201,7 +203,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   Widget _cityPill(
-      String label, IconData icon, Color color, int count, String value) {
+      String label, IconData? icon, Color color, int count, String value) {
     final active = _city == value;
     return Padding(
       padding: const EdgeInsets.only(left: 7),
@@ -222,8 +224,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                     : Theme.of(context).dividerColor.withOpacity(0.45)),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 14, color: active ? Colors.white : color),
-            const SizedBox(width: 5),
+            if (icon != null)
+              Icon(icon, size: 14, color: active ? Colors.white : color),
+            if (icon != null) const SizedBox(width: 5),
             Text('$label  $count',
                 style: TextStyle(
                   fontSize: 12,
@@ -327,34 +330,23 @@ class AvailabilityCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(13, 12, 10, 4),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(13),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    gov.color.withOpacity(isDark ? 0.30 : 0.17),
-                    gov.color.withOpacity(isDark ? 0.14 : 0.07),
-                  ],
-                ),
-              ),
-              child: Icon(gov.icon, color: gov.color, size: 20),
-            ),
-            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(post.titleLine,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 15.5,
-                          height: 1.2,
-                          fontWeight: FontWeight.bold)),
+                  Row(children: [
+                    Expanded(
+                      child: Text(post.titleLine,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 15.5,
+                              height: 1.2,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(width: 8),
+                    GovMark(city: post.city, compact: true),
+                  ]),
                   const SizedBox(height: 3),
                   Row(children: [
                     Icon(Icons.local_pharmacy_outlined,
@@ -559,14 +551,14 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
       if (!mounted) return;
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('وصل إعلانك — يظهر بعد موافقة الإدارة'),
+        content: Text('وصل إعلانك، يظهر بعد موافقة الإدارة'),
         backgroundColor: AppColors.successGreen,
         behavior: SnackBarBehavior.floating,
       ));
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'تعذّر الإرسال — تأكّد من تسجيل الدخول والاتصال';
+          _error = 'تعذّر الإرسال، تأكّد من تسجيل الدخول والاتصال';
           _sending = false;
         });
       }
@@ -590,8 +582,8 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
                       TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               Text(
-                  'يظهر إعلانك بعد موافقة الإدارة ويسري 30 يوماً، '
-                  'ويمكنك إغلاقه عند نفاد الكمية.',
+                  'يظهر إعلانك بعد موافقة الإدارة ويسري 30 يوماً'
+                  'ويمكنك إغلاقه عند نفاد الكمية',
                   style: TextStyle(
                       fontSize: 12,
                       height: 1.5,
@@ -741,7 +733,7 @@ class _MyAvailabilityScreenState extends State<MyAvailabilityScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(30),
-                child: Text('لم تنشر إعلاناً بعد.',
+                child: Text('لم تنشر إعلاناً بعد',
                     style: TextStyle(
                         fontSize: 13,
                         color: Theme.of(context).colorScheme.onSurfaceVariant)),
@@ -771,7 +763,7 @@ class _MyAvailabilityScreenState extends State<MyAvailabilityScreen> {
                           _reload();
                         },
                         icon: const Icon(Icons.inventory_rounded, size: 16),
-                        label: const Text('نفدت الكمية — أغلق الإعلان',
+                        label: const Text('نفدت الكمية، أغلق الإعلان',
                             style: TextStyle(fontSize: 12.5)),
                       ),
                     ),

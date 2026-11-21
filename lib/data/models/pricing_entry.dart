@@ -7,6 +7,9 @@ class PricingEntry {
   final int viewCount;
   final DateTime updatedAt;
 
+  /// الصفوف المخفيّة لا تظهر للمستخدم، وتبقى للمراجعة الإدارية.
+  final bool isHidden;
+
   const PricingEntry({
     required this.id,
     required this.barcode,
@@ -15,6 +18,7 @@ class PricingEntry {
     this.notes,
     this.viewCount = 0,
     required this.updatedAt,
+    this.isHidden = false,
   });
 
   factory PricingEntry.fromJson(Map<String, dynamic> json) => PricingEntry(
@@ -25,5 +29,6 @@ class PricingEntry {
         notes: json['notes'] as String?,
         viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
         updatedAt: DateTime.parse(json['updated_at'] as String),
+        isHidden: json['is_hidden'] as bool? ?? false,
       );
 }

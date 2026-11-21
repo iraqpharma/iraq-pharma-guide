@@ -68,18 +68,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // bar had nothing behind it to blur and looked opaque.
       extendBody: Platform.isIOS,
       drawer: const AppDrawer(),
-      body: _bodyForIndex(idx),
+      // السحب أفقياً ينقل بين أقسام الشريط السفلي بدل فتح القائمة
+      // الجانبية. القائمة تُفتح من زرّها في الترويسة.
+      drawerEnableOpenDragGesture: false,
+      body: _SwipeTabs(
+        index: idx,
+        count: 5,
+        onChanged: (i) => _goTo(i),
+        child: _bodyForIndex(idx),
+      ),
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: idx,
-        onTap: (i) {
-          if (i == 2) {
-            ref.read(searchQueryProvider.notifier).state = '';
-            ref.read(activeFiltersProvider.notifier).state = {};
-          }
-          ref.read(_bottomIndexProvider.notifier).state = i;
-        },
+        onTap: _goTo,
       ),
     );
+  }
+
+  void _goTo(int i) {
+    if (i == 2) {
+      ref.read(searchQueryProvider.notifier).state = '';
+      ref.read(activeFiltersProvider.notifier).state = {};
+    }
+    ref.read(_bottomIndexProvider.notifier).state = i;
   }
 
   Widget _bodyForIndex(int idx) {
@@ -1326,18 +1336,30 @@ class _ToolsBody extends StatelessWidget {
               _NavToolItem(context.s.notebook,     context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
             ];
 
-  List<_NavToolItem> _getGridTools(BuildContext context) =>
-      FeatureFlags.doseToolsOnThisPlatform
-          ? [
-              _NavToolItem(context.s.interactions,  context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
-              _NavToolItem(context.s.notebook,      context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
-              _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
-              _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
-            ]
-          : [
-              _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
-              _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
-            ];
+  // الأدوات المرجعية تظهر على المنصّتين، أمّا أدوات حساب الجرعة فتبقى
+  // على أندرويد وحده لأن متجر آبل يشدّد على حسابات الجرعات.
+  List<_NavToolItem> _getGridTools(BuildContext context) {
+    final s = context.s;
+    return [
+      if (FeatureFlags.doseToolsOnThisPlatform) ...[
+        _NavToolItem(s.interactions,  s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
+        _NavToolItem(s.notebook,      s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
+      ],
+      // بطاقات الزبائن أعلى الشبكة: القسم الذي يُعيد الصيدلاني كل يوم
+      _NavToolItem(s.customers,       s.customersSub,    Icons.badge_outlined,        const Color(0xFF2F6FB8), '/customers'),
+      _NavToolItem(s.pricingCalc,     s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+      _NavToolItem(s.substitution,    s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
+      // أدوات مرجعية لا تحسب جرعة
+      _NavToolItem(s.shelfLife,       s.shelfLifeSub,       Icons.event_busy_outlined,       const Color(0xFF3C7FB0), '/shelf-life'),
+      _NavToolItem(s.supplyDays,      s.supplyDaysSub,      Icons.inventory_2_outlined,      const Color(0xFF2E8B82), '/supply-days'),
+      _NavToolItem(s.labUnits,        s.labUnitsSub,        Icons.biotech_outlined,          const Color(0xFF7A4EA8), '/lab-units'),
+      _NavToolItem(s.vaccineSchedule, s.vaccineScheduleSub, Icons.vaccines_outlined,         const Color(0xFF2E8F63), '/vaccine-schedule'),
+      if (FeatureFlags.doseToolsOnThisPlatform) ...[
+        _NavToolItem(s.chemoDose,     s.chemoDoseSub,       Icons.bloodtype_outlined,        const Color(0xFFB0306A), '/chemo-dose'),
+        _NavToolItem(s.fluidCalc,     s.fluidCalcSub,       Icons.water_drop_outlined,       const Color(0xFF3E8F9C), '/fluid-calc'),
+      ],
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1523,6 +1545,42 @@ class _NavToolCard extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 // FAVORITES BODY
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/// يلتقط السحب الأفقي وينقل بين أقسام الشريط السفلي.
+///
+/// الترتيب على الشاشة من اليمين إلى اليسار: المفضلة · الأدوات ·
+/// الرئيسية · البحث · حسابي. فالسحب من اليمين لليسار يتقدّم في الفهرس
+/// والعكس يرجع — وهذا هو الاتجاه الطبيعي في واجهة عربية.
+class _SwipeTabs extends StatelessWidget {
+  final int index;
+  final int count;
+  final ValueChanged<int> onChanged;
+  final Widget child;
+  const _SwipeTabs({
+    required this.index,
+    required this.count,
+    required this.onChanged,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // يمرّ اللمس إلى المحتوى، ولا يُبتلع إلا السحب الأفقي الواضح
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (d) {
+        final v = d.primaryVelocity ?? 0;
+        if (v.abs() < 220) return; // سحبة خفيفة أو تمرير رأسي
+        final rtl = Directionality.of(context) == TextDirection.rtl;
+        // سرعة موجبة = سحب نحو اليمين
+        final forward = rtl ? v > 0 : v < 0;
+        final next = forward ? index + 1 : index - 1;
+        if (next >= 0 && next < count) onChanged(next);
+      },
+      child: child,
+    );
+  }
+}
 
 class _FavoritesBody extends StatefulWidget {
   const _FavoritesBody();

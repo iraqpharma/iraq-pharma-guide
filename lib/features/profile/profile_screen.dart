@@ -481,13 +481,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       title: 'إحصائيات التطبيق',
                       onTap: () => context.push('/admin-pin?to=/admin/statistics'),
                     ),
-                    _divider(cs),
-                    _buildNavTile(cs,
-                      icon: Icons.admin_panel_settings_outlined,
-                      color: const Color(0xFF455A64),
-                      title: 'إدارة قاعدة البيانات',
-                      onTap: () => context.push('/admin-pin'),
-                    ),
                   ]),
                 ],
                 const SizedBox(height: 16),
@@ -889,6 +882,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     Text('${context.s.version} v${_appVersion.isEmpty ? '' : _appVersion}',
         style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 11, color: cs.onSurfaceVariant.withOpacity(0.45))),
+    const SizedBox(height: 10),
+    // إعداد المحتوى الدوائي — مكانه هنا تحت اسم التطبيق وإصداره
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(children: [
+        Text('إعداد ومراجعة المحتوى الدوائي',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.ibmPlexSansArabic(
+                fontSize: 10.5, color: cs.onSurfaceVariant)),
+        const SizedBox(height: 3),
+        Text('د. حميد عدنان حميد',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.ibmPlexSansArabic(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary)),
+        Text('صيدلاني سريري',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.ibmPlexSansArabic(
+                fontSize: 10, color: cs.onSurfaceVariant)),
+      ]),
+    ),
   ]);
 }
 

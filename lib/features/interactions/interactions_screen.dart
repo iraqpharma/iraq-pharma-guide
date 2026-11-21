@@ -8,6 +8,7 @@ import '../../providers/drug_provider.dart';
 import '../../providers/interaction_provider.dart';
 import '../../services/auth_service.dart';
 import '../../core/l10n/app_strings.dart';
+import '../../shared/widgets/section_intro.dart';
 
 class InteractionsScreen extends ConsumerStatefulWidget {
   const InteractionsScreen({super.key});
@@ -20,6 +21,9 @@ class _InteractionsScreenState extends ConsumerState<InteractionsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SectionIntro.showOnce(context, id: 'interactions');
+    });
     AuthService.instance.incrementToolUsage();
   }
 

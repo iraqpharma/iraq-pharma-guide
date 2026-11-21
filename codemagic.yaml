@@ -1,4 +1,8 @@
 workflows:
+
+  # ═══════════════════════════════════════════════════════════════════
+  # iOS → TestFlight
+  # ═══════════════════════════════════════════════════════════════════
   ios-testflight:
     name: iOS — TestFlight only
     instance_type: mac_mini_m2
@@ -18,7 +22,9 @@ workflows:
       events:
         - push
       branch_patterns:
-        - pattern: release/3.0
+        # كان مثبّتاً على release/3.0 فلم يكن البناء ينطلق من release/3.1.
+        # النجمة تغطّي كل فروع الإصدارات القادمة بلا تعديل في كل مرّة.
+        - pattern: release/*
           include: true
           source: true
 
@@ -60,6 +66,72 @@ workflows:
         # بعد موافقة د. حميد نُحوّل submit_to_app_store إلى true.
         submit_to_testflight: true
         submit_to_app_store: false
+      email:
+        recipients:
+          - hameedalkubaisi96@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # ═══════════════════════════════════════════════════════════════════
+  # Android → APK للفحص المباشر على الهاتف
+  # ═══════════════════════════════════════════════════════════════════
+  android-test:
+    name: Android — APK للفحص
+    instance_type: linux_x2
+    max_build_duration: 60
+
+    environment:
+      flutter: 3.41.8
+      java: 17
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: release/*
+          include: true
+          source: true
+
+    scripts:
+      # مفتاح التوقيع ليس في المستودع (وهذا صحيح، فهو سرّ). إن أُضيف
+      # في Codemagic تحت مجموعة keystore_reference يُستعمل، وإلا يرجع
+      # gradle تلقائياً إلى توقيع debug — وهو كافٍ تماماً لتثبيت النسخة
+      # على الهاتف والفحص، وغير صالح للرفع إلى Google Play.
+      - name: Set up signing if a keystore is configured
+        script: |
+          if [ -n "$CM_KEYSTORE_PATH" ]; then
+            echo "keystore موجود — سيُستعمل للتوقيع"
+            cat > "$CM_BUILD_DIR/android/key.properties" <<KP
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          KP
+          else
+            echo "لا keystore — سيُبنى بتوقيع debug للفحص فقط"
+          fi
+
+      - name: Flutter packages get
+        script: flutter packages pub get
+
+      - name: Flutter analyze
+        script: flutter analyze --no-fatal-warnings --no-fatal-infos
+        ignore_failure: true
+
+      - name: Build APK
+        script: flutter build apk --release
+
+      - name: Build app bundle
+        script: flutter build appbundle --release
+        ignore_failure: true
+
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/**/*.aab
+      - build/app/outputs/**/mapping.txt
+
+    publishing:
       email:
         recipients:
           - hameedalkubaisi96@gmail.com

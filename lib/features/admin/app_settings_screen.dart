@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../services/app_admin_service.dart';
 import '../../services/availability_service.dart';
 import '../../services/jobs_service.dart';
+import '../../services/barcode_service.dart';
 
 /// «إعدادات التطبيق» — مركز إداري واحد لكل ما يحتاج موافقة أو متابعة،
 /// بدل تفرّق الأقسام في شاشات لا يعرف صاحب التطبيق مكانها.
@@ -16,10 +17,12 @@ class AppSettingsScreen extends StatefulWidget {
 }
 
 class _AppSettingsScreenState extends State<AppSettingsScreen> {
-  int _availPending = 0;
-  int _jobsPending  = 0;
-  int _reqNew       = 0;
-  bool _loading     = true;
+  int _availPending  = 0;
+  int _jobsPending   = 0;
+  int _reqNew        = 0;
+  int _hiddenPricing = 0;
+  int _barcodePending = 0;
+  bool _loading      = true;
 
   @override
   void initState() {
@@ -31,12 +34,19 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
     final a = await AvailabilityService.instance.pendingCount();
     final j = await JobsService.instance.pendingCount();
     final r = await AppAdminService.instance.newRequestsCount();
+    int h = 0;
+    try {
+      h = (await AppAdminService.instance.hiddenPricing()).length;
+    } catch (_) {}
+    final bc = await BarcodeService.instance.pendingCount();
     if (!mounted) return;
     setState(() {
-      _availPending = a;
-      _jobsPending  = j;
-      _reqNew       = r;
-      _loading      = false;
+      _availPending  = a;
+      _jobsPending   = j;
+      _reqNew        = r;
+      _hiddenPricing  = h;
+      _barcodePending = bc;
+      _loading        = false;
     });
   }
 
@@ -164,6 +174,15 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
               },
             ),
 
+            const _GroupTitle('التواصل'),
+            _AdminTile(
+              icon: Icons.notifications_active_rounded,
+              color: const Color(0xFF2E8F63),
+              title: 'إرسال إشعار',
+              subtitle: 'إشعار لكل المستخدمين من داخل التطبيق مباشرة',
+              onTap: () => context.push('/admin/send-notification'),
+            ),
+
             const _GroupTitle('المحتوى'),
             _AdminTile(
               icon: Icons.ondemand_video_rounded,
@@ -180,7 +199,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
               onTap: () => context.push('/admin/ads'),
             ),
 
-            const _GroupTitle('قاعدة البيانات'),
+            const _GroupTitle('قاعدة الأدوية'),
             _AdminTile(
               icon: Icons.medication_rounded,
               color: const Color(0xFF00897B),
@@ -189,11 +208,26 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
               onTap: () => context.push('/admin/drugs'),
             ),
             _AdminTile(
-              icon: Icons.insert_chart_rounded,
-              color: const Color(0xFF6B6BC4),
-              title: 'الإحصائيات',
-              subtitle: 'المستخدمون والاستعمال',
-              onTap: () => context.push('/admin/statistics'),
+              icon: Icons.qr_code_2_rounded,
+              color: const Color(0xFF455A64),
+              title: 'قاعدة الباركود',
+              subtitle: 'إدخال مفرد، لصق دفعة، ومراجعة اقتراحات المستخدمين',
+              badge: _barcodePending,
+              onTap: () async {
+                await context.push('/admin/barcodes');
+                _load();
+              },
+            ),
+            _AdminTile(
+              icon: Icons.price_check_rounded,
+              color: const Color(0xFFD4A017),
+              title: 'مراجعة دليل الأسعار',
+              subtitle: 'أسماء عبثية ومستلزمات ليست أدوية، مخفيّة للمراجعة',
+              badge: _hiddenPricing,
+              onTap: () async {
+                await context.push('/admin/pricing-review');
+                _load();
+              },
             ),
           ],
         ),

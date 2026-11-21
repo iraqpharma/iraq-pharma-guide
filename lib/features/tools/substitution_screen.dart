@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/database/substitution_database.dart';
 import '../../services/auth_service.dart';
 import '../../core/l10n/app_strings.dart';
+import '../../shared/widgets/section_intro.dart';
 
 class SubstitutionScreen extends StatefulWidget {
   const SubstitutionScreen({super.key});
@@ -26,6 +27,9 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SectionIntro.showOnce(context, id: 'substitution');
+    });
     AuthService.instance.incrementToolUsage();
   }
 

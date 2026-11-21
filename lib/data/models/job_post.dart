@@ -25,6 +25,10 @@ class JobPost {
   final String status;          // pending | approved | rejected | closed | expired
   final String rejectReason;
   final int views;
+  /// عدد من ضغط «اتصال» أو «واتساب» على الإعلان.
+  final int contactClicks;
+  /// عدد الإعجابات — يُحدَّث بمُشغّل في قاعدة البيانات لا من التطبيق.
+  final int likes;
   final DateTime createdAt;
   final DateTime? expiresAt;
 
@@ -54,6 +58,8 @@ class JobPost {
     this.status = 'pending',
     this.rejectReason = '',
     this.views = 0,
+    this.contactClicks = 0,
+    this.likes = 0,
     required this.createdAt,
     this.expiresAt,
   });
@@ -86,6 +92,10 @@ class JobPost {
         status: _s(m['status']).isEmpty ? 'pending' : _s(m['status']),
         rejectReason: _s(m['reject_reason']),
         views: m['views'] == null ? 0 : (m['views'] as num).toInt(),
+        contactClicks: m['contact_clicks'] == null
+            ? 0
+            : (m['contact_clicks'] as num).toInt(),
+        likes: m['likes'] == null ? 0 : (m['likes'] as num).toInt(),
         createdAt:
             DateTime.tryParse(_s(m['created_at']))?.toLocal() ?? DateTime.now(),
         expiresAt: DateTime.tryParse(_s(m['expires_at']))?.toLocal(),

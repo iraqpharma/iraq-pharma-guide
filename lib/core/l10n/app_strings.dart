@@ -23,7 +23,7 @@ class AppStrings {
   // ── Educational tool notice ───────────────────────────────────────────────
   String get eduNoticeTitle => isAr ? 'أداة تعليمية' : 'Educational tool';
   String get eduNoticeBody => isAr
-      ? 'هذه الحاسبة أداة تعليمية للتدريب على المعادلات الدوائية المنشورة، وليست أداة لوصف العلاج. تحقّق دائمًا من النشرة الدوائية الرسمية وراجع الطبيب أو الصيدلاني المختص قبل أي قرار علاجي.'
+      ? 'هذه الحاسبة أداة تعليمية للتدريب على المعادلات الدوائية المنشورة، وليست أداة لوصف العلاج. تحقّق دائمًا من النشرة الدوائية الرسمية وراجع الطبيب أو الصيدلاني المختص قبل أي قرار علاجي'
       : 'This calculator is a teaching aid based on published pharmaceutical formulas. It is not a prescribing tool. Always verify against the official drug leaflet and consult a qualified physician or pharmacist before any treatment decision.';
   String get eduNoticeDontShow =>
       isAr ? 'لا تُظهر هذا التنبيه مرة أخرى' : "Don't show this again";
@@ -32,7 +32,7 @@ class AppStrings {
   // ── Account deletion ──────────────────────────────────────────────────────
   String get deleteAccount => isAr ? 'حذف الحساب نهائيًا' : 'Delete account permanently';
   String get deleteAccountBody => isAr
-      ? 'سيُحذف حسابك وكل بياناتك نهائيًا ولا يمكن استرجاعها:\n\n• بياناتك الشخصية وصورتك\n• ملاحظاتك في المرجع التفاعلي\n• مفضلاتك وإحصائياتك\n• اشتراكك في الإشعارات\n\nاكتب كلمة "حذف" للتأكيد.'
+      ? 'سيُحذف حسابك وكل بياناتك نهائيًا ولا يمكن استرجاعها:\n\n• بياناتك الشخصية وصورتك\n• ملاحظاتك في المرجع التفاعلي\n• مفضلاتك وإحصائياتك\n• اشتراكك في الإشعارات\n\nاكتب كلمة "حذف" للتأكيد'
       : 'Your account and all your data will be permanently deleted and cannot be recovered:\n\n• Your profile details and photo\n• Your notes in the interactive reference\n• Your favourites and statistics\n• Your notification subscription\n\nType "delete" to confirm.';
   String get deleteAccountConfirmWord => isAr ? 'حذف' : 'delete';
   String get deleteAccountConfirm => isAr ? 'حذف نهائيًا' : 'Delete permanently';
@@ -69,7 +69,7 @@ class AppStrings {
   String get suggestDrugSub    => isAr ? 'سيصل طلبك للفريق مباشرةً للمراجعة' : 'Your request will go directly to the team';
   String get drugName          => isAr ? 'اسم الدواء'         : 'Drug Name';
   String get chooseCat         => isAr ? 'اختر القسم'         : 'Choose Category';
-  String get sending           => isAr ? 'جاري الإرسال...'   : 'Sending...';
+  String get sending           => isAr ? 'جاري الإرسال…'   : 'Sending...';
   String get sendRequest       => isAr ? 'إرسال الطلب'        : 'Send Request';
   String get requestSent       => isAr ? 'تم إرسال الطلب!'   : 'Request Sent!';
   String get requestSentSub    => isAr ? 'سيراجع الفريق طلبك ويضيف الدواء قريباً' : 'The team will review your request and add the drug soon';
@@ -82,7 +82,7 @@ class AppStrings {
       ? 'اكتب الاسم العلمي أو الشركة أو التركيز أو من أين رأيت الدواء'
       : 'Generic name, manufacturer, strength, or where you saw the drug';
   String get reqNotesEmpty     => isAr
-      ? 'الملاحظات إجبارية — اكتب أي معلومة تساعدنا على إيجاد الدواء'
+      ? 'الملاحظات إجبارية، اكتب أي معلومة تساعدنا على إيجاد الدواء'
       : 'Notes are required — add any detail that helps us find the drug';
   String get reqNotesShort     => isAr
       ? 'اكتب 5 أحرف على الأقل'
@@ -132,15 +132,29 @@ class AppStrings {
   String get doseCalc          => isAr ? 'حاسبة الجرعة'                            : 'Dose Calculator';
   String get doseCalcSub       => isAr ? 'احسب الجرعة للأطفال والبالغين بدقة'     : 'Calculate dose for children and adults';
   String get crcl              => isAr ? 'حاسبة CrCl'                              : 'CrCl Calculator';
-  String get crclSub           => isAr ? 'تصفية الكرياتينين — معادلة Cockcroft-Gault' : 'Creatinine Clearance — Cockcroft-Gault';
+  String get crclSub           => isAr ? 'تصفية الكرياتينين، معادلة Cockcroft-Gault' : 'Creatinine Clearance — Cockcroft-Gault';
   String get interactions      => isAr ? 'فاحص التفاعلات'     : 'Interaction Checker';
   String get interactionsSub   => isAr ? 'تفاعلات الأدوية'    : 'Drug Interactions';
-  String get notebook          => isAr ? 'دفتر الصيدلاني'     : 'Pharmacist Notebook';
-  String get notebookSub       => isAr ? 'الأدوية المفقودة'   : 'Missing Drugs';
+  String get notebook          => isAr ? 'نواقص الصيدلية'     : 'Pharmacy Shortages';
+  String get notebookSub       => isAr ? 'سجّل ما نفد وما أوشك' : 'Log what ran out and what is low';
   String get pricingCalc       => isAr ? 'حاسبة التسعير'      : 'Pricing Calculator';
   String get pricingCalcSub    => isAr ? 'حاسبة التسعير الذكية' : 'Smart Pricing Calculator';
   String get substitution      => isAr ? 'الباحث عن البدائل'  : 'Substitution Finder';
   String get substitutionSub   => isAr ? 'البديل الذكي'       : 'Smart Substitution';
+
+  // أدوات سريرية إضافية
+  String get chemoDose         => isAr ? 'تخفيض جرعات الكيماوي' : 'Chemo Dose Adjustment';
+  String get chemoDoseSub      => isAr ? 'تعديل الجرعة حسب الكبد والكلى' : 'Hepatic and renal adjustment';
+  String get fluidCalc         => isAr ? 'السوائل والتخفيف'   : 'Fluids & Dilution';
+  String get fluidCalcSub      => isAr ? 'تخفيف، تسريب، جرعة بالوزن' : 'Dilution, infusion, weight dose';
+  String get shelfLife         => isAr ? 'الصلاحية بعد الفتح' : 'Shelf Life After Opening';
+  String get shelfLifeSub      => isAr ? 'كم يبقى صالحاً بعد أول استعمال' : 'How long after first use';
+  String get supplyDays        => isAr ? 'كم تكفي العلبة'     : 'Days of Supply';
+  String get supplyDaysSub     => isAr ? 'متى ينفد الدواء وكم علبة يحتاج' : 'When it runs out, how many packs';
+  String get labUnits          => isAr ? 'وحدات التحاليل'     : 'Lab Unit Converter';
+  String get labUnitsSub       => isAr ? 'تحويل بين mg/dL و mmol/L' : 'Convert mg/dL and mmol/L';
+  String get vaccineSchedule   => isAr ? 'جدول التلقيح'       : 'Vaccination Schedule';
+  String get vaccineScheduleSub => isAr ? 'مواعيد لقاحات الطفل في العراق' : 'Iraqi childhood vaccine timetable';
 
   // ── Drawer (hamburger menu) ─────────────────────────────────────────────────
   String get pricesSectionLabel   => isAr ? 'الأسعار' : 'Prices';
@@ -180,13 +194,13 @@ class AppStrings {
   String get password          => isAr ? 'كلمة المرور'            : 'Password';
   String get forgotPassword    => isAr ? 'نسيت كلمة المرور؟'     : 'Forgot Password?';
   String get signIn            => isAr ? 'تسجيل الدخول'           : 'Sign In';
-  String get signingIn         => isAr ? 'جاري الدخول...'         : 'Signing in...';
+  String get signingIn         => isAr ? 'جاري الدخول…'         : 'Signing in...';
   String get orSignInWith      => isAr ? 'أو سجّل الدخول بـ'      : 'Or sign in with';
   String get googleSignIn      => isAr ? 'Google'                 : 'Google';
   String get noAccount         => isAr ? 'ليس لديك حساب؟'        : 'Don\'t have an account?';
   String get registerNow       => isAr ? 'سجّل الآن'              : 'Register Now';
   String get welcomeBack       => isAr ? 'أهلاً بعودتك!'          : 'Welcome Back!';
-  String get loginSuccess      => isAr ? 'تم تسجيل الدخول بنجاح.' : 'Signed in successfully.';
+  String get loginSuccess      => isAr ? 'تم تسجيل الدخول بنجاح' : 'Signed in successfully.';
 
   // ── Auth — Sign Up ────────────────────────────────────────────────────────
   String get createAccount     => isAr ? 'إنشاء حساب'             : 'Create Account';
@@ -201,17 +215,17 @@ class AppStrings {
   String get address           => isAr ? 'العنوان'                 : 'Address';
   String get optional          => isAr ? 'اختياري'                 : 'Optional';
   String get signUp            => isAr ? 'إنشاء الحساب'            : 'Create Account';
-  String get signingUp         => isAr ? 'جاري الإنشاء...'         : 'Creating...';
+  String get signingUp         => isAr ? 'جاري الإنشاء…'         : 'Creating...';
   String get alreadyHaveAccount => isAr ? 'لديك حساب بالفعل؟'     : 'Already have an account?';
   String get signInNow         => isAr ? 'سجّل الدخول'             : 'Sign In';
   String get accountCreated    => isAr ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!';
   String get accountCreatedSub => isAr
-      ? 'أهلاً بك في مجتمع الصيادلة في العراق.\nيمكنك الآن البدء باستكشاف دليل الأدوية والأدوات السريرية.'
+      ? 'أهلاً بك في مجتمع الصيادلة في العراق\nيمكنك الآن البدء باستكشاف دليل الأدوية والأدوات السريرية'
       : 'Welcome to the Iraq pharmacists community.\nYou can now explore the drug guide and clinical tools.';
   String get startNow          => isAr ? 'ابدأ الآن' : 'Start Now';
   String get verifyEmailTitle  => isAr ? 'تحقق من بريدك الإلكتروني' : 'Verify your email';
   String get verifyEmailSub    => isAr
-      ? 'تم إرسال رابط التحقق إلى بريدك الإلكتروني.\nافتح الإيميل واضغط على الرابط لتفعيل حسابك.'
+      ? 'تم إرسال رابط التحقق إلى بريدك الإلكتروني\nافتح الإيميل واضغط على الرابط لتفعيل حسابك'
       : 'A verification link has been sent to your email.\nOpen it to activate your account.';
   String get goToLogin         => isAr ? 'الذهاب إلى تسجيل الدخول' : 'Go to Login';
   String get didntReceiveEmail => isAr ? 'لم تستلم الإيميل؟ تحقق من مجلد Spam' : "Didn't receive it? Check your Spam folder";
@@ -276,36 +290,36 @@ class AppStrings {
   /// الاختصاصات الطبية — تظهر للطبيب فقط. الاسم الإنجليزي بين قوسين
   /// لأن المصطلح الطبي هو المتعامَل به في التقارير والوصفات.
   List<String> get medicalSpecialties => const [
-    'طب عام — General Practice',
-    'باطنية — Internal Medicine',
-    'أطفال — Pediatrics',
-    'جراحة عامة — General Surgery',
-    'نسائية وتوليد — Obstetrics & Gynaecology',
-    'قلب — Cardiology',
-    'جهاز هضمي — Gastroenterology',
-    'غدد وسكري — Endocrinology',
-    'كلى — Nephrology',
-    'صدرية — Pulmonology',
-    'أعصاب — Neurology',
-    'نفسية — Psychiatry',
-    'أورام — Oncology',
-    'دم — Haematology',
-    'مفاصل وروماتيزم — Rheumatology',
-    'أمراض معدية — Infectious Diseases',
-    'جلدية — Dermatology',
-    'عيون — Ophthalmology',
-    'أنف وأذن وحنجرة — ENT',
-    'عظام — Orthopaedics',
-    'مسالك بولية — Urology',
-    'تخدير — Anaesthesia',
-    'طوارئ — Emergency Medicine',
-    'أشعة — Radiology',
-    'مختبرات ومرضية — Laboratory & Pathology',
-    'أسرة ومجتمع — Family & Community Medicine',
-    'جراحة تجميل — Plastic Surgery',
-    'جراحة أعصاب — Neurosurgery',
-    'جراحة قلب وصدر — Cardiothoracic Surgery',
-    'اختصاص آخر — Other',
+    'طب عام · General Practice',
+    'باطنية · Internal Medicine',
+    'أطفال · Pediatrics',
+    'جراحة عامة · General Surgery',
+    'نسائية وتوليد · Obstetrics & Gynaecology',
+    'قلب · Cardiology',
+    'جهاز هضمي · Gastroenterology',
+    'غدد وسكري · Endocrinology',
+    'كلى · Nephrology',
+    'صدرية · Pulmonology',
+    'أعصاب · Neurology',
+    'نفسية · Psychiatry',
+    'أورام · Oncology',
+    'دم · Haematology',
+    'مفاصل وروماتيزم · Rheumatology',
+    'أمراض معدية · Infectious Diseases',
+    'جلدية · Dermatology',
+    'عيون · Ophthalmology',
+    'أنف وأذن وحنجرة · ENT',
+    'عظام · Orthopaedics',
+    'مسالك بولية · Urology',
+    'تخدير · Anaesthesia',
+    'طوارئ · Emergency Medicine',
+    'أشعة · Radiology',
+    'مختبرات ومرضية · Laboratory & Pathology',
+    'أسرة ومجتمع · Family & Community Medicine',
+    'جراحة تجميل · Plastic Surgery',
+    'جراحة أعصاب · Neurosurgery',
+    'جراحة قلب وصدر · Cardiothoracic Surgery',
+    'اختصاص آخر · Other',
   ];
 
   // Governorates (no translation needed — same in both)
@@ -358,14 +372,14 @@ class AppStrings {
   String get notifications     => isAr ? 'الإشعارات'                      : 'Notifications';
   String get noNotifications   => isAr ? 'لا توجد إشعارات'               : 'No Notifications';
   String get enableNotifFromSettings => isAr
-      ? 'الإذن مرفوض من إعدادات الجهاز — فعّله من الإعدادات أولاً'
+      ? 'الإذن مرفوض من إعدادات الجهاز، فعّله من الإعدادات أولاً'
       : 'Permission denied at the device level — enable it from Settings first';
   String get noNotificationsSub=> isAr ? 'ستظهر هنا الإشعارات والتنبيهات الجديدة' : 'New notifications and alerts will appear here';
 
   // ── Notification Permission ───────────────────────────────────────────────
   String get notifPermTitle => isAr ? 'تفعيل التنبيهات'   : 'Enable Notifications';
   String get notifPermSub   => isAr
-      ? 'كن أول من يعلم بآخر تحديثات الأدوية،\nتغييرات الأسعار، والتنبيهات الطبية الهامة.'
+      ? 'كن أول من يعلم بآخر تحديثات الأدوية،\nتغييرات الأسعار، والتنبيهات الطبية الهامة'
       : 'Be the first to know about drug updates,\nprice changes, and important medical alerts.';
   String get enabling       => isAr ? 'جارٍ التفعيل…' : 'Enabling…';
   String get enableNow      => isAr ? 'تفعيل الآن'    : 'Enable Now';
@@ -389,7 +403,7 @@ class AppStrings {
 
   // ── Profile completion prompt (post-login, optional) ────────────────────
   String get completeProfileTitle  => isAr ? 'أكمل ملفك الشخصي'                : 'Complete your profile';
-  String get completeProfileSub    => isAr ? 'أضف محافظتك وتاريخ ميلادك وصورتك — كل هذا اختياري ويمكنك تخطيه الآن'
+  String get completeProfileSub    => isAr ? 'أضف محافظتك وتاريخ ميلادك وصورتك، كل هذا اختياري ويمكنك تخطيه الآن'
                                             : 'Add your governorate, birth date and photo — all optional, you can skip for now';
   String get addPhotoLabel         => isAr ? 'إضافة صورة'                     : 'Add photo';
   String get skipForNow            => isAr ? 'تخطي الآن'                      : 'Skip for now';
@@ -478,7 +492,7 @@ class AppStrings {
   String get pregnancyCat        => isAr ? 'فئة الحمل'              : 'Pregnancy Category';
   String get lactationHale       => isAr ? 'الرضاعة (Hale)'         : 'Lactation (Hale)';
   String get blackBoxWarning     => isAr ? 'تحذير الصندوق الأسود'   : 'Black Box Warning';
-  String get ivTitle             => isAr ? 'IV — التحضير والإعطاء'  : 'IV — Preparation & Administration';
+  String get ivTitle             => isAr ? 'IV، التحضير والإعطاء'  : 'IV — Preparation & Administration';
   String get pharmacistNote      => isAr ? 'نصيحة الصيدلاني'        : 'Pharmacist Tip';
   String get refrigeratedLabel   => isAr ? 'مبرّد'                  : 'Refrigerated';
   String get unknown             => isAr ? 'غير محدد'               : 'Unknown';
@@ -520,16 +534,16 @@ class AppStrings {
   String get reset_           => isAr ? 'مسح'         : 'Reset';
   String get totalDose        => isAr ? 'الجرعة الكلية' : 'Total Dose';
   String get doseCapped       => isAr ? 'الجرعة المحسوبة (بُقيدت عند الحد القصوى)' : 'Calculated Dose (Capped at Max)';
-  String get capNote          => isAr ? 'تجاوزت الحد القصوى — تم تحديد الجرعة عنده' : 'Exceeded max dose — capped at maximum';
+  String get capNote          => isAr ? 'تجاوزت الحد القصوى، تم تحديد الجرعة عنده' : 'Exceeded max dose — capped at maximum';
   String get dailyDose        => isAr ? 'الجرعة اليومية' : 'Daily Dose';
   String get perDose          => isAr ? 'الجرعة الواحدة' : 'Per-Dose';
   String get formula          => isAr ? 'المعادلة'       : 'Formula';
   String get pediatricFormula => isAr ? 'الجرعة = الوزن (كغ) × الجرعة (مغ/كغ)'  : 'Dose = Weight (kg) × Dose (mg/kg)';
   String get adultFormula     => isAr ? 'الجرعة اليومية = الوزن × الجرعة\nالجرعة الواحدة = الجرعة اليومية ÷ التكرار'
                                       : 'Daily Dose = Weight × Dose\nPer-Dose = Daily ÷ Frequency';
-  String get pediatricBanner  => isAr ? 'احسب جرعة الطفل بحسب وزنه (مغ/كغ). أدخل الجرعة القصوى لمنع التجاوز.'
+  String get pediatricBanner  => isAr ? 'احسب جرعة الطفل بحسب وزنه (مغ/كغ). أدخل الجرعة القصوى لمنع التجاوز'
                                       : 'Calculate pediatric dose by weight (mg/kg). Enter max dose to prevent overdosing.';
-  String get adultBanner      => isAr ? 'احسب الجرعة اليومية والجرعة الواحدة بناءً على الوزن والتكرار.'
+  String get adultBanner      => isAr ? 'احسب الجرعة اليومية والجرعة الواحدة بناءً على الوزن والتكرار'
                                       : 'Calculate daily and per-dose based on weight and frequency.';
   String get kgUnit           => isAr ? 'كغ'    : 'kg';
   String get mgKgUnit         => isAr ? 'مغ/كغ' : 'mg/kg';
@@ -537,7 +551,7 @@ class AppStrings {
   String get timesDay         => isAr ? 'مرة/يوم' : 'times/day';
 
   // ── Interaction Checker ───────────────────────────────────────────────────
-  String get searchAddDrug    => isAr ? 'ابحث عن دواء للإضافة...' : 'Search a drug to add...';
+  String get searchAddDrug    => isAr ? 'ابحث عن دواء للإضافة…' : 'Search a drug to add...';
   String get severityMajor    => isAr ? 'خطير'  : 'Major';
   String get severityModerate => isAr ? 'متوسط' : 'Moderate';
   String get severityMinor    => isAr ? 'خفيف'  : 'Minor';
@@ -611,7 +625,7 @@ class AppStrings {
 
   // ── Notebook ──────────────────────────────────────────────────────────────
   String get notebookTitle   => isAr ? 'دفتر الأدوية المفقودة' : 'Missing Drugs Notebook';
-  String get addDrugHint     => isAr ? 'أضف اسم دواء مفقود...' : 'Add a missing drug name...';
+  String get addDrugHint     => isAr ? 'أضف اسم دواء مفقود…' : 'Add a missing drug name...';
   String get sendWhatsApp    => isAr ? 'إرسال عبر WhatsApp'    : 'Send via WhatsApp';
   String get noPendingItems  => isAr ? 'لا توجد عناصر غير مكتملة للإرسال' : 'No pending items to send';
   String get emptyNotebook   => isAr ? 'الدفتر فارغ'           : 'Notebook is empty';
@@ -624,7 +638,25 @@ class AppStrings {
   String get doneLabel        => isAr ? 'تم'     : 'Done';
   String get addLabel         => isAr ? 'إضافة'  : 'Add';
   String get clearDone        => isAr ? 'مسح المكتملة' : 'Clear done';
-  String get whatsappError    => isAr ? 'تعذّر فتح واتساب. تأكد من تثبيته.' : 'Could not open WhatsApp. Make sure it is installed.';
+  String get whatsappError    => isAr ? 'تعذّر فتح واتساب. تأكد من تثبيته' : 'Could not open WhatsApp. Make sure it is installed.';
+  // سجلّ النواقص
+  String get statusOut        => isAr ? 'نفد'          : 'Out of stock';
+  String get statusLow        => isAr ? 'على وشك النفاذ' : 'Running low';
+  String get statusRestocked  => isAr ? 'تمّ التأمين'   : 'Restocked';
+  String get shortageHint     => isAr ? 'اكتب حرفين من اسم الدواء' : 'Type two letters of the name';
+  String get addByPhoto       => isAr ? 'صوّر العلبة'   : 'Photograph the pack';
+  String get addByScan        => isAr ? 'اقرأ الباركود' : 'Scan the barcode';
+  String get photoNoName      => isAr ? 'صورة بانتظار الاسم' : 'Photo awaiting a name';
+  String get completeName     => isAr ? 'أكمل الاسم'    : 'Add the name';
+  String get qtyNoteHint      => isAr ? 'ملاحظة: الكمّية أو المندوب أو البديل' : 'Note: quantity, rep, or substitute';
+  String get emptyShortages   => isAr ? 'لا نواقص مسجّلة' : 'No shortages logged';
+  String get emptyShortagesSub => isAr
+      ? 'سجّل ما نفد من الرفّ وما أوشك\nثم أرسل القائمة للمندوب بضغطة'
+      : 'Log what ran out and what is low,\nthen send the list in one tap';
+  String get shortageList     => isAr ? 'قائمة النواقص' : 'Shortage list';
+  String get customers        => isAr ? 'زبائني'       : 'My Customers';
+  String get customersSub     => isAr ? 'علاج الزبون وجرعته وموعد إعادة صرفه'
+                                      : 'Their drug, dose and refill date';
 
   // ── Pricing Calculator ────────────────────────────────────────────────────
   String get pricingTitle    => isAr ? 'حاسبة التسعير الذكية'   : 'Smart Pricing Calculator';
@@ -641,8 +673,8 @@ class AppStrings {
   String get iqd             => isAr ? 'د.ع'                        : 'IQD';
   String get piecesUnit      => isAr ? 'قطعة'                       : 'pcs';
   String get howToUse        => isAr ? 'كيفية الاستخدام'            : 'How to Use';
-  String get helpRequired    => isAr ? 'الحقول المعلّمة بـ (*) إلزامية — الباقي اختياري' : 'Fields marked (*) are required — rest are optional';
-  String get helpBonus       => isAr ? 'البونص: القطع المجانية من المورد — تُحسب في التكلفة' : 'Bonus: free units from supplier — counted in cost';
+  String get helpRequired    => isAr ? 'الحقول المعلّمة بـ (*) إلزامية، الباقي اختياري' : 'Fields marked (*) are required — rest are optional';
+  String get helpBonus       => isAr ? 'البونص: القطع المجانية من المورد، تُحسب في التكلفة' : 'Bonus: free units from supplier — counted in cost';
   String get helpDiscountNote => isAr ? 'نسبة الخصم والخصم النقدي يُطرحان من الفاتورة' : 'Discount % and cash discount are deducted from invoice';
   String get helpAutoUpdate  => isAr ? 'النتائج تتحدث تلقائياً عند كل إدخال' : 'Results update automatically with each input';
   String piecesAndPaid(int pieces, String paid) => isAr ? '$pieces قطعة • $paid د.ع' : '$pieces pcs • $paid IQD';
@@ -660,7 +692,7 @@ class AppStrings {
   String get otcSubtitle2        => isAr ? 'أدوية بدون وصفة طبية'               : 'Over-the-counter medicines';
   String get chooseCategory      => isAr ? 'اختر القسم'                          : 'Choose a category';
   String get otcChooseSectionHint => isAr ? 'اختر قسماً لعرض الأمراض والأدوية' : 'Choose a section to browse conditions and drugs';
-  String get otcSearchHint       => isAr ? 'ابحث عن قسم أو مرض أو دواء...'      : 'Search by category, condition or drug...';
+  String get otcSearchHint       => isAr ? 'ابحث عن قسم أو مرض أو دواء…'      : 'Search by category, condition or drug...';
   String get noResults           => isAr ? 'لا توجد نتائج'                       : 'No results';
   String get chooseCondition     => isAr ? 'اختر الحالة الطبية'                  : 'Choose a condition';
   String get dosage_             => isAr ? 'الجرعة'                              : 'Dosage';
@@ -674,7 +706,7 @@ class AppStrings {
   String get priceGuideTitle      => isAr ? 'دليل الأسعار التجاري'                : 'Commercial Price Guide';
   String get dataRefreshed        => isAr ? 'تم استيراد أحدث البيانات بنجاح'     : 'Latest data imported successfully';
   String get refreshList          => isAr ? 'تحديث القائمة'                       : 'Refresh list';
-  String get priceSearchHint      => isAr ? 'ابحث باسم المنتج أو الباركود...'    : 'Search by product name or barcode...';
+  String get priceSearchHint      => isAr ? 'ابحث باسم المنتج أو الباركود…'    : 'Search by product name or barcode...';
   String get technicalDetails     => isAr ? 'التفاصيل الفنية'                     : 'Technical Details';
   String get barcode_             => isAr ? 'الباركود'                            : 'Barcode';
   String get entryId              => isAr ? 'المعرف (ID)'                         : 'Entry ID';
@@ -716,7 +748,7 @@ class AppStrings {
 
   // Quick filter
   String get quickFilter     => isAr ? 'فلتر سريع'                        : 'Quick Filter';
-  String get drugSearchHint  => isAr ? 'ابحث عن اسم الدواء...'            : 'Search drug name...';
+  String get drugSearchHint  => isAr ? 'ابحث عن اسم الدواء…'            : 'Search drug name...';
 
   // Barcode scanner
   String get barcodeScanHint  => isAr ? 'وجّه الكاميرا نحو باركود المنتج أو اسم المنتج للبحث السريع'  : 'Point the camera at the product barcode or its name for a quick search';
@@ -735,16 +767,16 @@ class AppStrings {
   String get suggestionHeaderSub  => isAr ? 'ساعدنا في تحسين التطبيق باقتراحاتك' : 'Help us improve the app with your suggestions';
   String get suggestionType       => isAr ? 'نوع الاقتراح'                 : 'Suggestion type';
   String get suggestionDetails    => isAr ? 'تفاصيل الاقتراح'              : 'Suggestion details';
-  String get suggestionHint       => isAr ? 'اكتب اقتراحك أو وصف المشكلة هنا...' : 'Write your suggestion or describe the issue here...';
+  String get suggestionHint       => isAr ? 'اكتب اقتراحك أو وصف المشكلة هنا…' : 'Write your suggestion or describe the issue here...';
   String get writeYourSuggestion  => isAr ? 'يرجى كتابة اقتراحك'           : 'Please write your suggestion';
   String get min10Chars           => isAr ? '10 أحرف على الأقل'            : 'At least 10 characters';
   String get attachImageOptional  => isAr ? 'إرفاق صورة (اختياري)'         : 'Attach image (optional)';
   String get changeImage          => isAr ? 'تغيير الصورة'                 : 'Change image';
   String get tapToAddImage        => isAr ? 'اضغط لإضافة صورة'            : 'Tap to add an image';
   String get sendFailed_          => isAr ? 'فشل الإرسال، تحقق من اتصالك وحاول مجدداً' : 'Send failed. Check your connection and try again.';
-  String get sending_             => isAr ? 'جارٍ الإرسال...'              : 'Sending...';
+  String get sending_             => isAr ? 'جارٍ الإرسال…'              : 'Sending...';
   String get suggestionSent       => isAr ? 'تم إرسال اقتراحك!'            : 'Your suggestion was sent!';
-  String get suggestionSentMsg    => isAr ? 'شكراً لمساهمتك في تطوير التطبيق.\nسنراجع اقتراحك في أقرب وقت.' : 'Thank you for helping improve the app.\nWe will review your suggestion soon.';
+  String get suggestionSentMsg    => isAr ? 'شكراً لمساهمتك في تطوير التطبيق\nسنراجع اقتراحك في أقرب وقت' : 'Thank you for helping improve the app.\nWe will review your suggestion soon.';
   String get allowAccessSettings  => isAr ? 'يرجى السماح بالوصول من إعدادات الهاتف' : 'Please allow access in phone settings';
   String get allowAccessRequired  => isAr ? 'يجب السماح بالوصول للمتابعة'  : 'Access permission is required to continue';
   String get fromGallery          => isAr ? 'من معرض الصور'                : 'From gallery';
@@ -760,7 +792,7 @@ class AppStrings {
   String get medicalDisclaimer    => isAr ? 'إخلاء مسؤولية طبية'           : 'Medical Disclaimer';
   String get importantNotice      => isAr ? 'تنبيه مهم'                    : 'Important Notice';
   String get disclaimerContent    => isAr
-      ? 'هذا التطبيق للأغراض التعليمية والمرجعية فقط.\nلا يُغني عن استشارة الطبيب أو الصيدلاني.\nالمعلومات مستمدة من FDA وقد لا تعكس الواقع المحلي بالكامل.'
+      ? 'هذا التطبيق للأغراض التعليمية والمرجعية فقط\nلا يُغني عن استشارة الطبيب أو الصيدلاني\nالمعلومات مستمدة من FDA وقد لا تعكس الواقع المحلي بالكامل'
       : 'This app is for educational and reference purposes only.\nIt does not replace consultation with a physician or pharmacist.\nInformation is sourced from the FDA and may not fully reflect local practices.';
   String get appVersion           => isAr ? 'الإصدار 1.0.0'                : 'Version 1.0.0';
   String get okLabel              => isAr ? 'موافق'                        : 'OK';
@@ -787,7 +819,7 @@ class AppStrings {
   String get searchDrugHint        => isAr ? 'ابحث عن دواء... (عربي أو إنجليزي)' : 'Search drug... (Arabic or English)';
   String get allowCameraSettings   => isAr ? 'يرجى السماح بالكاميرا من إعدادات الجهاز' : 'Please allow camera access in device settings';
   String get cameraPermission      => isAr ? 'إذن الكاميرا'                : 'Camera Permission';
-  String get cameraPermissionReason => isAr ? 'نحتاج إلى إذن استخدام الكاميرا لمسح باركود الدواء بسرعة وبدقة.' : 'We need camera permission to scan drug barcodes quickly and accurately.';
+  String get cameraPermissionReason => isAr ? 'نحتاج إلى إذن استخدام الكاميرا لمسح باركود الدواء بسرعة وبدقة' : 'We need camera permission to scan drug barcodes quickly and accurately.';
   String get allow_                => isAr ? 'السماح'                      : 'Allow';
   String get scan_                 => isAr ? 'مسح'                         : 'Scan';
   String get recentSearches        => isAr ? 'عمليات البحث الأخيرة'        : 'Recent Searches';
@@ -798,7 +830,7 @@ class AppStrings {
   String get splashTitle     => isAr ? 'دليل الصيدلة العراقي'             : 'Iraq Pharma Guide';
 
   // ── Common ────────────────────────────────────────────────────────────────
-  String get loading           => isAr ? 'جاري التحميل...' : 'Loading...';
+  String get loading           => isAr ? 'جاري التحميل…' : 'Loading...';
   String get error             => isAr ? 'خطأ'             : 'Error';
   String get retry             => isAr ? 'إعادة المحاولة'  : 'Retry';
   String get close             => isAr ? 'إغلاق'           : 'Close';
@@ -827,10 +859,10 @@ class AppStrings {
 
   // ── Force update dialog ───────────────────────────────────────────────────
   String get updateRequired          => isAr ? 'تحديث مطلوب' : 'Update Required';
-  String get updateAvailableBody     => isAr ? 'يتوفر تحديث جديد!\nيرجى تحديث التطبيق للمتابعة.' : 'A new update is available!\nPlease update the app to continue.';
+  String get updateAvailableBody     => isAr ? 'يتوفر تحديث جديد!\nيرجى تحديث التطبيق للمتابعة' : 'A new update is available!\nPlease update the app to continue.';
   String get currentVersionLabel     => isAr ? 'الإصدار الحالي' : 'Current Version';
   String get requiredVersionLabel    => isAr ? 'الإصدار المطلوب' : 'Required Version';
-  String get openingLabel            => isAr ? 'جارٍ الفتح...' : 'Opening...';
+  String get openingLabel            => isAr ? 'جارٍ الفتح…' : 'Opening...';
   String get updateNowLabel          => isAr ? 'تحديث الآن' : 'Update Now';
   String get cannotContinueWithoutUpdate => isAr ? 'لا يمكن الاستمرار بدون التحديث' : 'Cannot continue without updating';
 

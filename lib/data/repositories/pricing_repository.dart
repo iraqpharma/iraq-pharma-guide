@@ -13,13 +13,18 @@ class PricingRepository {
     await prefs.setString(_cacheKey, jsonEncode(rows));
   }
 
+  /// الصفوف المخفيّة أسماء عبثية أو مستلزمات ليست أدوية، فلا تصل
+  /// للمستخدم في أي مسار: لا من السيرفر ولا من الذاكرة المحليّة.
+  static List<PricingEntry> _visible(Iterable<PricingEntry> rows) =>
+      rows.where((e) => !e.isHidden).toList();
+
   Future<List<PricingEntry>> loadCached() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_cacheKey);
       if (raw == null) return [];
       final list = jsonDecode(raw) as List;
-      return list.map((e) => PricingEntry.fromJson(e)).toList();
+      return _visible(list.map((e) => PricingEntry.fromJson(e)));
     } catch (_) {
       return [];
     }
@@ -30,11 +35,12 @@ class PricingRepository {
     final data = await _client
         .from(_table)
         .select()
+        .eq('is_hidden', false)
         .order('view_count', ascending: false)
         .order('trade_name', ascending: true);
     final rows = List<Map<String, dynamic>>.from(data);
     await _saveCache(rows);
-    return rows.map(PricingEntry.fromJson).toList();
+    return _visible(rows.map(PricingEntry.fromJson));
   }
 
   // stream مرتّب حسب الأكثر مشاهدة
@@ -45,7 +51,7 @@ class PricingRepository {
         .order('view_count', ascending: false)
         .map((rows) {
           _saveCache(rows);
-          return rows.map(PricingEntry.fromJson).toList();
+          return _visible(rows.map(PricingEntry.fromJson));
         });
   }
 
@@ -55,12 +61,9 @@ class PricingRepository {
         .from(_table)
         .stream(primaryKey: ['id'])
         .order('view_count', ascending: false)
-        .map((rows) => rows
-            .map(PricingEntry.fromJson)
-            .where((e) =>
-                e.tradeName.toLowerCase().contains(q) ||
-                e.barcode.toLowerCase().contains(q))
-            .toList());
+        .map((rows) => _visible(rows.map(PricingEntry.fromJson)).where((e) =>
+            e.tradeName.toLowerCase().contains(q) ||
+            e.barcode.toLowerCase().contains(q)).toList());
   }
 
   // زيادة عداد المشاهدة عند فتح التفاصيل

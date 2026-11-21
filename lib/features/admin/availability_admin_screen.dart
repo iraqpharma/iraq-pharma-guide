@@ -149,25 +149,21 @@ class _AvailabilityAdminScreenState extends State<AvailabilityAdminScreen> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: gov.color.withOpacity(0.13),
-            ),
-            child: Icon(gov.icon, color: gov.color, size: 19),
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(p.titleLine,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                Row(children: [
+                  Expanded(
+                    child: Text(p.titleLine,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 8),
+                  GovMark(city: p.city, compact: true),
+                ]),
                 const SizedBox(height: 2),
                 Text('${p.pharmacyName} · ${p.locationAr}',
                     maxLines: 1,

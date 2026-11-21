@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../services/app_admin_service.dart';
+import 'registrants_screen.dart';
 
 class AdminStatisticsScreen extends StatefulWidget {
   const AdminStatisticsScreen({super.key});
@@ -12,6 +14,7 @@ class AdminStatisticsScreen extends StatefulWidget {
 
 class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
   Map<String, dynamic>? _stats;
+  Map<String, dynamic>? _eng;
   bool  _loading = true;
   String? _error;
 
@@ -25,10 +28,27 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
     setState(() { _loading = true; _error = null; });
     try {
       final res = await Supabase.instance.client.rpc('get_app_statistics');
-      if (mounted) setState(() { _stats = Map<String, dynamic>.from(res); _loading = false; });
+      // إحصائيات التفاعل اختيارية: فشلها لا يُسقط الصفحة كلها
+      Map<String, dynamic>? eng;
+      try {
+        eng = await AppAdminService.instance.engagement();
+      } catch (_) {}
+      if (mounted) {
+        setState(() {
+          _stats = Map<String, dynamic>.from(res);
+          _eng = eng;
+          _loading = false;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
+  }
+
+  void _openRegistrants(String period, String title) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => RegistrantsScreen(period: period, title: title),
+    ));
   }
 
   @override
@@ -99,6 +119,7 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
               value: '${s['users_this_month'] ?? 0}',
               icon: Icons.calendar_month_rounded,
               color: const Color(0xFF6366F1),
+              onTap: () => _openRegistrants('month', 'جدد هذا الشهر'),
             )),
             const SizedBox(width: 10),
             Expanded(child: _StatCard(
@@ -106,6 +127,7 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
               value: '${s['users_this_week'] ?? 0}',
               icon: Icons.date_range_rounded,
               color: const Color(0xFFF59E0B),
+              onTap: () => _openRegistrants('week', 'جدد هذا الأسبوع'),
             )),
           ]),
           const SizedBox(height: 10),
@@ -115,6 +137,7 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
               value: '${s['users_today'] ?? 0}',
               icon: Icons.today_rounded,
               color: const Color(0xFFEF4444),
+              onTap: () => _openRegistrants('today', 'تسجيلات اليوم'),
             )),
             const SizedBox(width: 10),
             Expanded(child: _StatCard(
@@ -124,6 +147,9 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
               color: const Color(0xFF455A64),
             )),
           ]),
+
+          // ── التفاعل مع الأقسام ─────────────────────────────────────
+          if (_eng != null) ..._engagement(_eng!),
 
           const SizedBox(height: 24),
 
@@ -179,6 +205,209 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
     );
   }
 
+  /// التفاعل الحقيقي: من يلعب، من يستعمل الأدوات، وماذا ينتظر المراجعة.
+  List<Widget> _engagement(Map<String, dynamic> e) {
+    String v(String k) => '${e[k] ?? 0}';
+    final roles  = (e['roles']  as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final cities = (e['cities'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+    return [
+      // ── النشاط الحقيقي ─────────────────────────────────────────
+      // عدد المسجّلين رقم لا يتغيّر. الرقم الذي يُقاس عليه نجاح
+      // التطبيق هو من فتحه اليوم فعلاً.
+      const SizedBox(height: 24),
+      _SectionHeader(
+          title: 'النشاط الفعلي', icon: Icons.bolt_rounded),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'نشطون اليوم',
+          value: v('active_today'),
+          icon: Icons.wb_sunny_outlined,
+          color: const Color(0xFFE4572E),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'نشطون هذا الأسبوع',
+          value: v('active_week'),
+          icon: Icons.calendar_view_week_rounded,
+          color: const Color(0xFFD4A017),
+        )),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'نشطون هذا الشهر',
+          value: v('active_month'),
+          icon: Icons.calendar_month_outlined,
+          color: const Color(0xFF2E8F63),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'لم يفتحوه منذ شهر',
+          value: v('dormant_30'),
+          icon: Icons.bedtime_outlined,
+          color: const Color(0xFF6E7B88),
+        )),
+      ]),
+
+      const SizedBox(height: 24),
+      _SectionHeader(
+          title: 'عيادتك اليوم والمسابقات',
+          icon: Icons.emoji_events_outlined),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'لعبوا أسئلة اليوم',
+          value: v('quiz_players_total'),
+          icon: Icons.quiz_outlined,
+          color: const Color(0xFF7A4EA8),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'نشطون هذا الأسبوع',
+          value: v('quiz_players_week'),
+          icon: Icons.local_fire_department_outlined,
+          color: const Color(0xFFE4572E),
+        )),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'معدّل الإجابات الصحيحة',
+          value: '${e['quiz_avg_score'] ?? 0}',
+          icon: Icons.check_circle_outline_rounded,
+          color: const Color(0xFF10B981),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'أطول سلسلة أيام',
+          value: v('streak_best'),
+          icon: Icons.bolt_rounded,
+          color: const Color(0xFFD4A017),
+        )),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'تحدّي السرعة',
+          value: v('speed_players_total'),
+          icon: Icons.speed_rounded,
+          color: const Color(0xFF0EA5E9),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'أعلى نتيجة سرعة',
+          value: v('speed_top_score'),
+          icon: Icons.military_tech_outlined,
+          color: const Color(0xFF9AA5B1),
+        )),
+      ]),
+
+      const SizedBox(height: 24),
+      _SectionHeader(
+          title: 'استعمال الأقسام', icon: Icons.insights_rounded),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'مرّات استعمال الأدوات',
+          value: _formatNumber(e['tool_usage_total']),
+          icon: Icons.handyman_outlined,
+          color: const Color(0xFF2E8B82),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'عمليات البحث',
+          value: _formatNumber(e['search_total']),
+          icon: Icons.search_rounded,
+          color: const Color(0xFF3C7FB0),
+        )),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'إعلانات وظائف منشورة',
+          value: v('jobs_live'),
+          icon: Icons.work_outline_rounded,
+          color: const Color(0xFF6366F1),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'إعلانات توفّر منشورة',
+          value: v('availability_live'),
+          icon: Icons.inventory_2_outlined,
+          color: const Color(0xFF2E8F63),
+        )),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'باركودات معرّفة',
+          value: v('barcodes_known'),
+          icon: Icons.qr_code_2_rounded,
+          color: const Color(0xFF455A64),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'أسعار مخفيّة للمراجعة',
+          value: v('pricing_hidden'),
+          icon: Icons.visibility_off_outlined,
+          color: const Color(0xFFF59E0B),
+        )),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'اقتراحات باركود',
+          value: v('barcodes_pending'),
+          icon: Icons.qr_code_scanner_rounded,
+          color: const Color(0xFF3C7FB0),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'اقتراحات المستخدمين',
+          value: v('suggestions_total'),
+          icon: Icons.lightbulb_outline_rounded,
+          color: const Color(0xFF7A8F3E),
+        )),
+      ]),
+
+      const SizedBox(height: 24),
+      _SectionHeader(
+          title: 'ينتظر قراراً', icon: Icons.pending_actions_rounded),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: _StatCard(
+          label: 'وظائف بانتظار الموافقة',
+          value: v('jobs_pending'),
+          icon: Icons.hourglass_bottom_rounded,
+          color: const Color(0xFFEF4444),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: _StatCard(
+          label: 'طلبات إضافة أدوية',
+          value: v('drug_requests_open'),
+          icon: Icons.playlist_add_rounded,
+          color: const Color(0xFF8B5CF6),
+        )),
+      ]),
+
+      if (roles.isNotEmpty) ...[
+        const SizedBox(height: 24),
+        _SectionHeader(title: 'المهن', icon: Icons.badge_outlined),
+        const SizedBox(height: 10),
+        _BreakdownCard(rows: roles, keyName: 'role'),
+      ],
+      if (cities.isNotEmpty) ...[
+        const SizedBox(height: 18),
+        _SectionHeader(
+            title: 'المحافظات', icon: Icons.location_on_outlined),
+        const SizedBox(height: 10),
+        _BreakdownCard(rows: cities, keyName: 'city'),
+      ],
+    ];
+  }
+
   String _formatNumber(dynamic n) {
     final num = int.tryParse(n.toString()) ?? 0;
     if (num >= 1000000) return '${(num / 1000000).toStringAsFixed(1)}M';
@@ -208,27 +437,33 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+
+  /// البطاقات القابلة للفتح تعرض سهماً صغيراً كي يعرف المدير أن وراءها تفصيلاً
+  final VoidCallback? onTap;
+
   const _StatCard({required this.label, required this.value,
-      required this.icon, required this.color});
+      required this.icon, required this.color, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final body = Padding(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(
-          width: 38, height: 38,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(10),
+        Row(children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
           ),
-          child: Icon(icon, color: color, size: 20),
-        ),
+          const Spacer(),
+          if (onTap != null)
+            Icon(Icons.chevron_left_rounded,
+                size: 20,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ]),
         const SizedBox(height: 12),
         Text(value, style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 26, fontWeight: FontWeight.bold,
@@ -236,6 +471,87 @@ class _StatCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(label, style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+      ]),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: onTap != null
+                ? color.withOpacity(0.32)
+                : Theme.of(context).dividerColor),
+      ),
+      child: onTap == null
+          ? body
+          : Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(onTap: onTap, child: body),
+            ),
+    );
+  }
+}
+
+/// توزيع بسيط بأشرطة نسبية: المهن، المحافظات.
+class _BreakdownCard extends StatelessWidget {
+  final List<Map<String, dynamic>> rows;
+  final String keyName;
+  const _BreakdownCard({required this.rows, required this.keyName});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxN = rows
+        .map((r) => (r['n'] as num?)?.toInt() ?? 0)
+        .fold<int>(1, (a, b) => b > a ? b : a);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(children: [
+        for (final r in rows)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(children: [
+              SizedBox(
+                width: 110,
+                child: Text('${r[keyName] ?? ''}',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface)),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: ((r['n'] as num?)?.toInt() ?? 0) / maxN,
+                    minHeight: 6,
+                    backgroundColor: Theme.of(context).dividerColor,
+                    valueColor:
+                        const AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 9),
+              SizedBox(
+                width: 34,
+                child: Text('${r['n'] ?? 0}',
+                    textAlign: TextAlign.end,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            Theme.of(context).colorScheme.onSurfaceVariant)),
+              ),
+            ]),
+          ),
       ]),
     );
   }

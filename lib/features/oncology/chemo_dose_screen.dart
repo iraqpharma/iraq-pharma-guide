@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
 import 'chemo_dose_rules.dart';
+import '../../shared/widgets/section_intro.dart';
 
 /// حاسبة تخفيض جرعات العلاج الكيميائي.
 /// تُدخل القياسات والمختبرات مرة واحدة، فتعطي لكل دواء النسبة الموصى بها
@@ -29,6 +30,14 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
 
   bool _female = false;
   int  _drugIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SectionIntro.showOnce(context, id: 'chemo_dose');
+    });
+  }
 
   @override
   void dispose() {
@@ -219,7 +228,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
             child: Text(
               'أداة مساعدة للقرار. النتيجة لا تُغني عن بروتوكول المركز '
               'العلاجي ولا عن قرار الطبيب المعالج، ولا تشمل التعديل بسبب '
-              'السمّية التراكمية أو التداخلات.',
+              'السمّية التراكمية أو التداخلات',
               style: TextStyle(
                   fontSize: 12, height: 1.6, color: Color(0xFF7A4E05)),
             ),
@@ -405,7 +414,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
         const SizedBox(height: 9),
         const Text(
           'يُستعمل GFR المحسوب بـ Cockcroft-Gault أعلاه. كثير من المراكز '
-          'تضع سقفاً لـ GFR عند 125 mL/min لتفادي الجرعات المفرطة.',
+          'تضع سقفاً لـ GFR عند 125 mL/min لتفادي الجرعات المفرطة',
           style: TextStyle(fontSize: 11.5, height: 1.65, color: Color(0xFF6B6B7B)),
         ),
       ]),

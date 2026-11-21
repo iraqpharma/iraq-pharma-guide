@@ -11,7 +11,7 @@ class SafetyBadges extends StatelessWidget {
   Widget build(BuildContext context) {
     final chips = <Widget>[
       if (drug.isVesicant)
-        const _Badge('مُقرِّح — خطر تنخّر عند التسرّب',
+        const _Badge('مُقرِّح، خطر تنخّر عند التسرّب',
             Icons.warning_amber_rounded, Color(0xFFAE2E24)),
       if (drug.lightProtection)
         const _Badge('يُحفظ بعيداً عن الضوء',
@@ -171,9 +171,9 @@ class _VesicantBanner extends StatelessWidget {
               SizedBox(width: 8),
               Expanded(
                   child: Text(
-                      'دواء مُقرِّح (vesicant): التسرّب خارج الوريد يُسبّب تنخّراً. '
-                      'أوقف التسريب فوراً ولا تنزع القنية، واسحب ما أمكن من الدواء، '
-                      'ثم طبّق بروتوكول التسرّب والترياق المذكور أدناه.',
+                      'دواء مُقرِّح (vesicant): التسرّب خارج الوريد يُسبّب تنخّراً'
+                      'أوقف التسريب فوراً ولا تنزع القنية، واسحب ما أمكن من الدواء'
+                      'ثم طبّق بروتوكول التسرّب والترياق المذكور أدناه',
                       style: TextStyle(
                           fontSize: 12.5,
                           height: 1.5,

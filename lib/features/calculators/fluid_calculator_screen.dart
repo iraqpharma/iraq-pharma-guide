@@ -207,9 +207,9 @@ class _Disclaimer extends StatelessWidget {
           const SizedBox(width: 9),
           Expanded(
             child: Text(
-                'الحاسبة أداة مساعدة — راجع نشرة المنتج وبروتوكول المستشفى '
+                'الحاسبة أداة مساعدة، راجع نشرة المنتج وبروتوكول المستشفى '
                 'قبل التحضير، وتحقّق من الحساب مرّة ثانية مع زميل في '
-                'الأدوية عالية الخطورة.',
+                'الأدوية عالية الخطورة',
                 style: TextStyle(
                     fontSize: 11.5,
                     height: 1.65,
@@ -253,7 +253,7 @@ class _DilutionTabState extends State<_DilutionTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
-        Text('من تركيز جاهز إلى تركيز مطلوب — تُحسب كمية العيار والمذيب.',
+        Text('من تركيز جاهز إلى تركيز مطلوب، تُحسب كمية العيار والمذيب',
             style: TextStyle(
                 fontSize: 12.5,
                 height: 1.6,
@@ -284,8 +284,8 @@ class _DilutionTabState extends State<_DilutionTab> {
               ['التركيز المطلوب أعلى من تركيز العيار', '✕'],
             ],
             color: AppColors.errorRed,
-            note: 'التخفيف يُنزِل التركيز لا يرفعه — راجع الأرقام أو ابحث '
-                'عن عيار أقوى.',
+            note: 'التخفيف يُنزِل التركيز لا يرفعه، راجع الأرقام أو ابحث '
+                'عن عيار أقوى',
           )
         else if (v1 != null)
           _Result(
@@ -296,9 +296,9 @@ class _DilutionTabState extends State<_DilutionTab> {
               ['الحجم النهائي', '${_fmt(v2)} mL'],
               ['الكمية الكلية للدواء', '${_fmt(c2! * v2)} mg'],
             ],
-            note: 'نسبة التخفيف ≈ 1 : ${_fmt(c1! / c2, 1)} — '
+            note: 'نسبة التخفيف ≈ 1 : ${_fmt(c1! / c2, 1)}'
                 'استعمل المذيب الموصى به في نشرة الدواء (NS أو D5W أو ماء '
-                'للحقن) لا أي مذيب.',
+                'للحقن) لا أي مذيب',
           ),
         const _Disclaimer(),
       ],
@@ -338,7 +338,7 @@ class _RateTabState extends State<_RateTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
-        Text('من حجم الكيس ومدّة التسريب إلى معدل المضخة وعدد القطرات.',
+        Text('من حجم الكيس ومدّة التسريب إلى معدل المضخة وعدد القطرات',
             style: TextStyle(
                 fontSize: 12.5,
                 height: 1.6,
@@ -354,7 +354,7 @@ class _RateTabState extends State<_RateTab> {
             ctrl: _hours,
             label: 'مدّة التسريب',
             unit: 'ساعة',
-            hint: 'مثال: 8 — نصف ساعة تُكتب 0.5',
+            hint: 'مثال: 8، نصف ساعة تُكتب 0.5',
             onChanged: (_) => setState(() {})),
         const Padding(
           padding: EdgeInsets.only(bottom: 8, right: 2),
@@ -384,7 +384,7 @@ class _RateTabState extends State<_RateTab> {
               ['بالثانية', 'قطرة كل ${_fmt(60 / (mlh * _dropFactor / 60), 1)} ث'],
             ],
             note: 'بالعدّ اليدوي: احسب القطرات في 15 ثانية واضربها في 4 '
-                'للتحقّق من الضبط.',
+                'للتحقّق من الضبط',
           ),
         const _Disclaimer(),
       ],
@@ -446,8 +446,8 @@ class _WeightDoseTabState extends State<_WeightDoseTab> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
         Text(
-            'لأدوية التسريب المحسوبة بالوزن (نورإبينفرين، دوبامين، '
-            'ميدازولام…): من الجرعة المطلوبة إلى معدل المضخة.',
+            'لأدوية التسريب المحسوبة بالوزن (نورإبينفرين، دوبامين'
+            'ميدازولام…): من الجرعة المطلوبة إلى معدل المضخة',
             style: TextStyle(
                 fontSize: 12.5,
                 height: 1.6,
@@ -498,9 +498,9 @@ class _WeightDoseTabState extends State<_WeightDoseTab> {
               ['تركيز الكيس', '${_fmt(concMcgMl!, 0)} mcg/mL'],
               ['الجرعة الفعلية', '${_fmt(mcgMin!, 1)} mcg/دقيقة'],
             ],
-            note: 'تحقّق من التركيز المعتمد في وحدتك — بعض الوحدات تُحضّر '
+            note: 'تحقّق من التركيز المعتمد في وحدتك، بعض الوحدات تُحضّر '
                 'النورإبينفرين 4 mg/250 mL وأخرى 4 mg/50 mL، والفرق في '
-                'المعدل خمسة أضعاف.',
+                'المعدل خمسة أضعاف',
           ),
         const _Disclaimer(),
       ],
@@ -547,7 +547,7 @@ class _MaintenanceTabState extends State<_MaintenanceTab> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
         Text('سوائل الصيانة بقاعدة Holliday-Segar (4-2-1)، مع حساب العَوَز '
-            'عند وجود تجفاف.',
+            'عند وجود تجفاف',
             style: TextStyle(
                 fontSize: 12.5,
                 height: 1.6,
@@ -585,8 +585,8 @@ class _MaintenanceTabState extends State<_MaintenanceTab> {
               ['في 24 ساعة', '${_fmt(hr * 24, 0)} mL'],
             ],
             note: 'المحلول المعتاد للصيانة عند الأطفال: isotonic '
-                '(0.9٪ NaCl + 5٪ dextrose) مع البوتاسيوم عند الحاجة — '
-                'المحاليل الناقصة التوتّر ترفع خطر نقص الصوديوم.',
+                '(0.9٪ NaCl + 5٪ dextrose) مع البوتاسيوم عند الحاجة'
+                'المحاليل الناقصة التوتّر ترفع خطر نقص الصوديوم',
           ),
           if (deficit != null && deficit > 0) ...[
             const SizedBox(height: 12),
@@ -599,7 +599,7 @@ class _MaintenanceTabState extends State<_MaintenanceTab> {
                 ['والنصف في 16 ساعة', '${_fmt(deficit / 2 / 16, 1)} mL/hr إضافية'],
               ],
               note: 'الصدمة تُعالَج أولاً بجرعة bolus 10–20 mL/kg قبل '
-                  'حساب العَوَز، ويُعاد تقييم الطفل بعد كل جرعة.',
+                  'حساب العَوَز، ويُعاد تقييم الطفل بعد كل جرعة',
             ),
           ],
         ],

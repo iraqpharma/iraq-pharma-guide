@@ -143,6 +143,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Navigate
     if (AuthService.instance.isLoggedIn) {
+      // نبضة «آخر ظهور» لحساب النشطين اليوم. لا تُنتظر نتيجتها كي لا
+      // تؤخّر الدخول، وفشلها لا يمنع فتح التطبيق.
+      AuthService.instance.touchLastSeen();
       final valid = await SessionService.instance.isSessionStillValid();
       if (!mounted) return;
       if (valid) {

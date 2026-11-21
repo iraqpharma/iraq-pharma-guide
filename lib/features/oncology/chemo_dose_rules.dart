@@ -86,14 +86,14 @@ DoseAdvice evaluate(ChemoDrug d, ChemoLabs labs) {
 String? marrowHold(ChemoLabs l) {
   if (l.anc < 1.0 && l.platelets < 75) {
     return 'العدلات ${l.anc.toStringAsFixed(1)}×10⁹/L والصفيحات '
-        '${l.platelets.toStringAsFixed(0)}×10⁹/L — تُؤجَّل الدورة حتى التعافي';
+        '${l.platelets.toStringAsFixed(0)}×10⁹/L، تُؤجَّل الدورة حتى التعافي';
   }
   if (l.anc < 1.0) {
-    return 'العدلات ${l.anc.toStringAsFixed(1)}×10⁹/L (<1.0) — تُؤجَّل الدورة عادةً '
+    return 'العدلات ${l.anc.toStringAsFixed(1)}×10⁹/L (<1.0)، تُؤجَّل الدورة عادةً '
         'حتى ≥1.5، ويُراجَع استعمال G-CSF';
   }
   if (l.platelets < 75) {
-    return 'الصفيحات ${l.platelets.toStringAsFixed(0)}×10⁹/L (<75) — تُؤجَّل الدورة '
+    return 'الصفيحات ${l.platelets.toStringAsFixed(0)}×10⁹/L (<75)، تُؤجَّل الدورة '
         'عادةً حتى ≥100';
   }
   return null;
@@ -109,11 +109,11 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label · BC Cancer',
     rules: [
       DoseRule(applies: _biliOver5, percent: 0.0,
-          reason: 'البيليروبين >5 mg/dL — يُمنع الإعطاء'),
+          reason: 'البيليروبين >5 mg/dL، يُمنع الإعطاء'),
       DoseRule(applies: _bili3to5, percent: 0.25,
-          reason: 'البيليروبين 3.1–5 mg/dL — ٢٥٪ من الجرعة'),
+          reason: 'البيليروبين 3.1–5 mg/dL، ٢٥٪ من الجرعة'),
       DoseRule(applies: _bili12to3, percent: 0.5,
-          reason: 'البيليروبين 1.2–3 mg/dL — ٥٠٪ من الجرعة'),
+          reason: 'البيليروبين 1.2–3 mg/dL، ٥٠٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -124,11 +124,11 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _biliOver5, percent: 0.0,
-          reason: 'البيليروبين >5 mg/dL — يُمنع الإعطاء'),
+          reason: 'البيليروبين >5 mg/dL، يُمنع الإعطاء'),
       DoseRule(applies: _bili3to5, percent: 0.25,
-          reason: 'البيليروبين 3.1–5 mg/dL — ٢٥٪ من الجرعة'),
+          reason: 'البيليروبين 3.1–5 mg/dL، ٢٥٪ من الجرعة'),
       DoseRule(applies: _bili12to3, percent: 0.5,
-          reason: 'البيليروبين 1.2–3 mg/dL — ٥٠٪ من الجرعة'),
+          reason: 'البيليروبين 1.2–3 mg/dL، ٥٠٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -139,7 +139,7 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label · NCCN',
     rules: [
       DoseRule(applies: _biliOver3, percent: 0.5,
-          reason: 'البيليروبين >3 mg/dL — ٥٠٪ من الجرعة'),
+          reason: 'البيليروبين >3 mg/dL، ٥٠٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -150,9 +150,9 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _biliOver3, percent: 0.0,
-          reason: 'البيليروبين >3 mg/dL — يُمنع الإعطاء'),
+          reason: 'البيليروبين >3 mg/dL، يُمنع الإعطاء'),
       DoseRule(applies: _bili2to3, percent: 0.5,
-          reason: 'البيليروبين 2.1–3 mg/dL — ٥٠٪ من الجرعة'),
+          reason: 'البيليروبين 2.1–3 mg/dL، ٥٠٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -163,9 +163,9 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _biliOver3, percent: 0.25,
-          reason: 'البيليروبين >3 mg/dL — ٢٥٪ من الجرعة'),
+          reason: 'البيليروبين >3 mg/dL، ٢٥٪ من الجرعة'),
       DoseRule(applies: _bili2to3, percent: 0.5,
-          reason: 'البيليروبين 2.1–3 mg/dL — ٥٠٪ من الجرعة'),
+          reason: 'البيليروبين 2.1–3 mg/dL، ٥٠٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -176,11 +176,11 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _biliOver5, percent: 0.0,
-          reason: 'البيليروبين >5× الحد الأعلى — لا يُوصى بالإعطاء'),
+          reason: 'البيليروبين >5× الحد الأعلى، لا يُوصى بالإعطاء'),
       DoseRule(applies: _bili2to5, percent: 0.5,
-          reason: 'اختلال كبدي متوسط — خفض الجرعة إلى ٥٠٪ تقريباً'),
+          reason: 'اختلال كبدي متوسط، خفض الجرعة إلى ٥٠٪ تقريباً'),
       DoseRule(applies: _astHigh, percent: 0.75,
-          reason: 'ارتفاع الترانس أميناز — خفض أولي إلى ٧٥٪ مع مراقبة'),
+          reason: 'ارتفاع الترانس أميناز، خفض أولي إلى ٧٥٪ مع مراقبة'),
     ],
   ),
   ChemoDrug(
@@ -191,9 +191,9 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label (تحذير صندوق أسود)',
     rules: [
       DoseRule(applies: _biliOverULN, percent: 0.0,
-          reason: 'البيليروبين فوق الحد الأعلى — يُمنع الإعطاء (صندوق أسود)'),
+          reason: 'البيليروبين فوق الحد الأعلى، يُمنع الإعطاء (صندوق أسود)'),
       DoseRule(applies: _astAlpHigh, percent: 0.0,
-          reason: 'AST/ALT >1.5× مع ALP >2.5× — يُمنع الإعطاء (صندوق أسود)'),
+          reason: 'AST/ALT >1.5× مع ALP >2.5×، يُمنع الإعطاء (صندوق أسود)'),
     ],
   ),
   ChemoDrug(
@@ -204,11 +204,11 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label · NCCN',
     rules: [
       DoseRule(applies: _crclUnder30, percent: 0.0,
-          reason: 'CrCl <30 mL/min — يُمنع الإعطاء'),
+          reason: 'CrCl <30 mL/min، يُمنع الإعطاء'),
       DoseRule(applies: _crcl30to45, percent: 0.5,
-          reason: 'CrCl 30–45 mL/min — ٥٠٪ مع إماهة مكثّفة أو بديل كاربوبلاتين'),
+          reason: 'CrCl 30–45 mL/min، ٥٠٪ مع إماهة مكثّفة أو بديل كاربوبلاتين'),
       DoseRule(applies: _crcl45to60, percent: 0.75,
-          reason: 'CrCl 45–60 mL/min — ٧٥٪ مع إماهة ومراقبة المغنيسيوم'),
+          reason: 'CrCl 45–60 mL/min، ٧٥٪ مع إماهة ومراقبة المغنيسيوم'),
     ],
   ),
   ChemoDrug(
@@ -228,9 +228,9 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _crclUnder30, percent: 0.0,
-          reason: 'CrCl <30 mL/min — يُمنع الإعطاء'),
+          reason: 'CrCl <30 mL/min، يُمنع الإعطاء'),
       DoseRule(applies: _crcl30to50, percent: 0.75,
-          reason: 'CrCl 30–50 mL/min — ٧٥٪ من الجرعة'),
+          reason: 'CrCl 30–50 mL/min، ٧٥٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -241,13 +241,13 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label · Lexicomp',
     rules: [
       DoseRule(applies: _crclUnder10, percent: 0.0,
-          reason: 'CrCl <10 mL/min — يُمنع الإعطاء'),
+          reason: 'CrCl <10 mL/min، يُمنع الإعطاء'),
       DoseRule(applies: _crcl10to50, percent: 0.5,
-          reason: 'CrCl 10–50 mL/min — ٥٠٪ مع قلونة البول وليوكوفورين'),
+          reason: 'CrCl 10–50 mL/min، ٥٠٪ مع قلونة البول وليوكوفورين'),
       DoseRule(applies: _crcl50to60, percent: 0.7,
-          reason: 'CrCl 51–60 mL/min — ٧٠٪ من الجرعة'),
+          reason: 'CrCl 51–60 mL/min، ٧٠٪ من الجرعة'),
       DoseRule(applies: _crcl60to80, percent: 0.75,
-          reason: 'CrCl 61–80 mL/min — ٧٥٪ من الجرعة'),
+          reason: 'CrCl 61–80 mL/min، ٧٥٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -258,11 +258,11 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label · BC Cancer',
     rules: [
       DoseRule(applies: _crclUnder15, percent: 0.0,
-          reason: 'CrCl <15 mL/min — لا توجد توصية؛ يُتجنّب'),
+          reason: 'CrCl <15 mL/min، لا توجد توصية؛ يُتجنّب'),
       DoseRule(applies: _bili15to3, percent: 0.5,
-          reason: 'البيليروبين 1.5–3 mg/dL — ٥٠٪ من الجرعة'),
+          reason: 'البيليروبين 1.5–3 mg/dL، ٥٠٪ من الجرعة'),
       DoseRule(applies: _crcl15to50, percent: 0.75,
-          reason: 'CrCl 15–50 mL/min — ٧٥٪ من الجرعة'),
+          reason: 'CrCl 15–50 mL/min، ٧٥٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -273,9 +273,9 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _biliOver3, percent: 0.0,
-          reason: 'البيليروبين >3 mg/dL — يُتجنّب'),
+          reason: 'البيليروبين >3 mg/dL، يُتجنّب'),
       DoseRule(applies: _bili15to3, percent: 0.5,
-          reason: 'البيليروبين 1.5–3 mg/dL — خفض الجرعة ومراقبة الإسهال'),
+          reason: 'البيليروبين 1.5–3 mg/dL، خفض الجرعة ومراقبة الإسهال'),
     ],
   ),
   ChemoDrug(
@@ -286,7 +286,7 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _crclUnder45, percent: 0.0,
-          reason: 'CrCl <45 mL/min — يُمنع الإعطاء'),
+          reason: 'CrCl <45 mL/min، يُمنع الإعطاء'),
     ],
   ),
   ChemoDrug(
@@ -297,7 +297,7 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _crclUnder30, percent: 0.65,
-          reason: 'CrCl <30 mL/min — خفض الجرعة الابتدائية ومراقبة السمّية'),
+          reason: 'CrCl <30 mL/min، خفض الجرعة الابتدائية ومراقبة السمّية'),
     ],
   ),
   ChemoDrug(
@@ -308,11 +308,11 @@ const chemoDrugs = <ChemoDrug>[
     source: 'Lexicomp · BC Cancer',
     rules: [
       DoseRule(applies: _crcl20to30, percent: 0.45,
-          reason: 'CrCl 20–30 mL/min — ٤٥٪ من الجرعة'),
+          reason: 'CrCl 20–30 mL/min، ٤٥٪ من الجرعة'),
       DoseRule(applies: _crcl30to40, percent: 0.60,
-          reason: 'CrCl 30–40 mL/min — ٦٠٪ من الجرعة'),
+          reason: 'CrCl 30–40 mL/min، ٦٠٪ من الجرعة'),
       DoseRule(applies: _crcl40to50, percent: 0.70,
-          reason: 'CrCl 40–50 mL/min — ٧٠٪ من الجرعة'),
+          reason: 'CrCl 40–50 mL/min، ٧٠٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -323,7 +323,7 @@ const chemoDrugs = <ChemoDrug>[
     source: 'Lexicomp',
     rules: [
       DoseRule(applies: _crclUnder10, percent: 0.75,
-          reason: 'CrCl <10 mL/min — ٧٥٪ من الجرعة'),
+          reason: 'CrCl <10 mL/min، ٧٥٪ من الجرعة'),
     ],
   ),
   ChemoDrug(
@@ -334,7 +334,7 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _biliOver5, percent: 0.0,
-          reason: 'البيليروبين >5 mg/dL — يُمنع الإعطاء'),
+          reason: 'البيليروبين >5 mg/dL، يُمنع الإعطاء'),
     ],
   ),
   ChemoDrug(
@@ -345,7 +345,7 @@ const chemoDrugs = <ChemoDrug>[
     source: 'FDA label',
     rules: [
       DoseRule(applies: _bili16plus, percent: 0.8,
-          reason: 'البيليروبين >1.6 mg/dL — البدء بـ 800 mg/m²'),
+          reason: 'البيليروبين >1.6 mg/dL، البدء بـ 800 mg/m²'),
     ],
   ),
 ];

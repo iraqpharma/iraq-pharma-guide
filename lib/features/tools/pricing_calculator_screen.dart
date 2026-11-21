@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../services/auth_service.dart';
+import '../../shared/widgets/section_intro.dart';
 
 class PricingCalculatorScreen extends StatefulWidget {
   const PricingCalculatorScreen({super.key});
@@ -30,6 +31,9 @@ class _PricingCalculatorScreenState extends State<PricingCalculatorScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SectionIntro.showOnce(context, id: 'pricing');
+    });
     AuthService.instance.incrementToolUsage();
     for (final c in [_baseCostCtrl, _purchasedCtrl, _bonusCtrl,
                      _discountCtrl, _cashCtrl, _profitCtrl]) {

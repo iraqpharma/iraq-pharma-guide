@@ -60,7 +60,7 @@ class _EmbedVideoPlayerState extends State<EmbedVideoPlayer> {
           const Padding(
             padding: EdgeInsets.all(14),
             child: Text(
-              'هذه المنصّة لا تسمح بالتشغيل داخل التطبيق — افتح الفيديو من الزر أدناه',
+              'هذه المنصّة لا تسمح بالتشغيل داخل التطبيق، افتح الفيديو من الزر أدناه',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 12.5),
             ),
@@ -114,7 +114,7 @@ class _FileVideoPlayerState extends State<FileVideoPlayer> {
         alignment: Alignment.center,
         child: const Padding(
           padding: EdgeInsets.all(14),
-          child: Text('تعذّر تشغيل الملف — تحقّق من الرابط أو الاتصال',
+          child: Text('تعذّر تشغيل الملف، تحقّق من الرابط أو الاتصال',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 12.5)),
         ),

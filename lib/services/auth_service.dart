@@ -5,6 +5,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'admin_session.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ── Input limits ──────────────────────────────────────────────────────────────
@@ -396,7 +398,11 @@ class AuthService {
   }
 
   // ── Sign Out ──────────────────────────────────────────────────────────────
-  Future<void> signOut() async => _client.auth.signOut();
+  Future<void> signOut() async {
+    // قفل الباب الإداري فوراً مع الخروج
+    AdminSession.reset();
+    await _client.auth.signOut();
+  }
 
   /// Permanently deletes the signed-in user. Required by App Store guideline
   /// 5.1.1(v) and Google Play's data deletion policy: the user must be able to
@@ -417,6 +423,7 @@ class AuthService {
     // The user row is gone; clear the local session and every local flag so a
     // fresh sign-up on this device starts clean.
     try {
+      AdminSession.reset();
       await _client.auth.signOut();
     } catch (_) {}
     try {
@@ -492,12 +499,26 @@ class AuthService {
     username = _sanitizeUsername(username);
     if (username.length < 4) return UsernameStatus.tooShort;
     try {
-      final res = await _client.from('profiles')
-          .select('username').eq('username', username).maybeSingle();
-      return res == null ? UsernameStatus.available : UsernameStatus.taken;
+      // جدول profiles لم يعد مقروءاً إلا لصاحبه وللمدراء، فالتحقّق يمرّ
+      // على دالّة لا تُرجع إلا نعم أو لا بلا كشف أي بيانات.
+      final free = await _client
+          .rpc('username_available', params: {'p_username': username});
+      return (free == true)
+          ? UsernameStatus.available
+          : UsernameStatus.taken;
     } catch (_) {
       return UsernameStatus.error;
     }
+  }
+
+  /// نبضة «آخر ظهور» تُنادى عند فتح التطبيق، لحساب النشطين اليوم.
+  ///
+  /// تكتب لصاحب الحساب وحده، ولا تُرجع شيئاً، وفشلها لا يُزعج المستخدم.
+  Future<void> touchLastSeen() async {
+    try {
+      if (_client.auth.currentUser == null) return;
+      await _client.rpc('touch_last_seen');
+    } catch (_) {}
   }
 
   // ── Username generation (Arabic + English) ───────────────────────────────

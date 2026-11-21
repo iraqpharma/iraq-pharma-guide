@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/database/database_helper.dart';
+import '../../services/haptics_service.dart';
 
 /// «تحدّي التداخلات» — زوج أدوية في كل سؤال: هل بينهما تداخل مُدرج؟
 ///
@@ -45,6 +46,11 @@ class _InteractionChallengeScreenState
   void _pick(int v) {
     if (_chosen != null) return;
     final correct = (_pairs[_index]['interacts'] as int) == v;
+    if (correct) {
+      Haptics.success();
+    } else {
+      Haptics.error();
+    }
     setState(() {
       _chosen = v;
       if (correct) _score++;
@@ -78,7 +84,7 @@ class _InteractionChallengeScreenState
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(28),
-            child: Text('تعذّر توليد الأزواج — أعد المحاولة',
+            child: Text('تعذّر توليد الأزواج، أعد المحاولة',
                 style:
                     TextStyle(color: theme.colorScheme.onSurfaceVariant)),
           ),
@@ -122,9 +128,9 @@ class _InteractionChallengeScreenState
               const SizedBox(height: 8),
               Text(
                   pct >= 70
-                      ? 'معرفتك بالتداخلات قوية — واصل.'
+                      ? 'معرفتك بالتداخلات قوية، واصل'
                       : 'التداخلات أكثر ما يُغفل في الصيدلية. أعد المحاولة '
-                          'بأزواج جديدة.',
+                          'بأزواج جديدة',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 12.5,
@@ -197,20 +203,27 @@ class _InteractionChallengeScreenState
           ]),
 
           const SizedBox(height: 20),
-          const Text('هل بينهما تداخل مُدرج في مصدر التطبيق؟',
+          const Text('هل يوجد تداخل دوائي مُعتبَر بين هذين الدوائين؟',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          Text('تداخل يستدعي تنبيه الطبيب أو تعديل الجرعة أو المراقبة',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 11.5,
+                  height: 1.5,
+                  color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 16),
 
           Row(children: [
             Expanded(
               child: _answerBtn(
-                  'نعم، يوجد', Icons.warning_amber_rounded, 1, truth),
+                  'نعم، يوجد تداخل', Icons.warning_amber_rounded, 1, truth),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _answerBtn(
-                  'لا، غير مُدرج', Icons.check_circle_outline_rounded, 0,
+                  'لا تداخل مُعتبَر', Icons.check_circle_outline_rounded, 0,
                   truth),
             ),
           ]),
@@ -232,7 +245,7 @@ class _InteractionChallengeScreenState
                     Icon(Icons.info_outline_rounded,
                         size: 16, color: AppColors.primary),
                     SizedBox(width: 7),
-                    Text('ما في المصدر',
+                    Text('التفسير',
                         style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,

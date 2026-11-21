@@ -312,40 +312,6 @@ class _DrawerFooter extends StatelessWidget {
               _legalLink(context, s.disclaimer, '/legal/disclaimer'),
             ],
           ),
-          const SizedBox(height: 10),
-          // ── إعداد ومراجعة المحتوى ───────────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(children: [
-              Text(
-                'إعداد ومراجعة المحتوى الدوائي',
-                style: GoogleFonts.ibmPlexSansArabic(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 10.5),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                'د. حميد عدنان حميد',
-                style: GoogleFonts.ibmPlexSansArabic(
-                    color: AppColors.primary,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                'صيدلاني سريري',
-                style: GoogleFonts.ibmPlexSansArabic(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 10),
-                textAlign: TextAlign.center,
-              ),
-            ]),
-          ),
           const SizedBox(height: 8),
           // App name + version
           Text(

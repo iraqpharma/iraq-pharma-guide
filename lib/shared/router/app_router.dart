@@ -48,8 +48,16 @@ import '../../features/clinic_today/speed_calc_screen.dart';
 import '../../features/videos/videos_screen.dart';
 import '../../features/availability/availability_screen.dart';
 import '../../features/calculators/fluid_calculator_screen.dart';
+import '../../features/calculators/shelf_life_screen.dart';
+import '../../features/calculators/supply_days_screen.dart';
+import '../../features/calculators/lab_units_screen.dart';
+import '../../features/calculators/vaccine_schedule_screen.dart';
 import '../../features/admin/app_settings_screen.dart';
 import '../../features/admin/availability_admin_screen.dart';
+import '../../features/admin/pricing_review_screen.dart';
+import '../../features/admin/barcode_admin_screen.dart';
+import '../../features/admin/notification_composer_screen.dart';
+import '../../features/customers/customers_screen.dart';
 import '../../features/admin/drug_requests_admin_screen.dart';
 import '../../features/admin/ads_admin_screen.dart';
 
@@ -154,6 +162,18 @@ final appRouter = GoRouter(
 
     // حاسبة السوائل والتخفيف
     GoRoute(path: '/fluid-calc', builder: (_, __) => const FluidCalculatorScreen()),
+
+    // أدوات سريرية إضافية
+    GoRoute(path: '/customers',
+        builder: (_, __) => const CustomersScreen()),
+    GoRoute(path: '/shelf-life',
+        builder: (_, __) => const ShelfLifeScreen()),
+    GoRoute(path: '/supply-days',
+        builder: (_, __) => const SupplyDaysScreen()),
+    GoRoute(path: '/lab-units',
+        builder: (_, __) => const LabUnitsScreen()),
+    GoRoute(path: '/vaccine-schedule',
+        builder: (_, __) => const VaccineScheduleScreen()),
     GoRoute(path: '/videos',       builder: (_, __) => const VideosScreen()),
     GoRoute(path: '/profile',        builder: (_, __) => const ProfileScreen()),
     GoRoute(path: '/edit-profile',          builder: (_, __) => const EditProfileScreen()),
@@ -176,6 +196,12 @@ final appRouter = GoRouter(
     GoRoute(path: '/admin/availability', builder: (_, __) => const AvailabilityAdminScreen()),
     GoRoute(path: '/admin/drug-requests', builder: (_, __) => const DrugRequestsAdminScreen()),
     GoRoute(path: '/admin/ads', builder: (_, __) => const AdsAdminScreen()),
+    GoRoute(path: '/admin/pricing-review',
+        builder: (_, __) => const PricingReviewScreen()),
+    GoRoute(path: '/admin/barcodes',
+        builder: (_, __) => const BarcodeAdminScreen()),
+    GoRoute(path: '/admin/send-notification',
+        builder: (_, __) => const NotificationComposerScreen()),
     GoRoute(path: '/admin/statistics',  builder: (_, __) => const AdminStatisticsScreen()),
     GoRoute(path: '/admin/drugs',   builder: (_, __) => const AdminDrugListScreen()),
     GoRoute(

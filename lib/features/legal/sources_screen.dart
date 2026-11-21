@@ -66,15 +66,15 @@ const _sources = <_Source>[
     titleAr: 'إدارة الغذاء والدواء الأمريكية (FDA)',
     titleEn: 'U.S. Food and Drug Administration (FDA)',
     descAr:
-        'نشرات المنتج المعتمدة، التحذيرات الرسمية وحدود الجرعات القصوى، وتحذيرات الصندوق الأسود.',
+        'نشرات المنتج المعتمدة، التحذيرات الرسمية وحدود الجرعات القصوى، وتحذيرات الصندوق الأسود',
     descEn:
         'Approved product labeling, official safety warnings, maximum-dose limits, and boxed warnings.',
     url: 'https://www.accessdata.fda.gov/scripts/cder/daf/',
   ),
   _Source(
-    titleAr: 'DailyMed — المكتبة الوطنية الأمريكية للطب',
+    titleAr: 'DailyMed، المكتبة الوطنية الأمريكية للطب',
     titleEn: 'DailyMed — U.S. National Library of Medicine',
-    descAr: 'النشرات الدوائية الكاملة المعتمدة رسميًا لكل مستحضر.',
+    descAr: 'النشرات الدوائية الكاملة المعتمدة رسميًا لكل مستحضر',
     descEn: 'Full official prescribing information for each product.',
     url: 'https://dailymed.nlm.nih.gov/dailymed/',
   ),
@@ -82,7 +82,7 @@ const _sources = <_Source>[
     titleAr: 'منظمة الصحة العالمية (WHO)',
     titleEn: 'World Health Organization (WHO)',
     descAr:
-        'قائمة الأدوية الأساسية، وسلّم تسكين الألم المعتمد في تصنيف المسكنات داخل التطبيق.',
+        'قائمة الأدوية الأساسية، وسلّم تسكين الألم المعتمد في تصنيف المسكنات داخل التطبيق',
     descEn:
         'Model List of Essential Medicines, and the analgesic ladder used to classify pain medicines in the app.',
     url: 'https://www.who.int/publications/i/item/WHO-MHP-HPS-EML-2023.02',
@@ -91,7 +91,7 @@ const _sources = <_Source>[
     titleAr: 'معادلة كوكروفت–غولت (Cockcroft–Gault)',
     titleEn: 'Cockcroft–Gault equation',
     descAr:
-        'المعادلة المعتمدة في حساب تصفية الكرياتينين. Cockcroft DW, Gault MH. Nephron. 1976;16(1):31-41.',
+        'المعادلة المعتمدة في حساب تصفية الكرياتينين. Cockcroft DW, Gault MH. Nephron. 1976;16(1):31-41',
     descEn:
         'The equation used for creatinine clearance. Cockcroft DW, Gault MH. Nephron. 1976;16(1):31-41.',
     url: 'https://pubmed.ncbi.nlm.nih.gov/1244564/',
@@ -99,7 +99,7 @@ const _sources = <_Source>[
   _Source(
     titleAr: 'Hale\'s Medications & Mothers\' Milk',
     titleEn: 'Hale\'s Medications & Mothers\' Milk',
-    descAr: 'المرجع المعتمد في تصنيف أمان الأدوية أثناء الرضاعة داخل التطبيق.',
+    descAr: 'المرجع المعتمد في تصنيف أمان الأدوية أثناء الرضاعة داخل التطبيق',
     descEn:
         'The reference used for the lactation-safety classification shown in the app.',
     url: 'https://www.halesmeds.com/',
@@ -123,7 +123,7 @@ class _Intro extends StatelessWidget {
       ),
       child: Text(
         ar
-            ? 'المعلومات الدوائية المعروضة في هذا التطبيق مجمّعة من المراجع المذكورة أدناه، وهي معدّة لأغراض تعليمية ومرجعية فقط. اضغط على أي مرجع لفتح مصدره.'
+            ? 'المعلومات الدوائية المعروضة في هذا التطبيق مجمّعة من المراجع المذكورة أدناه، وهي معدّة لأغراض تعليمية ومرجعية فقط. اضغط على أي مرجع لفتح مصدره'
             : 'The drug information in this app is compiled from the references listed below and is provided for educational and reference purposes only. Tap any reference to open its source.',
         style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 13.5, height: 1.7, color: Colors.black87),
@@ -237,7 +237,7 @@ class _Method extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             ar
-                ? 'جُمعت بطاقات الأدوية من المراجع أعلاه ثم صيغت بالعربية لأغراض الدراسة والمراجعة. التطبيق أداة تعليمية ومرجعية، وليس جهازًا طبيًا، ولا يقدّم تشخيصًا ولا وصفة علاجية، ولا يغني عن استشارة طبيب أو صيدلاني مرخّص. تُراجع قاعدة البيانات وتُحدَّث بشكل دوري.'
+                ? 'جُمعت بطاقات الأدوية من المراجع أعلاه ثم صيغت بالعربية لأغراض الدراسة والمراجعة. التطبيق أداة تعليمية ومرجعية، وليس جهازًا طبيًا، ولا يقدّم تشخيصًا ولا وصفة علاجية، ولا يغني عن استشارة طبيب أو صيدلاني مرخّص. تُراجع قاعدة البيانات وتُحدَّث بشكل دوري'
                 : 'Drug entries were compiled from the references above and written in Arabic for study and revision. The app is an educational reference tool. It is not a medical device, it does not provide diagnosis or prescriptions, and it does not replace consultation with a licensed physician or pharmacist. The database is reviewed and updated periodically.',
             style: GoogleFonts.ibmPlexSansArabic(
                 fontSize: 12.5,
@@ -279,7 +279,7 @@ class SourcesFooterLink extends StatelessWidget {
               Flexible(
                 child: Text(
                   ar
-                      ? 'المعلومات مجمّعة من مراجع دوائية معيارية — عرض المصادر'
+                      ? 'المعلومات مجمّعة من مراجع دوائية معيارية، عرض المصادر'
                       : 'Compiled from standard pharmaceutical references — view sources',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.ibmPlexSansArabic(

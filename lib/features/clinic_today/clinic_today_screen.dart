@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/database/database_helper.dart';
+import 'quiz_shuffle.dart';
+import '../../services/haptics_service.dart';
 
 /// «عيادتك اليوم» — خمسة أسئلة سريرية يومياً، تعمل بلا إنترنت.
 ///
@@ -60,7 +62,11 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
       qs = await db.quizByIds(savedQids);
     }
     if (qs.isEmpty) {
-      qs = await db.dailyQuiz(count: 5);
+      // بذرة اليوم: عدد الأيام منذ 2020 — ثابتة لكل المستخدمين
+      final n = DateTime.now();
+      final daySeed =
+          DateTime(n.year, n.month, n.day).difference(DateTime(2020)).inDays;
+      qs = await db.dailyQuiz(count: 5, daySeed: daySeed);
       await prefs.setString(_kDate, _todayKey);
       await prefs.setStringList(
           _kQids, qs.map((e) => (e['qid'] ?? '').toString()).toList());
@@ -91,6 +97,12 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
 
   void _pick(int i, int answer) {
     if (_chosen != null) return;
+    // الردّ اللمسي يسبق إعادة الرسم كي يصل مع الضغطة لا بعدها
+    if (i == answer) {
+      Haptics.success();
+    } else {
+      Haptics.error();
+    }
     setState(() {
       _chosen = i;
       if (i == answer) _score++;
@@ -112,7 +124,8 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('عيادتك اليوم'),
+        title: const Text('أسئلة اليوم',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           if (_streak > 0)
             Padding(
@@ -157,11 +170,17 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
 
   Widget _buildQuestion() {
     final q = _questions[_index];
-    final options =
-        (jsonDecode((q['options_json'] ?? '[]').toString()) as List)
-            .map((e) => e.toString())
-            .toList();
-    final answer = (q['answer_index'] as num?)?.toInt() ?? 0;
+    final raw = (jsonDecode((q['options_json'] ?? '[]').toString()) as List)
+        .map((e) => e.toString())
+        .toList();
+    // خلط ثابت: يزيل انحياز موقع الإجابة الصحيحة في بيانات الأسئلة.
+    final sh = shuffleOptions(
+      (q['qid'] ?? '').toString(),
+      raw,
+      (q['answer_index'] as num?)?.toInt() ?? 0,
+    );
+    final options = sh.options;
+    final answer = sh.answer;
     final theme = Theme.of(context);
 
     return Column(children: [
@@ -247,13 +266,21 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
                     ]),
               ),
               const SizedBox(height: 16),
+              // ارتفاع ثابت 48 كان يقصّ نزول حرف «ي» في الخط العربي.
               SizedBox(
-                height: 48,
+                width: double.infinity,
                 child: FilledButton(
                   onPressed: _next,
-                  child: Text(_index + 1 >= _questions.length
-                      ? 'إنهاء'
-                      : 'السؤال التالي'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Text(
+                    _index + 1 >= _questions.length ? 'إنهاء' : 'السؤال التالي',
+                    style: const TextStyle(
+                        fontSize: 15, height: 1.6, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -369,8 +396,8 @@ class _Result extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             good
-                ? 'عُد غداً لخمسة أسئلة جديدة.'
-                : 'اقرأ الشروح أعلاه — وعُد غداً لأسئلة جديدة.',
+                ? 'عُد غداً لخمسة أسئلة جديدة'
+                : 'اقرأ الشروح أعلاه، وعُد غداً لأسئلة جديدة',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 13.5,
@@ -421,7 +448,7 @@ class _NoQuestions extends StatelessWidget {
             Text('لا توجد أسئلة في هذه النسخة',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 6),
-            Text('حدّث التطبيق للحصول على بنك الأسئلة.',
+            Text('حدّث التطبيق للحصول على بنك الأسئلة',
                 textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
           ]),
         ),
