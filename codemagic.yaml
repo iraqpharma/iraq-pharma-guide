@@ -17,6 +17,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: "com.iraqpharmaguide.iraqPharmaGuide"
+        APP_STORE_APPLE_ID: "6800479716"
 
     triggering:
       events:
@@ -50,6 +51,36 @@ workflows:
               --create
           else
             echo "لا مفتاح محفوظ — سيُولَّد مفتاح وشهادة جديدان لهذا البناء"
+            # تنظيف: شهادات التوزيع التي أنشأتها أبنية سابقة ضاع مفتاحها مع
+            # آلة البناء، فلا نفع منها وتملأ حصّة آبل (3 شهادات). تُحذف هنا كل
+            # شهادة توزيع تنتهي في 2027-11-20 أو بعده، أي أُنشئت من
+            # 2026-11-20 فصاعداً. شهادة 2027-08-11 الأقدم لا تُمسّ.
+            # (بموافقة د. حميد، 2026-11-21)
+            app-store-connect certificates list --json > /tmp/certs.json 2>/tmp/certs.err || true
+            python3 - <<'PY' > /tmp/stale_cert_ids.txt || true
+          import json, sys
+          raw = open('/tmp/certs.json', encoding='utf-8', errors='ignore').read()
+          try:
+              data = json.loads(raw)
+          except Exception:
+              a, b = raw.find('['), raw.rfind(']')
+              data = json.loads(raw[a:b + 1]) if a >= 0 and b > a else []
+          if isinstance(data, dict):
+              data = data.get('data', [])
+          for c in data:
+              at = c.get('attributes', c)
+              typ = str(at.get('certificateType', at.get('certificate_type', '')))
+              exp = str(at.get('expirationDate', at.get('expiration_date', '')))[:10]
+              print('cert', c.get('id'), typ, exp, file=sys.stderr)
+              if typ.endswith('DISTRIBUTION') and typ in ('DISTRIBUTION', 'IOS_DISTRIBUTION') \
+                      and exp >= '2027-11-20' and c.get('id'):
+                  print(c['id'])
+          PY
+            while read -r CID; do
+              [ -n "$CID" ] || continue
+              echo "حذف شهادة توزيع من بناء سابق: $CID"
+              app-store-connect certificates delete "$CID" --ignore-not-found || true
+            done < /tmp/stale_cert_ids.txt
             openssl genrsa -out /tmp/cert_key.pem 2048
             app-store-connect fetch-signing-files "$BUNDLE_ID" \
               --type IOS_APP_STORE \
@@ -68,7 +99,14 @@ workflows:
 
       - name: Flutter build ipa
         script: |
-          flutter build ipa --release \
+          # رقم البناء: الأكبر بين رقم pubspec وآخر رقم على TestFlight + 1،
+          # حتى لا يرفض App Store Connect الرفع بسبب رقم مكرّر.
+          PUB=$(grep '^version:' pubspec.yaml | sed 's/.*+//' | tr -cd '0-9')
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null | tail -1 | tr -cd '0-9' || true)
+          BN=$(( ${LATEST:-0} + 1 ))
+          if [ "$BN" -lt "${PUB:-1}" ]; then BN=$PUB; fi
+          echo "رقم البناء: $BN (pubspec: $PUB، آخر TestFlight: ${LATEST:-لا يوجد})"
+          flutter build ipa --release --build-number="$BN" \
             --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
@@ -131,9 +169,29 @@ workflows:
             echo "أُنشئ من متغيّر البيئة"
             python3 -c "import json,sys; d=json.load(open('$F')); print('package:', [c['client_info']['android_client_info']['package_name'] for c in d['client']])"
           else
-            echo "ناقص: google-services.json. أضفه إلى المستودع أو إلى"
-            echo "متغيّرات Codemagic باسم GOOGLE_SERVICES_JSON."
-            exit 1
+            # لا ملف ولا متغيّر: يُبنى الملف من lib/firebase_options.dart
+            # الموجود في المستودع (المفتاح والمشروع أنفسهما)، مع معرّف تطبيق
+            # أندرويد المسجّل في Firebase للحزمة com.iraqpharmaguide.app.
+            python3 - "$F" "$CM_BUILD_DIR/lib/firebase_options.dart" <<'PY'
+          import re, json, sys
+          s = open(sys.argv[2], encoding='utf-8').read()
+          blk = re.search(r'android\s*=\s*FirebaseOptions\((.*?)\);', s, re.S).group(1)
+          g = lambda k: re.search(k + r":\s*'([^']+)'", blk).group(1)
+          d = {
+              "project_info": {"project_number": g('messagingSenderId'),
+                               "project_id": g('projectId'),
+                               "storage_bucket": g('storageBucket')},
+              "client": [{
+                  "client_info": {
+                      "mobilesdk_app_id": "1:1411929971:android:e9ae6f3d36702914449706",
+                      "android_client_info": {"package_name": "com.iraqpharmaguide.app"}},
+                  "oauth_client": [],
+                  "api_key": [{"current_key": g('apiKey')}],
+                  "services": {"appinvite_service": {"other_platform_oauth_client": []}}}],
+              "configuration_version": "1"}
+          json.dump(d, open(sys.argv[1], 'w'), indent=2)
+          print('وُلّد google-services.json للحزمة com.iraqpharmaguide.app')
+          PY
           fi
 
       - name: Set up signing if a keystore is configured
