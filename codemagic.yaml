@@ -36,11 +36,27 @@ workflows:
         script: |
           set -e
           keychain initialize
-          openssl genrsa -out /tmp/cert_key.pem 2048
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --certificate-key=@file:/tmp/cert_key.pem \
-            --create
+
+          # آبل تسمح بثلاث شهادات توزيع فقط. توليد مفتاح جديد في كل بناء
+          # يُنشئ شهادة جديدة في كل مرّة، فتمتلئ الحصّة ويفشل البناء بـ 409.
+          # الحلّ: مفتاح خاص واحد ثابت محفوظ في متغيّرات Codemagic باسم
+          # CERTIFICATE_PRIVATE_KEY، فتُعاد الشهادة نفسها بلا إنشاء جديد.
+          if [ -n "$CERTIFICATE_PRIVATE_KEY" ]; then
+            echo "$CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key.pem
+            echo "استُعمل المفتاح الخاص المحفوظ"
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --certificate-key=@file:/tmp/cert_key.pem \
+              --create
+          else
+            echo "لا مفتاح محفوظ — سيُولَّد مفتاح وشهادة جديدان لهذا البناء"
+            openssl genrsa -out /tmp/cert_key.pem 2048
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --certificate-key=@file:/tmp/cert_key.pem \
+              --create
+          fi
+
           keychain add-certificates
           xcode-project use-profiles
 
@@ -98,6 +114,28 @@ workflows:
       # في Codemagic تحت مجموعة keystore_reference يُستعمل، وإلا يرجع
       # gradle تلقائياً إلى توقيع debug — وهو كافٍ تماماً لتثبيت النسخة
       # على الهاتف والفحص، وغير صالح للرفع إلى Google Play.
+      # ملف google-services.json مستثنى من git (سطر 58 في .gitignore)
+      # فلا يصل إلى آلة البناء، و Gradle يفشل بدونه. يُحقن من متغيّر
+      # GOOGLE_SERVICES_JSON في Codemagic (محتوى الملف كما هو، أو base64).
+      - name: Restore google-services.json
+        script: |
+          F="$CM_BUILD_DIR/android/app/google-services.json"
+          if [ -f "$F" ]; then
+            echo "الملف موجود في المستودع"
+          elif [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            if echo "$GOOGLE_SERVICES_JSON" | head -c 1 | grep -q '{'; then
+              printf '%s' "$GOOGLE_SERVICES_JSON" > "$F"
+            else
+              echo "$GOOGLE_SERVICES_JSON" | base64 --decode > "$F"
+            fi
+            echo "أُنشئ من متغيّر البيئة"
+            python3 -c "import json,sys; d=json.load(open('$F')); print('package:', [c['client_info']['android_client_info']['package_name'] for c in d['client']])"
+          else
+            echo "ناقص: google-services.json. أضفه إلى المستودع أو إلى"
+            echo "متغيّرات Codemagic باسم GOOGLE_SERVICES_JSON."
+            exit 1
+          fi
+
       - name: Set up signing if a keystore is configured
         script: |
           if [ -n "$CM_KEYSTORE_PATH" ]; then
