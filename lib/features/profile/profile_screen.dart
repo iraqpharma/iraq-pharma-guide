@@ -972,12 +972,15 @@ class _StatCard extends StatelessWidget {
         child: Icon(icon, color: color, size: 22),
       ),
       const SizedBox(width: 12),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(value, style: GoogleFonts.ibmPlexSansArabic(
+      // Expanded: النص يتقيّد بعرض البطاقة فلا يتجاوزها على الشاشات الضيقة.
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 20, fontWeight: FontWeight.bold, color: cs.onSurface)),
-        Text(label, style: GoogleFonts.ibmPlexSansArabic(
+        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 12, color: cs.onSurfaceVariant)),
-      ]),
+      ])),
     ]),
   );
 }

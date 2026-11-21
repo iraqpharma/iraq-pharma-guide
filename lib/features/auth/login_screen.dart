@@ -252,8 +252,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: AppColors.primary.withOpacity(0.18)),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      // Wrap: النص الإنجليزي أطول فينزل الرابط سطراً بدل أن يُقصّ.
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text('${context.s.noAccount}  ',
                               style: GoogleFonts.ibmPlexSansArabic(
@@ -837,8 +839,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.primary.withOpacity(0.18)),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text('${context.s.alreadyHaveAccount}  ',
                           style: GoogleFonts.ibmPlexSansArabic(

@@ -69,39 +69,60 @@ void main() async {
   // السبب — وهذا ما حدث في قسم مسكنات الألم. هذا البديل يُظهر رسالة
   // عربية مع نصّ الخطأ، فيصل الخطأ إلينا بصورة شاشة من المستخدم بدل
   // التخمين.
-  ErrorWidget.builder = (FlutterErrorDetails details) {
+  ErrorWidget.builder = (FlutterErrorDetails details) => _FriendlyError(details);
+
+  // تفضيلات الاهتزاز والصوت تُقرأ قبل أول شاشة كي لا تهتزّ قبل أن
+  // نعرف أن المستخدم أوقفها.
+  await Haptics.load();
+
+  runApp(const ProviderScope(child: IraqPharmaApp()));
+}
+
+/// بديل شاشة الخطأ الرمادية. بلا Expanded ولا عرض لانهائي، كي يُرسم
+/// سليماً أينما وقع الخطأ: شاشة كاملة، أو عنصر داخل قائمة ارتفاعها
+/// غير محدود (حيث كان البديل السابق نفسه يفشل فتظهر مساحة فارغة).
+class _FriendlyError extends StatelessWidget {
+  final FlutterErrorDetails details;
+  const _FriendlyError(this.details);
+
+  @override
+  Widget build(BuildContext context) {
     return Material(
       color: const Color(0xFFFFFBFA),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 52, color: Color(0xFFC2454B)),
-                const SizedBox(height: 14),
-                const Text(
-                  'حدث خطأ في عرض هذه الشاشة',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF9A1C24)),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'أرسل صورة لهذه الرسالة إلى فريق التطبيق ليُصلح السبب',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12.5, color: Color(0xFF6E7B88)),
-                ),
-                const SizedBox(height: 14),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Container(
-                      width: double.infinity,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 12),
+                    const Icon(Icons.error_outline_rounded,
+                        size: 48, color: Color(0xFFC2454B)),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'تعذّر عرض هذا الجزء',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF9A1C24)),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'ارجع وحاول مرة أخرى. إن تكرّر، أرسل صورة هذه الرسالة من «الدعم» داخل التطبيق',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.6,
+                          color: Color(0xFF6E7B88)),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF4F6F8),
@@ -111,24 +132,22 @@ void main() async {
                         textDirection: TextDirection.ltr,
                         child: Text(
                           details.exceptionAsString(),
+                          maxLines: 10,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 11, height: 1.5, fontFamily: 'monospace'),
+                              fontSize: 11,
+                              height: 1.5,
+                              fontFamily: 'monospace'),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
-  };
-
-  // تفضيلات الاهتزاز والصوت تُقرأ قبل أول شاشة كي لا تهتزّ قبل أن
-  // نعرف أن المستخدم أوقفها.
-  await Haptics.load();
-
-  runApp(const ProviderScope(child: IraqPharmaApp()));
+  }
 }

@@ -488,8 +488,12 @@ class _TealHeader extends StatelessWidget {
               ),
 
               // ── Center: Title — stays, just changes colour ───────────
+              // FittedBox: مع تكبير خط النظام يصغُر العنوان ليبقى داخل ارتفاع
+              // الشريط بدل أن يُقصّ من أسفل.
               Flexible(
-                child: Column(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
@@ -515,6 +519,7 @@ class _TealHeader extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
                 ),
               ),
 

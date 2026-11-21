@@ -364,8 +364,11 @@ class _GovBoard extends StatelessWidget {
           )
         else
           // شريط أفقي بالمحافظات التي فيها وظائف
+          // 108 لا 92: حبّة «الكل» (أيقونة + اسم + عدّاد) تحتاج ~101 بكسل
+          // (و~103 مع تكبير خط النظام)،
+          // وكان العدّاد يُقصّ من أسفل.
           SizedBox(
-            height: 92,
+            height: 108,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
@@ -744,21 +747,15 @@ class _JobCardState extends State<JobCard> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── خط رفيع متدرّج يميّز نوع الدوام ───────────────────────
-            Container(
-              width: 3.5,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [wt, wt.withOpacity(0.25)],
-                ),
-              ),
-            ),
-            Expanded(
+        // الخط الجانبي يُرسم فوق البطاقة بـ CustomPaint. كان قبلها عنصراً
+        // في Row بامتداد عمودي (stretch)، والبطاقة داخل قائمة ارتفاعها غير
+        // محدود، فيصير ارتفاع الصف لانهائياً ولا تُرسم البطاقة أصلاً:
+        // العدّاد يقول «1 وظيفة» والقائمة فارغة.
+        child: CustomPaint(
+          foregroundPainter:
+              _WorkTypeStripe(wt, Directionality.of(context)),
+          child: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 3.5),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -965,11 +962,38 @@ class _JobCardState extends State<JobCard> {
                 ],
               ),
             ),
-          ],
         ),
       ),
     );
   }
+}
+
+/// خط رفيع متدرّج على حافة البداية يميّز نوع الدوام.
+class _WorkTypeStripe extends CustomPainter {
+  final Color color;
+  final TextDirection dir;
+  const _WorkTypeStripe(this.color, this.dir);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const w = 3.5;
+    final rect = dir == TextDirection.rtl
+        ? Rect.fromLTWH(size.width - w, 0, w, size.height)
+        : Rect.fromLTWH(0, 0, w, size.height);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color, color.withOpacity(0.25)],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_WorkTypeStripe old) =>
+      old.color != color || old.dir != dir;
 }
 
 /// رقم صغير مع تسميته — لإحصاءات صاحب الإعلان.

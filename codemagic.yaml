@@ -118,7 +118,10 @@ workflows:
         auth: integration
         # TestFlight فقط — لا إرسال لمراجعة App Store.
         # بعد موافقة د. حميد نُحوّل submit_to_app_store إلى true.
-        submit_to_testflight: true
+        # false: الرفع إلى TestFlight يتم دائماً، وهذا الخيار يخصّ إرسال البناء
+        # لمراجعة «الاختبار الخارجي» فقط، وكان يفشل ويلوّن البناء بالأحمر لأن
+        # معلومات الاختبار الخارجي غير مملوءة في App Store Connect.
+        submit_to_testflight: false
         submit_to_app_store: false
       email:
         recipients:

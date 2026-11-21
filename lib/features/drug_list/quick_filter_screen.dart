@@ -88,7 +88,9 @@ final _quickFilterDrugsProvider =
   return DatabaseHelper.instance.getByFilters({key});
 });
 
-final _refrigSearchProvider = StateProvider<String>((_) => '');
+// autoDispose: نص البحث يُصفَّر تلقائياً عند مغادرة الشاشة. لا يجوز استعمال
+// `ref` داخل dispose (يرمي StateError)، فكان البحث القديم يبقى مطبّقاً.
+final _refrigSearchProvider = StateProvider.autoDispose<String>((_) => '');
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -106,9 +108,6 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
-    // Clear search state when leaving
-    Future.microtask(
-        () => ref.read(_refrigSearchProvider.notifier).state = '');
     super.dispose();
   }
 
@@ -146,25 +145,35 @@ class _QuickFilterScreenState extends ConsumerState<QuickFilterScreen> {
                           color: Colors.white, size: 20),
                       onPressed: () => context.pop(),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(meta.icon,
-                              color: Colors.white, size: 14),
-                          const SizedBox(width: 5),
-                          Text(meta.subtitle(context.s.isAr),
-                              style: GoogleFonts.cairo(
-                                  color: Colors.white,
-                                  fontSize: 11)),
-                        ],
+                    // الشارة تأخذ ما بقي من العرض وتُختصر بثلاث نقاط إن طال
+                    // نصّها (الإنجليزي أطول) بدل أن تخرج عن الشاشة.
+                    Expanded(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(meta.icon,
+                                  color: Colors.white, size: 14),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(meta.subtitle(context.s.isAr),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.cairo(
+                                        color: Colors.white,
+                                        fontSize: 11)),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],

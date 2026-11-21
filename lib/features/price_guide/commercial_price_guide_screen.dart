@@ -229,7 +229,7 @@ class _CommercialPriceGuideScreenState
                 : entriesAsync.hasError && displayEntries.isEmpty
                     ? const _ErrorState()
                     : displayEntries.isEmpty && _cacheLoaded
-                        ? const _EmptyState()
+                        ? _EmptyState(query: _searchCtrl.text.trim())
                         : _PriceList(
                             entries: displayEntries,
                             onTap: _openDetail,
@@ -570,26 +570,40 @@ class _DetailRow extends StatelessWidget {
 
 // ── Empty / Error states ──────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  /// نص البحث الحالي. إن كان غير فارغ فالحالة «لا نتائج لهذا البحث»
+  /// لا «القائمة فارغة».
+  final String query;
+  const _EmptyState({this.query = ''});
   @override
   Widget build(BuildContext context) {
+    final searching = query.isNotEmpty;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.price_check_outlined,
+            Icon(
+                searching
+                    ? Icons.search_off_rounded
+                    : Icons.price_check_outlined,
                 size: 72,
                 color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3)),
             const SizedBox(height: 16),
-            Text(context.s.listCurrentlyEmpty,
+            Text(
+                searching
+                    ? context.s.noResultsForQuery(query)
+                    : context.s.listCurrentlyEmpty,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 8),
-            Text(context.s.priceListEmptyHint,
+            Text(
+                searching
+                    ? context.s.priceNoMatchHint
+                    : context.s.priceListEmptyHint,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),

@@ -114,8 +114,10 @@ final appRouter = GoRouter(
       path: '/category/:key/family/:fam',
       builder: (_, state) => DrugListScreen(
         categoryKey: state.pathParameters['key']!,
-        familyName:
-            Uri.decodeComponent(state.pathParameters['fam']!),
+        // go_router يفكّ ترميز معاملات المسار بنفسه. فكّها مرّة ثانية كان
+        // يرمي «Illegal percent encoding in URI» مع كل عائلة في اسمها حرف
+        // غير لاتيني بسيط (مثل الشرطة الطويلة «—» أو β)، فتفشل الشاشة كلها.
+        familyName: state.pathParameters['fam']!,
       ),
     ),
     GoRoute(

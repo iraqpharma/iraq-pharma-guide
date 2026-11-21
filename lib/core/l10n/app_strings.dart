@@ -713,7 +713,8 @@ class AppStrings {
   String get packaging            => isAr ? 'التعبئة'                             : 'Packaging';
   String get barcodeCopied        => isAr ? 'تم نسخ الباركود'                     : 'Barcode copied';
   String get listCurrentlyEmpty   => isAr ? 'القائمة فارغة حالياً'               : 'List is currently empty';
-  String get priceListEmptyHint   => isAr ? 'ستظهر هنا أسعار المنتجات بعد إضافتها من لوحة التحكم' : 'Product prices will appear here once added via the dashboard';
+  String get priceListEmptyHint   => isAr ? 'نضيف أسعار المنتجات تباعاً، عُد قريباً' : 'Prices are added regularly. Check back soon';
+  String get priceNoMatchHint      => isAr ? 'جرّب الاسم التجاري بالإنجليزية، أو امسح باركود العلبة' : 'Try the brand name in English, or scan the barcode';
   String get serverConnectionFailed => isAr ? 'تعذّر الاتصال بالخادم'            : 'Could not connect to server';
   String get checkInternet        => isAr ? 'تحقق من اتصالك بالإنترنت'          : 'Check your internet connection';
 
