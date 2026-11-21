@@ -77,6 +77,16 @@ class AppStrings {
   String get errorRetry        => isAr ? 'حدث خطأ، حاول مجدداً' : 'An error occurred, please try again';
   String get enterDrugName     => isAr ? 'أدخل اسم الدواء' : 'Enter drug name';
   String get chooseCatValidate => isAr ? 'اختر القسم'       : 'Choose a category';
+  String get reqNotes          => isAr ? 'الملاحظات (إجباري)' : 'Notes (required)';
+  String get reqNotesHint      => isAr
+      ? 'اكتب الاسم العلمي أو الشركة أو التركيز أو من أين رأيت الدواء'
+      : 'Generic name, manufacturer, strength, or where you saw the drug';
+  String get reqNotesEmpty     => isAr
+      ? 'الملاحظات إجبارية — اكتب أي معلومة تساعدنا على إيجاد الدواء'
+      : 'Notes are required — add any detail that helps us find the drug';
+  String get reqNotesShort     => isAr
+      ? 'اكتب 5 أحرف على الأقل'
+      : 'Write at least 5 characters';
 
   // Drug request categories
   List<String> get drugCategories => isAr ? [
@@ -237,8 +247,66 @@ class AppStrings {
 
   // Roles
   List<String> get roles => isAr
-      ? ['مدير صيدلية', 'صيدلاني متدرب', 'معاون صيدلي']
-      : ['Pharmacy Manager', 'Trainee Pharmacist', 'Pharmacy Assistant'];
+      ? [
+          'مدير صيدلية',
+          'صيدلاني',
+          'صيدلاني متدرب',
+          'معاون صيدلي',
+          'طالب صيدلة',
+          'طبيب',
+          'طبيب أسنان',
+        ]
+      : [
+          'Pharmacy Manager',
+          'Pharmacist',
+          'Trainee Pharmacist',
+          'Pharmacy Assistant',
+          'Pharmacy Student',
+          'Physician',
+          'Dentist',
+        ];
+
+  /// المهن التي يُسأل صاحبها عن اختصاصه.
+  bool roleNeedsSpecialty(String? role) =>
+      role == 'طبيب' || role == 'Physician';
+
+  String get specialtyLabel  => isAr ? 'الاختصاص' : 'Specialty';
+  String get chooseSpecialty => isAr ? 'اختر الاختصاص' : 'Choose specialty';
+
+  /// الاختصاصات الطبية — تظهر للطبيب فقط. الاسم الإنجليزي بين قوسين
+  /// لأن المصطلح الطبي هو المتعامَل به في التقارير والوصفات.
+  List<String> get medicalSpecialties => const [
+    'طب عام — General Practice',
+    'باطنية — Internal Medicine',
+    'أطفال — Pediatrics',
+    'جراحة عامة — General Surgery',
+    'نسائية وتوليد — Obstetrics & Gynaecology',
+    'قلب — Cardiology',
+    'جهاز هضمي — Gastroenterology',
+    'غدد وسكري — Endocrinology',
+    'كلى — Nephrology',
+    'صدرية — Pulmonology',
+    'أعصاب — Neurology',
+    'نفسية — Psychiatry',
+    'أورام — Oncology',
+    'دم — Haematology',
+    'مفاصل وروماتيزم — Rheumatology',
+    'أمراض معدية — Infectious Diseases',
+    'جلدية — Dermatology',
+    'عيون — Ophthalmology',
+    'أنف وأذن وحنجرة — ENT',
+    'عظام — Orthopaedics',
+    'مسالك بولية — Urology',
+    'تخدير — Anaesthesia',
+    'طوارئ — Emergency Medicine',
+    'أشعة — Radiology',
+    'مختبرات ومرضية — Laboratory & Pathology',
+    'أسرة ومجتمع — Family & Community Medicine',
+    'جراحة تجميل — Plastic Surgery',
+    'جراحة أعصاب — Neurosurgery',
+    'جراحة قلب وصدر — Cardiothoracic Surgery',
+    'اختصاص آخر — Other',
+  ];
 
   // Governorates (no translation needed — same in both)
   List<String> get governorates => [
@@ -341,8 +409,20 @@ class AppStrings {
     'gastrointestinal':'جهاز هضمي',
     'respiratory':     'جهاز تنفسي',
     'vitamins':        'فيتامينات ومقويات',
-    'cosmetic':        'كوزمتك وجلدية',
+    'cosmetic':        'تجميلية',
     'narcotics':       'أدوية مخدرة',
+    'oncology':          'أورام',
+    'psychiatry':        'نفسية',
+    'endocrine':         'غدد صمّاء',
+    'hematology':        'دم',
+    'immunology':        'مناعة',
+    'dermatology':       'جلدية',
+    'ophthalmology':     'عيون',
+    'urology':           'بولية',
+    'womens_health':     'صحة المرأة',
+    'vaccines':          'مطاعيم',
+    'fluids_electrolytes': 'سوائل وشوارد',
+    'anesthesia':        'تخدير',
     'other':           'أخرى',
   } : const {
     'antibiotics':     'Antibiotics',
@@ -353,8 +433,20 @@ class AppStrings {
     'gastrointestinal':'Gastroenterology',
     'respiratory':     'Respiratory',
     'vitamins':        'Vitamins & Supplements',
-    'cosmetic':        'Dermatology & Cosmetic',
+    'cosmetic':        'Cosmetic',
     'narcotics':       'Controlled & Narcotics',
+    'oncology':          'Oncology',
+    'psychiatry':        'Psychiatry',
+    'endocrine':         'Endocrine',
+    'hematology':        'Hematology',
+    'immunology':        'Immunology',
+    'dermatology':       'Dermatology',
+    'ophthalmology':     'Ophthalmology',
+    'urology':           'Urology',
+    'womens_health':     "Women's Health",
+    'vaccines':          'Vaccines',
+    'fluids_electrolytes': 'Fluids & Electrolytes',
+    'anesthesia':        'Anesthesia',
     'other':           'Other',
   };
 

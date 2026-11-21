@@ -8,10 +8,13 @@ class SessionService {
   static const _keyLoginTimestamp = 'session_login_ts';
   static const _keySavedEmail     = 'session_saved_email';
 
-  // Duration when "تذكرني" is checked
-  static const _rememberDays = 30;
-  // Duration when NOT checked (next cold launch → signed out)
-  static const _sessionHours = 48; // 2 days
+  // «تذكرني» مُفعّل: نصف سنة، والمهلة متجدّدة (sliding) فكل فتح للتطبيق
+  // داخل المهلة يُعيد العدّ من جديد — المستخدم النشِط لا يُخرَج أبداً.
+  static const _rememberDays = 180;
+  // غير مُفعّل: أسبوعان بدل 48 ساعة. الإخراج كل يومين كان يزعج
+  // المستخدمين ويجعلهم يعيدون كتابة كلمة المرور بلا سبب أمني حقيقي،
+  // ورمز التحديث في سوبابيس يتجدّد تلقائياً.
+  static const _sessionDays = 14;
 
   /// Called right after successful login/OTP verification.
   Future<void> onLoginSuccess({
@@ -43,6 +46,9 @@ class SessionService {
   }
 
   /// True if the stored session is still within its validity window.
+  ///
+  /// المهلة متجدّدة: إن كانت الجلسة سارية يُحدَّث وقتها، فتُحسب المهلة
+  /// من آخر استعمال لا من أوّل دخول.
   Future<bool> isSessionStillValid() async {
     final prefs = await SharedPreferences.getInstance();
     final ts = prefs.getInt(_keyLoginTimestamp);
@@ -50,9 +56,21 @@ class SessionService {
     final elapsed = DateTime.now().difference(
         DateTime.fromMillisecondsSinceEpoch(ts));
     final rememberMe = prefs.getBool(_keyRememberMe) ?? false;
-    return rememberMe
-        ? elapsed.inDays < _rememberDays
-        : elapsed.inHours < _sessionHours;
+    final valid = elapsed.inDays <
+        (rememberMe ? _rememberDays : _sessionDays);
+    if (valid) {
+      await prefs.setInt(
+          _keyLoginTimestamp, DateTime.now().millisecondsSinceEpoch);
+    }
+    return valid;
+  }
+
+  /// يُحدِّث وقت آخر استعمال يدوياً (يُستدعى عند فتح التطبيق).
+  Future<void> touch() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getInt(_keyLoginTimestamp) == null) return;
+    await prefs.setInt(
+        _keyLoginTimestamp, DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<void> clear() async {

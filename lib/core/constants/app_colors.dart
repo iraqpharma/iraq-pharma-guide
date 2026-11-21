@@ -26,7 +26,35 @@ class AppColors {
   static const textSecondary= Color(0xFF718096);
   static const divider      = Color(0xFFEEF0F3);
 
-  // ── Category icon backdrop colors ─────────────────────────────────────────
+  // ── Category palette v3.1 ─────────────────────────────────────────────────
+  // لوحة واحدة مضبوطة: تشبّع متوسط (≈45–55%) وإضاءة متقاربة، فلا لون يصرخ
+  // ولا لون يبهت. كل قسم يأخذ موضعاً مختلفاً على عجلة الألوان حتى تبقى
+  // الأقسام مميّزة عن بعضها عند النظر السريع، وكلها تتناغم مع الأخضر الأساسي.
+  static const cCardio       = Color(0xFFC2454B); // قرمزي هادئ
+  static const cAntibiotics  = Color(0xFF3A72B8); // أزرق فولاذي
+  static const cOncology     = Color(0xFF7A4EA8); // بنفسجي عميق
+  static const cAnalgesics   = Color(0xFFD08A3E); // عسلي
+  static const cGastro       = Color(0xFF2E8B82); // أخضر مزرق
+  static const cRespiratory  = Color(0xFF3F93A8); // سماوي رمادي
+  static const cNeuro        = Color(0xFF6B6BC4); // نيلي
+  static const cPsych        = Color(0xFF8A62B5); // خزامى
+  static const cDiabetes     = Color(0xFF2E8F63); // زمردي
+  static const cEndocrine    = Color(0xFF9A6B4F); // طيني
+  static const cHematology   = Color(0xFFB04A4A); // آجرّي
+  static const cImmunology   = Color(0xFF2E8077); // تركوازي داكن
+  static const cDerma        = Color(0xFFC25F7E); // وردي محروق
+  static const cOphtha       = Color(0xFF3C7FB0); // أزرق سماوي
+  static const cUrology      = Color(0xFF3E8EA0); // مائي
+  static const cWomens       = Color(0xFFBD6690); // موف
+  static const cVaccines     = Color(0xFF4A8F5A); // أخضر ورقي
+  static const cVitamins     = Color(0xFFC79A3C); // ذهبي
+  static const cFluids       = Color(0xFF3E8F9C); // أزرق مائي
+  static const cAnesthesia   = Color(0xFF5F7184); // رمادي أزرق
+  static const cNarcotics    = Color(0xFF8A6A55); // بنّي
+  static const cCosmetic     = Color(0xFFC06C8C); // وردي مائل للموف
+  static const cOtherCat     = Color(0xFF6E7B88); // رمادي محايد
+
+  // ── Category icon backdrop colors (legacy aliases) ────────────────────────
   static const catCardio      = Color(0xFFE53E3E);
   static const catAntibiotics = Color(0xFF3B82F6);
   static const catDiabetes    = Color(0xFF10B981);

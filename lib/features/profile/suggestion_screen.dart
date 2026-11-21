@@ -32,35 +32,34 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
 
   // ── اختيار صورة من المعرض أو الكاميرا ──────────────────────────────────────
   Future<void> _pickImage(ImageSource source) async {
-    // طلب الأذن المناسب
-    Permission permission = source == ImageSource.camera
-        ? Permission.camera
-        : (Platform.isAndroid &&
-                (await Permission.photos.status).isDenied)
-            ? Permission.storage
-            : Permission.photos;
-
-    final status = await permission.request();
-    if (!mounted) return;
-
-    if (status.isDenied || status.isPermanentlyDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          status.isPermanentlyDenied
-              ? context.s.allowAccessSettings
-              : context.s.allowAccessRequired,
-          style: GoogleFonts.ibmPlexSansArabic(),
-        ),
-        action: status.isPermanentlyDenied
-            ? SnackBarAction(
-                label: context.s.settingsTitle,
-                onPressed: openAppSettings,
-              )
-            : null,
-        backgroundColor: Colors.red.shade400,
-        behavior: SnackBarBehavior.floating,
-      ));
-      return;
+    // المعرض لا يحتاج أي إذن: image_picker يستعمل PHPicker على iOS و
+    // Android Photo Picker على أندرويد، وكلٌّ منهما يمنح التطبيق الصورة
+    // المختارة وحدها. طلب إذن الصور هنا كان يرجع «مرفوض» دائماً على iOS
+    // لأن الإذن غير مطلوب ولا مُعلَن، فيظهر التنبيه الأحمر ولا يختفي،
+    // ولا يظهر أي إذن في إعدادات الجهاز لأن النظام لم يُسأل أصلاً.
+    // الكاميرا وحدها تحتاج إذناً، ويُطلب هنا قبل فتحها.
+    if (source == ImageSource.camera) {
+      final status = await Permission.camera.request();
+      if (!mounted) return;
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            status.isPermanentlyDenied
+                ? context.s.allowAccessSettings
+                : context.s.allowAccessRequired,
+            style: GoogleFonts.ibmPlexSansArabic(),
+          ),
+          action: status.isPermanentlyDenied
+              ? SnackBarAction(
+                  label: context.s.settingsTitle,
+                  onPressed: openAppSettings,
+                )
+              : null,
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+        ));
+        return;
+      }
     }
 
     final XFile? file = await _picker.pickImage(

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/drug_provider.dart';
 import '../../providers/filter_provider.dart';
@@ -148,6 +149,9 @@ class _HomeBodyState extends State<_HomeBody> {
           ),
         ),
 
+        // ── الجديد في 3.0 ─────────────────────────────────────────────────
+        const SliverToBoxAdapter(child: _NewInV3Section()),
+
         // ── Categories Section ────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
@@ -168,9 +172,9 @@ class _HomeBodyState extends State<_HomeBody> {
             ),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.1,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 11,
+              mainAxisExtent: 58,
             ),
           ),
         ),
@@ -479,7 +483,7 @@ class _TealHeader extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'دليل الصيدلة العراقي',
+                      'دليل الأدوية العراقي',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.cairo(
@@ -685,37 +689,168 @@ class _CatItem {
 }
 
 const _categories = [
-  // RTL index 0 → RIGHT column
-  _CatItem('قلب وأوعية',       'Cardiovascular',
-      Icons.favorite_rounded,       AppColors.catCardio,      'cardiovascular'),
-  // RTL index 1 → LEFT column
-  _CatItem('مضادات حيوية',     'Antibiotics & Antivirals',
-      Icons.coronavirus_outlined,   AppColors.catAntibiotics, 'antibiotics'),
-  // RTL index 2 → RIGHT column
-  _CatItem('سكري',             'Antidiabetics & Glucose',
-      Icons.all_inclusive,          AppColors.catDiabetes,    'diabetes'),
-  // RTL index 3 → LEFT column
-  _CatItem('مسكنات وألم',      'Analgesics & pain',
-      Icons.do_not_disturb_alt,     AppColors.catPain,        'analgesics'),
-  // RTL index 4 → RIGHT column
-  _CatItem('جهاز هضمي',        'Gastroenterology',
-      Icons.adjust,                 AppColors.catGastro,      'gastrointestinal'),
-  // RTL index 5 → LEFT column
-  _CatItem('أعصاب ونفسية',     'Neurology & Psychiatry',
-      Icons.lightbulb_outline_rounded, AppColors.catNeuro,   'neurology'),
-  // RTL index 6 → RIGHT column
-  _CatItem('فيتامينات ومقويات', 'Vitamins & Supplements',
-      Icons.egg_alt_outlined,       AppColors.catVitamins,    'vitamins'),
-  // RTL index 7 → LEFT column
-  _CatItem('كوزمتك وجلدية',    'Cosmetic & Dermatology',
-      Icons.face_retouching_natural, AppColors.catCosmetic,   'cosmetic'),
-  // RTL index 8 → RIGHT column
-  _CatItem('أدوية مخدرة',       'Controlled & Narcotics',
-      Icons.warning_amber_rounded,   AppColors.catNarcotics,  'narcotics'),
-  // RTL index 9 → LEFT column
+  // الأيقونات كلها من عائلة outlined/rounded بسماكة واحدة، والألوان من لوحة
+  // AppColors الموحّدة (تشبّع متوسط) حتى تبدو الشبكة كمجموعة واحدة لا كألوان
+  // متفرّقة.
+  _CatItem('قلب وأوعية',        'Cardiovascular',
+      Icons.monitor_heart_outlined,        AppColors.cCardio,      'cardiovascular'),
+  _CatItem('مضادات حيوية',      'Antibiotics & Antivirals',
+      Icons.biotech_outlined,              AppColors.cAntibiotics, 'antibiotics'),
+  _CatItem('أورام',             'Oncology',
+      Icons.radio_button_checked,          AppColors.cOncology,    'oncology'),
+  _CatItem('مسكنات وألم',       'Analgesics & pain',
+      Icons.healing_outlined,              AppColors.cAnalgesics,  'analgesics'),
+  _CatItem('جهاز هضمي',         'Gastroenterology',
+      Icons.restaurant_outlined,           AppColors.cGastro,      'gastrointestinal'),
+  _CatItem('جهاز تنفسي',        'Respiratory',
+      Icons.air_outlined,                  AppColors.cRespiratory, 'respiratory'),
+  _CatItem('أعصاب',             'Neurology',
+      Icons.psychology_alt_outlined,       AppColors.cNeuro,       'neurology'),
+  _CatItem('نفسية',             'Psychiatry',
+      Icons.self_improvement_outlined,     AppColors.cPsych,       'psychiatry'),
+  _CatItem('سكري',              'Antidiabetics & Glucose',
+      Icons.water_drop_outlined,           AppColors.cDiabetes,    'diabetes'),
+  _CatItem('غدد صمّاء',          'Endocrine',
+      Icons.hub_outlined,                  AppColors.cEndocrine,   'endocrine'),
+  _CatItem('دم',                'Hematology',
+      Icons.bloodtype_outlined,            AppColors.cHematology,  'hematology'),
+  _CatItem('مناعة',             'Immunology',
+      Icons.shield_outlined,               AppColors.cImmunology,  'immunology'),
+  _CatItem('جلدية',             'Dermatology',
+      Icons.spa_outlined,                  AppColors.cDerma,       'dermatology'),
+  _CatItem('عيون',              'Ophthalmology',
+      Icons.visibility_outlined,           AppColors.cOphtha,      'ophthalmology'),
+  _CatItem('بولية',             'Urology',
+      Icons.opacity_outlined,              AppColors.cUrology,     'urology'),
+  _CatItem('صحة المرأة',        "Women's Health",
+      Icons.pregnant_woman_outlined,       AppColors.cWomens,      'womens_health'),
+  _CatItem('مطاعيم',            'Vaccines',
+      Icons.vaccines_outlined,             AppColors.cVaccines,    'vaccines'),
+  _CatItem('فيتامينات ومقويات',  'Vitamins & Supplements',
+      Icons.eco_outlined,                  AppColors.cVitamins,    'vitamins'),
+  _CatItem('سوائل وشوارد',      'Fluids & Electrolytes',
+      Icons.science_outlined,              AppColors.cFluids,      'fluids_electrolytes'),
+  _CatItem('تخدير',             'Anesthesia',
+      Icons.airline_seat_flat_outlined,    AppColors.cAnesthesia,  'anesthesia'),
+  _CatItem('أدوية مخدرة',        'Controlled & Narcotics',
+      Icons.lock_outline_rounded,          AppColors.cNarcotics,   'narcotics'),
+  _CatItem('تجميلية',           'Cosmetic',
+      Icons.auto_awesome_outlined,         AppColors.cCosmetic,    'cosmetic'),
   _CatItem('أخرى',              'Other',
-      Icons.category_outlined,       AppColors.catOther,      'other'),
+      Icons.category_outlined,             AppColors.cOtherCat,    'other'),
 ];
+
+/// شريط «الجديد في 3.0» — يُبرز الأقسام الجديدة في الشاشة الرئيسية.
+class _NewInV3Section extends StatelessWidget {
+  const _NewInV3Section();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <List<dynamic>>[
+      [
+        'عيادتك اليوم',
+        'خمسة أسئلة سريرية',
+        Icons.medical_services_outlined,
+        const Color(0xFF0F6B4F),
+        '/clinic-today',
+      ],
+      [
+        'فرص عمل',
+        'وظائف الصيادلة',
+        Icons.work_outline_rounded,
+        const Color(0xFF2E7D32),
+        '/jobs',
+      ],
+      [
+        'فيديوهات',
+        'محتوى تعليمي',
+        Icons.ondemand_video_outlined,
+        const Color(0xFFC62828),
+        '/videos',
+      ],
+    ];
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+        child: Row(children: [
+          Container(
+            width: 4,
+            height: 18,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Text('استكشف',
+              style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface)),
+        ]),
+      ),
+      SizedBox(
+        height: 104,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: items.length,
+          itemBuilder: (ctx, i) {
+            final it = items[i];
+            final color = it[3] as Color;
+            return Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => ctx.push(it[4] as String),
+                child: Container(
+                  width: 158,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [color.withOpacity(0.16), color.withOpacity(0.04)],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: color.withOpacity(0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(it[2] as IconData, color: color, size: 26),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(it[0] as String,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: color)),
+                          const SizedBox(height: 2),
+                          Text(it[1] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Theme.of(ctx)
+                                      .colorScheme
+                                      .onSurfaceVariant)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+}
 
 class _CategoryCard extends StatelessWidget {
   final _CatItem cat;
@@ -723,45 +858,79 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/category/${cat.routeKey}'),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
+    final cs     = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // بطاقة أفقية مُدمَجة: الأيقونة في جهة البداية (اليمين بالعربية) والاسم
+    // بجوارها، فتأخذ نصف المساحة السابقة ويقلّ تمرير المستخدم. الظلّ بلون
+    // القسم ومائل للأسفل بدل الأسود الثقيل.
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? cs.surface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.07)
+              : cat.color.withOpacity(0.13),
+          width: 1,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                color: cat.color.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(cat.icon, color: cat.color, size: 32),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: cat.color.withOpacity(0.16),
+                  blurRadius: 11,
+                  spreadRadius: -3,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push('/category/${cat.routeKey}'),
+          splashColor: cat.color.withOpacity(0.10),
+          highlightColor: cat.color.withOpacity(0.06),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 9),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        cat.color.withOpacity(isDark ? 0.26 : 0.16),
+                        cat.color.withOpacity(isDark ? 0.14 : 0.07),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(cat.icon, color: cat.color, size: 20),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    context.s.isAr ? cat.ar : cat.en,
+                    style: GoogleFonts.cairo(
+                      fontSize: 11.8,
+                      height: 1.2,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.1,
+                      color: cs.onSurface,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              context.s.isAr ? cat.ar : cat.en,
-              style: GoogleFonts.cairo(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1141,16 +1310,34 @@ class _NoResultsState extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _ToolsBody extends StatelessWidget {
-  List<_NavToolItem> _getBannerTools(BuildContext context) => [
-    _NavToolItem(context.s.doseCalc,    context.s.doseCalcSub, Icons.calculate_outlined,     const Color(0xFF5C6BC0), '/calc'),
-    _NavToolItem(context.s.crcl,        context.s.crclSub,     Icons.monitor_heart_outlined,  const Color(0xFF0097A7), '/renal-calc'),
-  ];
-  List<_NavToolItem> _getGridTools(BuildContext context) => [
-    _NavToolItem(context.s.interactions,  context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
-    _NavToolItem(context.s.notebook,      context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
-    _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
-    _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
-  ];
+  // App Review rejected 2.3.0 under guideline 1.4.1: a dose calculator needs
+  // regulatory clearance we do not hold. On iOS the two dose tools are removed
+  // entirely — tiles here and routes in app_router — and the two reference
+  // tools move up into the banner slot so the tab is not left half empty.
+  // Android keeps them: see FeatureFlags.doseToolsOnThisPlatform.
+  List<_NavToolItem> _getBannerTools(BuildContext context) =>
+      FeatureFlags.doseToolsOnThisPlatform
+          ? [
+              _NavToolItem(context.s.doseCalc,     context.s.doseCalcSub,     Icons.calculate_outlined,    const Color(0xFF5C6BC0), '/calc'),
+              _NavToolItem(context.s.crcl,         context.s.crclSub,         Icons.monitor_heart_outlined, const Color(0xFF0097A7), '/renal-calc'),
+            ]
+          : [
+              _NavToolItem(context.s.interactions, context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
+              _NavToolItem(context.s.notebook,     context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
+            ];
+
+  List<_NavToolItem> _getGridTools(BuildContext context) =>
+      FeatureFlags.doseToolsOnThisPlatform
+          ? [
+              _NavToolItem(context.s.interactions,  context.s.interactionsSub, Icons.science_outlined,      const Color(0xFFE65100), '/interactions'),
+              _NavToolItem(context.s.notebook,      context.s.notebookSub,     Icons.edit_note_outlined,    const Color(0xFF2E7D32), '/notebook'),
+              _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+              _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
+            ]
+          : [
+              _NavToolItem(context.s.pricingCalc,   context.s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+              _NavToolItem(context.s.substitution,  context.s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
+            ];
 
   @override
   Widget build(BuildContext context) {
@@ -2414,6 +2601,7 @@ class _DrugRequestSheet extends StatefulWidget {
 class _DrugRequestSheetState extends State<_DrugRequestSheet> {
   final _formKey    = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
+  final _notesCtrl  = TextEditingController();
   String? _category;
   bool    _sending  = false;
   bool    _sent     = false;
@@ -2428,7 +2616,7 @@ class _DrugRequestSheetState extends State<_DrugRequestSheet> {
   }
 
   @override
-  void dispose() { _nameCtrl.dispose(); super.dispose(); }
+  void dispose() { _nameCtrl.dispose(); _notesCtrl.dispose(); super.dispose(); }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -2438,6 +2626,7 @@ class _DrugRequestSheetState extends State<_DrugRequestSheet> {
       await Supabase.instance.client.from('drug_requests').insert({
         'drug_name': _nameCtrl.text.trim(),
         'category' : _category!,
+        'notes'    : _notesCtrl.text.trim(),
         'user_id'  : user?.id,
       });
       if (mounted) setState(() { _sent = true; _sending = false; });
@@ -2540,6 +2729,42 @@ class _DrugRequestSheetState extends State<_DrugRequestSheet> {
               )).toList(),
               onChanged: (v) => setState(() => _category = v),
               validator: (v) => v == null ? context.s.chooseCatValidate : null,
+            ),
+            const SizedBox(height: 14),
+            // ── الملاحظات — إجبارية ──────────────────────────────────
+            TextFormField(
+              controller: _notesCtrl,
+              maxLines: 3,
+              minLines: 3,
+              maxLength: 400,
+              textInputAction: TextInputAction.newline,
+              style: GoogleFonts.cairo(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: context.s.reqNotes,
+                alignLabelWithHint: true,
+                hintText: context.s.reqNotesHint,
+                hintStyle: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                labelStyle: GoogleFonts.cairo(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                counterText: '',
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                        color: AppColors.primary, width: 1.5)),
+              ),
+              validator: (v) {
+                final t = (v ?? '').trim();
+                if (t.isEmpty) return context.s.reqNotesEmpty;
+                if (t.length < 5) return context.s.reqNotesShort;
+                return null;
+              },
             ),
           ])),
 

@@ -82,6 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
       email:      _emailCtrl.text,
     );
 
+    // يُخبر نظام التشغيل أن الدخول نجح، فيعرض «هل تريد حفظ كلمة المرور؟».
+    TextInput.finishAutofillContext();
+
     setState(() => _loading = false);
     _showLoginSuccess();
   }
@@ -159,7 +162,8 @@ class _LoginScreenState extends State<LoginScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-              child: Form(
+              child: AutofillGroup(
+                child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -181,6 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _PasswordField(
                       ctrl: _passCtrl, obscure: _obscure,
                       onToggle: () => setState(() => _obscure = !_obscure),
+                      onSubmitted: _submit,
                     ),
                     const SizedBox(height: 4),
 
@@ -269,6 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
+              ),
             ),
           ),
         ],
@@ -310,7 +316,7 @@ class _LoginHeader extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5)),
           const SizedBox(height: 4),
-          Text('دليل الصيدلة العراقي',
+          Text('دليل الأدوية العراقي',
               style: GoogleFonts.ibmPlexSansArabic(
                   color: Colors.white.withOpacity(0.85), fontSize: 13)),
         ],
@@ -406,6 +412,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _confirmCtrl  = TextEditingController();
 
   String?        _selectedRole;
+  /// الاختصاص الطبي — يُسأل عنه الطبيب فقط.
+  String?        _specialty;
   bool           _loading            = false;
   bool           _obscure1           = true;
   bool           _obscure2           = true;
@@ -511,6 +519,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       fullName:  fullName,
       username:  _usernameCtrl.text,
       role:      _selectedRole!,
+      specialty: _specialty ?? '',
       phone:     _phoneCtrl.text.trim(),
       birthDate: '',
       address:   '',
@@ -518,6 +527,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (!mounted) return;
     if (result.isSuccess) {
+      TextInput.finishAutofillContext();
       context.push('/otp', extra: {
         'email':   _emailCtrl.text.trim(),
         'type':    OtpType.signup,
@@ -582,7 +592,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-              child: Form(
+              child: AutofillGroup(
+                child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -602,6 +613,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 _AuthField(
                   label: context.s.firstName,
                   ctrl: _firstNameCtrl, icon: Icons.person_outline, maxLen: 40,
+                  autofillHints: const [AutofillHints.givenName],
                   validator: (v) => (v == null || v.trim().isEmpty) ? context.s.enterFirstName : null,
                 ),
                 const SizedBox(height: 12),
@@ -616,6 +628,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 _AuthField(
                   label: context.s.lastName,
                   ctrl: _lastNameCtrl, icon: Icons.person_outline, maxLen: 40,
+                  autofillHints: const [AutofillHints.familyName],
                   validator: (v) => (v == null || v.trim().isEmpty) ? context.s.enterLastName : null,
                 ),
                 const SizedBox(height: 12),
@@ -697,6 +710,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 _PasswordField(
                   ctrl: _passCtrl, obscure: _obscure1,
+                  isNew: true,
+                  action: TextInputAction.next,
                   onToggle: () => setState(() => _obscure1 = !_obscure1),
                   validator: (v) {
                     if (v == null || v.isEmpty) return context.s.enterPassword;
@@ -709,6 +724,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 _PasswordField(
                   ctrl: _confirmCtrl, obscure: _obscure2,
                   label: context.s.confirmPassword,
+                  isNew: true,
                   onToggle: () => setState(() => _obscure2 = !_obscure2),
                   validator: (v) {
                     if (v == null || v.isEmpty) return context.s.reEnterPassword;
@@ -723,9 +739,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   decoration: _fieldDeco(label: context.s.profession, icon: Icons.work_outline, context: context),
                   style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: Theme.of(context).colorScheme.onSurface),
                   items: _getRoles(context).map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-                  onChanged: (v) => setState(() => _selectedRole = v),
+                  onChanged: (v) => setState(() {
+                    _selectedRole = v;
+                    // تغيير المهنة يُلغي اختصاصاً لم يعد يناسبها.
+                    if (!context.s.roleNeedsSpecialty(v)) _specialty = null;
+                  }),
                   validator: (v) => v == null ? context.s.chooseProfession : null,
                 ),
+
+                // ── الاختصاص — للطبيب فقط ──────────────────────────────
+                if (context.s.roleNeedsSpecialty(_selectedRole)) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _specialty,
+                    isExpanded: true,
+                    decoration: _fieldDeco(
+                        label: context.s.specialtyLabel,
+                        icon: Icons.medical_services_outlined,
+                        context: context),
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    items: context.s.medicalSpecialties
+                        .map((sp) => DropdownMenuItem(
+                            value: sp,
+                            child: Text(sp,
+                                style: const TextStyle(fontSize: 13.5),
+                                overflow: TextOverflow.ellipsis)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _specialty = v),
+                    validator: (v) =>
+                        v == null ? context.s.chooseSpecialty : null,
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 
@@ -811,6 +857,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 32),
               ],
+            ),
             ),
           ),
         ),
@@ -915,7 +962,7 @@ class _AppLogo extends StatelessWidget {
     const SizedBox(height: 12),
     Text('Iraq Pharma Guide',
         style: GoogleFonts.ibmPlexSansArabic(fontSize: 17, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-    Text('دليل الصيدلة العراقي',
+    Text('دليل الأدوية العراقي',
         style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
   ]);
 }
@@ -975,6 +1022,9 @@ class _UniversalLoginFieldState extends State<_UniversalLoginField> {
     controller: widget.ctrl,
     keyboardType: _keyboard,
     textAlign: TextAlign.right,
+    // AutoFill: مدير كلمات المرور في الجهاز يعرض الحساب المحفوظ هنا.
+    autofillHints: const [AutofillHints.username, AutofillHints.email],
+    textInputAction: TextInputAction.next,
     maxLength: 254,
     inputFormatters: [LengthLimitingTextInputFormatter(254)],
     style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),
@@ -1000,15 +1050,19 @@ class _AuthField extends StatelessWidget {
   final TextInputType? keyboard;
   final TextDirection? textDirection;
   final String? Function(String?)? validator;
+  final List<String>? autofillHints;
 
   const _AuthField({
     required this.label, required this.ctrl, required this.icon,
     this.maxLen = 200, this.hint, this.keyboard, this.textDirection, this.validator,
+    this.autofillHints,
   });
 
   @override
   Widget build(BuildContext context) => TextFormField(
     controller: ctrl,
+    autofillHints: autofillHints,
+    textInputAction: TextInputAction.next,
     textAlign: textDirection == TextDirection.ltr ? TextAlign.left : TextAlign.right,
     textDirection: textDirection,
     keyboardType: keyboard,
@@ -1025,15 +1079,24 @@ class _PasswordField extends StatelessWidget {
   final String? label;
   final VoidCallback onToggle;
   final String? Function(String?)? validator;
+  /// كلمة مرور موجودة (دخول) أم جديدة (تسجيل) — يُغيّر ما يعرضه النظام.
+  final bool isNew;
+  final TextInputAction? action;
+  final VoidCallback? onSubmitted;
 
   const _PasswordField({
     required this.ctrl, required this.obscure,
     this.label, required this.onToggle, this.validator,
+    this.isNew = false, this.action, this.onSubmitted,
   });
 
   @override
   Widget build(BuildContext context) => TextFormField(
     controller: ctrl, obscureText: obscure,
+    autofillHints:
+        isNew ? const [AutofillHints.newPassword] : const [AutofillHints.password],
+    textInputAction: action ?? TextInputAction.done,
+    onFieldSubmitted: (_) => onSubmitted?.call(),
     textAlign: TextAlign.left, textDirection: TextDirection.ltr,
     maxLength: 128, inputFormatters: [LengthLimitingTextInputFormatter(128)],
     style: GoogleFonts.ibmPlexSansArabic(fontSize: 15),

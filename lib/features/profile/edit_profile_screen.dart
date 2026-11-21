@@ -15,6 +15,11 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  /// تبويب تغيير كلمة المرور مطويّ افتراضياً — أكثر من يدخل هذه الشاشة
+  /// يريد تعديل بياناته لا كلمة مروره، فكان يُجبَر على تمرير ثلاث حقول
+  /// قبل أن يصل إليها.
+  bool _showPassSection = false;
+
   // Profile form
   final _profileFormKey    = GlobalKey<FormState>();
   final _firstNameCtrl     = TextEditingController();
@@ -45,7 +50,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _passError;
   String? _passSuccess;
 
-  static const _roles = ['مدير صيدلية', 'صيدلاني متدرب', 'معاون صيدلي'];
+  /// المهن — بما فيها الطبيب وطبيب الأسنان. تبقى القيم القديمة مقبولة
+  /// فلا يفقد مستخدم قديم مهنته المحفوظة.
+  static const _roles = [
+    'مدير صيدلية', 'صيدلاني', 'صيدلاني متدرب', 'معاون صيدلي',
+    'طالب صيدلة', 'طبيب', 'طبيب أسنان',
+  ];
+  String? _specialty;
   static const _governorates = [
     'بغداد', 'البصرة', 'نينوى', 'أربيل', 'السليمانية', 'كركوك',
     'الأنبار', 'ديالى', 'صلاح الدين', 'بابل', 'كربلاء', 'النجف',
@@ -86,6 +97,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _originalUsername  = uname;
         _usernameCtrl.text = uname;
         _selectedRole      = _roles.contains(data['role']) ? data['role'] as String? : null;
+        final sp = (data['specialty'] ?? '').toString();
+        _specialty = sp.isEmpty ? null : sp;
         _selectedGovernorate = _governorates.contains(data['address']) ? data['address'] as String? : null;
         final bd = data['birth_date'] as String?;
         if (bd != null && bd.isNotEmpty) {
@@ -156,6 +169,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'full_name':  fullName,
       'username':   _usernameCtrl.text.trim().toLowerCase(),
       'role':       _selectedRole,
+      'specialty':  _specialty ?? '',
       'address':    _selectedGovernorate ?? '',
       'birth_date': birthStr.isEmpty ? null : birthStr,
     });
@@ -221,9 +235,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               padding: const EdgeInsets.all(18),
               child: Column(
                 children: [
-                  // ── Change Password ──────────────────────────────────────
-                  _sectionLabel(context.s.changePassword, Icons.lock_outline),
+                  // ── Change Password (مطويّ) ──────────────────────────────
+                  _passHeader(),
                   const SizedBox(height: 10),
+                  if (_showPassSection)
                   _card(
                     child: Form(
                       key: _passFormKey,
@@ -318,10 +333,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           decoration: _deco(label: context.s.profession, icon: Icons.work_outline),
                           style: GoogleFonts.ibmPlexSansArabic(fontSize: 15, color: AppColors.textPrimary),
                           items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-                          onChanged: (v) => setState(() => _selectedRole = v),
+                          onChanged: (v) => setState(() {
+                            _selectedRole = v;
+                            if (!context.s.roleNeedsSpecialty(v)) {
+                              _specialty = null;
+                            }
+                          }),
                           validator: (v) => v == null ? context.s.chooseProfession : null,
                         ),
                         const SizedBox(height: 12),
+
+                        // الاختصاص — للطبيب فقط
+                        if (context.s.roleNeedsSpecialty(_selectedRole)) ...[
+                          DropdownButtonFormField<String>(
+                            initialValue: _specialty,
+                            isExpanded: true,
+                            decoration: _deco(
+                                label: context.s.specialtyLabel,
+                                icon: Icons.medical_services_outlined),
+                            style: GoogleFonts.ibmPlexSansArabic(
+                                fontSize: 14, color: AppColors.textPrimary),
+                            items: context.s.medicalSpecialties
+                                .map((sp) => DropdownMenuItem(
+                                    value: sp,
+                                    child: Text(sp,
+                                        style: const TextStyle(fontSize: 13.5),
+                                        overflow: TextOverflow.ellipsis)))
+                                .toList(),
+                            onChanged: (v) => setState(() => _specialty = v),
+                            validator: (v) =>
+                                v == null ? context.s.chooseSpecialty : null,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
 
                         // Governorate
                         DropdownButtonFormField<String>(
@@ -435,6 +479,66 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           style: GoogleFonts.ibmPlexSansArabic(
               fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
     ],
+  );
+
+  /// ترويسة تبويب كلمة المرور — تُفتح وتُطوى بالضغط، ومعها رابط
+  /// «نسيت كلمة المرور» ظاهراً دائماً لمن لا يتذكّر كلمته الحالية.
+  Widget _passHeader() => Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      boxShadow: [
+        BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4)),
+      ],
+    ),
+    child: Column(children: [
+      Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => setState(() => _showPassSection = !_showPassSection),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 13, 12, 13),
+            child: Row(children: [
+              const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(context.s.changePassword,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary)),
+              ),
+              Icon(
+                  _showPassSection
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  size: 22,
+                  color: AppColors.primary),
+            ]),
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => context.push('/forgot-password'),
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
+            icon: const Icon(Icons.help_outline_rounded, size: 15),
+            label: Text(context.s.forgotPassword,
+                style: GoogleFonts.ibmPlexSansArabic(
+                    color: AppColors.primary, fontSize: 12.5)),
+          ),
+        ),
+      ),
+    ]),
   );
 
   Widget _card({required Widget child}) => Container(

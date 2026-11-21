@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+
+import 'database_helper.dart';
 
 // ── Models ────────────────────────────────────────────────────────────────────
 
@@ -989,6 +993,96 @@ class SubstitutionDatabase {
   }
 
   // ── Search ────────────────────────────────────────────────────────────────
+  /// بدائل مبنية على قاعدة الأدوية الكاملة (2620 دواءً) بدل الجدول المكتوب يدوياً.
+  ///
+  /// تبحث بالاسم التجاري أو العلمي أو العربي، ثم:
+  ///   • البدائل المباشرة = كل الأسماء التجارية لنفس المادة الفعّالة
+  ///   • المجموعات العلاجية = أدوية نفس زمرة ATC-4 بمواد فعّالة أخرى
+  /// وترجع `null` إن لم تجد، فيعود المتّصل إلى الجدول القديم.
+  Future<SubstitutionResult?> searchAlternativesV3(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) return null;
+
+    try {
+      final main = await DatabaseHelper.instance.database;
+      final hit = await main.rawQuery(
+        'SELECT generic_name, trade_names, atc_code, pharmacological_class '
+        'FROM drugs WHERE trade_names LIKE ? OR generic_name LIKE ? '
+        'OR generic_name_ar LIKE ? ORDER BY LENGTH(generic_name) LIMIT 1',
+        ['%$q%', '%$q%', '%$q%'],
+      );
+      if (hit.isEmpty) return null;
+
+      final generic = (hit.first['generic_name'] ?? '').toString();
+      final klass = (hit.first['pharmacological_class'] ?? '').toString();
+      final atc = (hit.first['atc_code'] ?? '').toString();
+      final atc4 = atc.length >= 5 ? atc.substring(0, 5) : atc;
+      if (generic.isEmpty) return null;
+
+      var seq = 1;
+      final direct = <CommercialBrand>[];
+      final sameRows = await main.rawQuery(
+        'SELECT trade_names FROM drugs WHERE generic_name = ?', [generic]);
+      for (final r in sameRows) {
+        for (final b in _tradeList(r['trade_names'])) {
+          direct.add(CommercialBrand(
+              id: seq++, brandName: b, company: '', ingredientId: 0));
+        }
+      }
+
+      final groups = <_TherapeuticGroup>[];
+      if (atc4.isNotEmpty) {
+        final others = await main.rawQuery(
+          'SELECT generic_name, trade_names FROM drugs '
+          'WHERE atc_code LIKE ? AND generic_name <> ? '
+          'ORDER BY generic_name LIMIT 20',
+          ['$atc4%', generic],
+        );
+        for (final o in others) {
+          final brands = <CommercialBrand>[];
+          for (final b in _tradeList(o['trade_names'])) {
+            brands.add(CommercialBrand(
+                id: seq++, brandName: b, company: '', ingredientId: 0));
+          }
+          if (brands.isEmpty) continue;
+          groups.add(_TherapeuticGroup(
+              ingredientName: (o['generic_name'] ?? '').toString(),
+              brands: brands));
+        }
+      }
+
+      if (direct.isEmpty && groups.isEmpty) return null;
+      return SubstitutionResult(
+        searchedBrand: q,
+        activeIngredient: generic,
+        drugClass: klass,
+        directAlternatives: direct,
+        therapeuticGroups: groups,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<String> _tradeList(Object? raw) {
+    final s = (raw ?? '').toString();
+    if (s.isEmpty || s == '[]') return const [];
+    try {
+      final decoded = jsonDecode(s);
+      if (decoded is List) {
+        return decoded
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
+    } catch (_) {/* ليست JSON */}
+    return s
+        .split(RegExp(r'[|,/]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
   Future<SubstitutionResult?> searchAlternatives(String query) async {
     final db = await database;
     final q  = query.trim().toLowerCase();

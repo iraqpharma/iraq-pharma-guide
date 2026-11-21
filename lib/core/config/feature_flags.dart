@@ -12,7 +12,7 @@ class FeatureFlags {
   /// and the user must acknowledge that before every use — but if review ever
   /// rejects on 1.4.2, set this to `!Platform.isIOS` and the tools disappear
   /// from iOS entirely (tiles, tools tab and routes) with no other edits.
-  static const bool doseToolsEnabled = true;
+  static const bool doseToolsEnabled = false;
 
   /// Kept so the override above is a one-word change.
   static bool get doseToolsOnThisPlatform =>

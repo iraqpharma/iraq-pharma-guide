@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'notification_service.dart';
 
 // ── Input limits ──────────────────────────────────────────────────────────────
 const int kMaxEmailLen    = 254;
@@ -45,6 +44,7 @@ class AuthService {
     required String username,
     required String role,
     String phone = '',
+    String specialty = '',
     required String birthDate,
     required String address,
   }) async {
@@ -61,6 +61,8 @@ class AuthService {
       'full_name': fullName,
       'username':  username,
       'role':      role,
+      // الاختصاص يُسأل عنه الطبيب فقط، ويبقى فارغاً لغيره.
+      if (specialty.isNotEmpty) 'specialty': _clamp(_sanitizeText(specialty), 80),
       // phone column does NOT exist in profiles table — omitted
       if (birthDate.isNotEmpty) 'birth_date': birthDate,
       if (address.isNotEmpty) 'address': address,
@@ -394,18 +396,7 @@ class AuthService {
   }
 
   // ── Sign Out ──────────────────────────────────────────────────────────────
-  Future<void> signOut() async {
-    // Clear the device's push token BEFORE the session goes away. The update
-    // runs under the user's own JWT, and RLS needs auth.uid() to still match
-    // the row — once signOut() returns, auth.uid() is null and the token is
-    // stranded in the profile, so the server keeps pushing to a device whose
-    // owner has logged out. That is exactly the bug where a test notification
-    // still arrived after signing out.
-    try {
-      await NotificationService.instance.clearTokenForCurrentUser();
-    } catch (_) {}
-    await _client.auth.signOut();
-  }
+  Future<void> signOut() async => _client.auth.signOut();
 
   /// Permanently deletes the signed-in user. Required by App Store guideline
   /// 5.1.1(v) and Google Play's data deletion policy: the user must be able to
@@ -455,6 +446,9 @@ class AuthService {
       if (data.containsKey('username'))
         sanitized['username'] = _clamp(_sanitizeUsername(data['username'] as String), kMaxUsernameLen);
       if (data.containsKey('role'))       sanitized['role']       = data['role'];
+      if (data.containsKey('specialty'))
+        sanitized['specialty'] =
+            _clamp(_sanitizeText(data['specialty'] as String), 80);
       if (data.containsKey('address'))    sanitized['address']    = data['address'];
       if (data.containsKey('birth_date')) sanitized['birth_date'] = data['birth_date'];
       await _client.from('profiles').update(sanitized).eq('id', uid);

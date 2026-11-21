@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/database/database_helper.dart';
 import '../data/models/drug_model.dart';
 import 'drug_provider.dart';
 
@@ -10,11 +11,43 @@ class FavoritesNotifier extends StateNotifier<List<int>> {
   }
 
   static const _key = 'favorites_v2';
+  static const _migratedKey = 'favorites_migrated_v3';
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
     state = raw.map(int.parse).toList();
+    await _migrateToV3(prefs);
+  }
+
+  /// ترحيل المفضّلات من معرّفات قاعدة 2.3 إلى معرّفات قاعدة 3.0.
+  ///
+  /// قاعدة 2.3 كانت 754 سجلاً بمعرّفات 1..754، وقاعدة 3.0 معرّفاتها مختلفة
+  /// تماماً. بدون هذا الترحيل تشير المفضّلة القديمة إلى **دواء آخر**، وهو
+  /// أخطر من فقدانها. الخريطة محفوظة في جدول `legacy_id_map` داخل القاعدة.
+  Future<void> _migrateToV3(SharedPreferences prefs) async {
+    if (prefs.getBool(_migratedKey) == true) return;
+    if (state.isEmpty) {
+      await prefs.setBool(_migratedKey, true);
+      return;
+    }
+    try {
+      final map = await DatabaseHelper.instance.legacyIdMap();
+      if (map.isEmpty) return; // قاعدة قديمة — نحاول مرة أخرى لاحقاً
+
+      final migrated = <int>[];
+      for (final oldId in state) {
+        final newId = map[oldId];
+        if (newId != null && !migrated.contains(newId)) {
+          migrated.add(newId);
+        }
+      }
+      state = migrated;
+      await _save();
+      await prefs.setBool(_migratedKey, true);
+    } catch (_) {
+      // لا نضع علم الترحيل عند الفشل حتى تُعاد المحاولة في التشغيل التالي
+    }
   }
 
   Future<void> _save() async {

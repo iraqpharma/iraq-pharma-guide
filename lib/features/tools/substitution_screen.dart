@@ -48,7 +48,9 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
 
   Future<void> _search(String q) async {
     setState(() { _loading = true; _searched = true; });
-    final res = await _db.searchAlternatives(q);
+    // القاعدة الجديدة أولاً (2620 دواءً)، ثم الجدول القديم احتياطاً
+    var res = await _db.searchAlternativesV3(q);
+    res ??= await _db.searchAlternatives(q);
     if (mounted) setState(() { _result = res; _loading = false; });
   }
 

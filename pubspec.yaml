@@ -1,7 +1,7 @@
 name: iraq_pharma_guide
 description: Iraq Pharma Guide - دليل الدواء العراقي
 publish_to: 'none'
-version: 2.3.0+21
+version: 3.0.0+31
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -43,8 +43,21 @@ dependencies:
   # Image caching
   cached_network_image: ^3.4.1
 
+  # تشغيل فيديوات يوتيوب داخل التطبيق بالمشغّل الرسمي (IFrame API).
+  # لا يُحمّل الفيديو ولا يزيد حجم التطبيق — البثّ من سيرفرات يوتيوب
+  # نفسها، ولا يبدأ أي تحميل قبل أن يضغط المستخدم زر التشغيل.
+  youtube_player_iframe: ^5.2.0
+  # Vimeo / فيسبوك / تيك توك / إنستغرام عبر صفحة embed العامة.
+  webview_flutter: ^4.10.0
+  # ملفات mp4/m3u8 المباشرة (المقاطع القصيرة المرفوعة على سوبابيس).
+  video_player: ^2.9.2
+
   # Image picker
   image_picker: ^1.1.2
+  # Pinned explicitly so the Android Photo Picker can be switched on in
+  # main.dart - required by Google Play's photo/video picker policy.
+  image_picker_android: ^0.8.13
+  image_picker_platform_interface: ^2.11.1
 
   # Version check
   package_info_plus: ^8.1.3

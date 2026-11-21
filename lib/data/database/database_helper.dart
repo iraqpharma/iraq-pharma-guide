@@ -7,12 +7,24 @@ import 'dart:io';
 import '../models/drug_model.dart';
 import '../models/suggestion_item.dart';
 
+/// عائلة دوائية داخل قسم (مثل Beta blockers داخل القلب والأوعية).
+class DrugFamily {
+  final String name;
+  final int total;
+  final int available;
+  const DrugFamily({
+    required this.name,
+    required this.total,
+    required this.available,
+  });
+}
+
 class DatabaseHelper {
   static DatabaseHelper? _instance;
   static Database? _db;
 
   // Increment this whenever assets/database/drugs.db is updated
-  static const int _kAssetDbVersion = 6;
+  static const int _kAssetDbVersion = 9;
 
   DatabaseHelper._();
   static DatabaseHelper get instance => _instance ??= DatabaseHelper._();
@@ -178,10 +190,60 @@ class DatabaseHelper {
   Future<List<Drug>> getByAppCategory(String category) async {
     final db = await database;
     final rows = await db.rawQuery(
-      'SELECT * FROM drugs WHERE app_category = ? ORDER BY pharmacological_class, generic_name',
+      'SELECT * FROM drugs WHERE app_category = ? '
+      'ORDER BY $_availOrder, generic_name COLLATE NOCASE',
       [category],
     );
     return rows.map(Drug.fromMap).toList();
+  }
+
+  // ── التصفّح الهرمي: قسم ← عائلة دوائية ← أدوية ─────────────────────────────
+  // الأدوية المتوفّرة في السوق العراقية تتقدّم على النادرة وغير المسجّلة،
+  // وعمود `iraq_availability` يُبنى مع قاعدة البيانات لا وقت التشغيل.
+  // 0 = متوفّر · 1 = غير محدّد · 2 = محدود/نادر · 3 = غير متوفّر
+  static const String _availOrder =
+      'CASE WHEN iraq_availability IS NULL THEN 1 ELSE iraq_availability END';
+
+  /// عوائل القسم مرتّبة بعدد الأدوية المتوفّرة محلياً ثم بالاسم.
+  Future<List<DrugFamily>> familiesOf(String category) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      '''SELECT subclass_en AS name,
+                COUNT(*)    AS total,
+                SUM(CASE WHEN $_availOrder <= 1 THEN 1 ELSE 0 END) AS available
+           FROM drugs
+          WHERE app_category = ?
+            AND TRIM(COALESCE(subclass_en, '')) <> ''
+          GROUP BY subclass_en
+          ORDER BY available DESC, total DESC, name COLLATE NOCASE''',
+      [category],
+    );
+    return rows
+        .map((r) => DrugFamily(
+              name: (r['name'] ?? '').toString(),
+              total: (r['total'] as num?)?.toInt() ?? 0,
+              available: (r['available'] as num?)?.toInt() ?? 0,
+            ))
+        .where((f) => f.name.isNotEmpty)
+        .toList();
+  }
+
+  /// أدوية عائلة واحدة داخل قسم.
+  Future<List<Drug>> getByFamily(String category, String family) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT * FROM drugs WHERE app_category = ? AND subclass_en = ? '
+      'ORDER BY $_availOrder, generic_name COLLATE NOCASE',
+      [category, family],
+    );
+    return rows.map(Drug.fromMap).toList();
+  }
+
+  /// هل عمود التوفّر موجود؟ (قواعد قديمة قبل الإصدار ٨ لا تحتويه)
+  Future<bool> hasAvailabilityColumn() async {
+    final db = await database;
+    final cols = await db.rawQuery('PRAGMA table_info(drugs)');
+    return cols.any((c) => (c['name'] ?? '').toString() == 'iraq_availability');
   }
 
   Future<List<Drug>> getByPharmClass(String pharmClass) async {
@@ -226,6 +288,242 @@ class DatabaseHelper {
       args,
     );
     return rows.map(Drug.fromMap).toList();
+  }
+
+  // ── الإصدار 3.0 ─────────────────────────────────────────────────────────
+
+  /// خريطة ترحيل المعرّفات من قاعدة 2.3 إلى 3.0 (تُستعمل لترحيل المفضّلات).
+  Future<Map<int, int>> legacyIdMap() async {
+    final db = await database;
+    try {
+      final rows = await db.query('legacy_id_map');
+      return {for (final r in rows) r['old_id'] as int: r['new_id'] as int};
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  /// أدوية الأورام فقط.
+  Future<List<Drug>> getOncologyDrugs() async {
+    final db = await database;
+    final rows = await db.query('drugs',
+        where: 'is_oncology = 1', orderBy: 'generic_name');
+    return rows.map(Drug.fromMap).toList();
+  }
+
+  /// بدائل الدواء: نفس المادة الفعّالة، ثم نفس الزمرة (ATC-4)، ثم آلية مشابهة.
+  Future<List<Map<String, dynamic>>> alternativesFor(Drug d) async {
+    final db = await database;
+    final atc = (d.atcCode.length >= 5) ? d.atcCode.substring(0, 5) : d.atcCode;
+    final out = <Map<String, dynamic>>[];
+
+    final same = await db.query('drugs',
+        where: 'generic_name = ? AND id <> ?',
+        whereArgs: [d.genericName, d.id],
+        limit: 20);
+    for (final m in same) {
+      out.add({'drug': Drug.fromMap(m), 'kind': 'generic'});
+    }
+
+    if (atc.isNotEmpty) {
+      final cls = await db.query('drugs',
+          where: 'atc_code LIKE ? AND generic_name <> ?',
+          whereArgs: ['$atc%', d.genericName],
+          limit: 20);
+      for (final m in cls) {
+        out.add({'drug': Drug.fromMap(m), 'kind': 'class'});
+      }
+    }
+
+    if (d.subclassEn.isNotEmpty) {
+      final rows = atc.isNotEmpty
+          ? await db.query('drugs',
+              where: 'subclass_en = ? AND generic_name <> ? '
+                  'AND (atc_code IS NULL OR atc_code NOT LIKE ?)',
+              whereArgs: [d.subclassEn, d.genericName, '$atc%'],
+              limit: 20)
+          : await db.query('drugs',
+              where: 'subclass_en = ? AND generic_name <> ?',
+              whereArgs: [d.subclassEn, d.genericName],
+              limit: 20);
+      for (final m in rows) {
+        out.add({'drug': Drug.fromMap(m), 'kind': 'mechanism'});
+      }
+    }
+    return out;
+  }
+
+  /// أسئلة «عيادتك اليوم»: حالة سريرية + سؤالان عاليا الأثر + سؤالان من البقية.
+  Future<List<Map<String, dynamic>>> dailyQuiz({int count = 5}) async {
+    final db = await database;
+    try {
+      return await db.rawQuery(
+        'SELECT * FROM quiz_questions WHERE is_active = 1 '
+        "ORDER BY (CASE qtype WHEN 'case' THEN 0 "
+        "WHEN 'lasa' THEN 1 WHEN 'diluent' THEN 1 WHEN 'vesicant' THEN 1 "
+        'ELSE 2 END), RANDOM() LIMIT ?',
+        [count],
+      );
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// أسئلة بعينها بالمعرّفات — لتثبيت أسئلة اليوم.
+  Future<List<Map<String, dynamic>>> quizByIds(List<String> qids) async {
+    if (qids.isEmpty) return const [];
+    final db = await database;
+    try {
+      final marks = List.filled(qids.length, '?').join(',');
+      final rows = await db.rawQuery(
+        'SELECT * FROM quiz_questions WHERE qid IN ($marks)',
+        qids,
+      );
+      // رتّبها بترتيب المعرّفات المحفوظ
+      final byId = {for (final r in rows) (r['qid'] ?? '').toString(): r};
+      return [
+        for (final id in qids)
+          if (byId[id] != null) byId[id]!,
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  // ── أنشطة «عيادتك اليوم» ──────────────────────────────────────────────────
+
+  /// «دواء اليوم» — اختيار ثابت لكل يوم، فكل المستخدمين يرون الدواء نفسه
+  /// ويبقى هو نفسه حتى منتصف الليل. يُفضَّل المتوفّر محلياً وذو النصيحة
+  /// الصيدلانية، فيكون الاختيار مفيداً لا عشوائياً.
+  Future<Map<String, dynamic>?> drugOfTheDay(int daySeed) async {
+    final db = await database;
+    try {
+      final pool = await db.rawQuery(
+        'SELECT id FROM drugs '
+        "WHERE counseling_note_ar <> '' "
+        '  AND (iraq_availability IS NULL OR iraq_availability <= 1) '
+        'ORDER BY generic_name COLLATE NOCASE',
+      );
+      if (pool.isEmpty) return null;
+      final idx = daySeed % pool.length;
+      final id = pool[idx]['id'];
+      final rows =
+          await db.rawQuery('SELECT * FROM drugs WHERE id = ?', [id]);
+      return rows.isEmpty ? null : rows.first;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// «حالة الأسبوع» — حالة سريرية ثابتة لكل أسبوع من أسئلة النوع `case`.
+  Future<Map<String, dynamic>?> caseOfTheWeek(int weekSeed) async {
+    final db = await database;
+    try {
+      final rows = await db.rawQuery(
+        "SELECT * FROM quiz_questions WHERE is_active = 1 AND qtype = 'case' "
+        'ORDER BY qid',
+      );
+      if (rows.isEmpty) return null;
+      return rows[weekSeed % rows.length];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// أزواج أدوية لتحدّي التداخلات.
+  ///
+  /// الزوج «متداخل» إذا ذُكر الاسم العلمي للدواء الثاني في نصّ تداخلات
+  /// الأول. وغياب الذكر لا يعني أماناً مطلقاً، لذا يُصاغ السؤال عن
+  /// «المُدرَج في مصدر التطبيق» لا عن الواقع كله — والشرح يعرض النصّ.
+  Future<List<Map<String, dynamic>>> interactionPairs({int count = 8}) async {
+    final db = await database;
+    try {
+      final rows = await db.rawQuery(
+        'SELECT id, generic_name, generic_name_ar, drug_interactions, '
+        '       drug_interactions_ar, app_category '
+        'FROM drugs '
+        "WHERE drug_interactions <> '' AND LENGTH(drug_interactions) > 40 "
+        '  AND (iraq_availability IS NULL OR iraq_availability <= 1) '
+        'ORDER BY RANDOM() LIMIT 220',
+      );
+      if (rows.length < 6) return const [];
+
+      final out = <Map<String, dynamic>>[];
+      final rnd = DateTime.now().millisecondsSinceEpoch;
+
+      // أزواج متداخلة: نبحث في نصّ التداخلات عن اسم دواء آخر موجود فعلاً
+      // في القاعدة، فيكون الزوج حقيقياً لا مُفترضاً.
+      for (var i = 0; i < rows.length && out.length < count; i++) {
+        final a = rows[(i * 7 + rnd) % rows.length];
+        final txt = (a['drug_interactions'] ?? '').toString().toLowerCase();
+        Map<String, dynamic>? partner;
+        for (final b in rows) {
+          if (b['id'] == a['id']) continue;
+          final bn = (b['generic_name'] ?? '').toString();
+          if (bn.length < 5) continue;
+          final first = bn.split(RegExp(r'[ /(]')).first.toLowerCase();
+          if (first.length >= 5 && txt.contains(first)) {
+            partner = b;
+            break;
+          }
+        }
+        if (partner != null) {
+          out.add({
+            'a': a['generic_name'],
+            'b': partner['generic_name'],
+            'interacts': 1,
+            'explain': (a['drug_interactions_ar'] ?? a['drug_interactions'])
+                .toString(),
+          });
+        }
+      }
+
+      // أزواج غير مُدرجة — من أقسام مختلفة ولا ذكر لأحدهما في الآخر.
+      for (var i = 0; out.length < count * 2 && i < rows.length; i++) {
+        final a = rows[i];
+        final b = rows[(i * 13 + 5) % rows.length];
+        if (a['id'] == b['id']) continue;
+        if (a['app_category'] == b['app_category']) continue;
+        final an = (a['generic_name'] ?? '').toString();
+        final bn = (b['generic_name'] ?? '').toString();
+        if (an.length < 5 || bn.length < 5) continue;
+        final at = (a['drug_interactions'] ?? '').toString().toLowerCase();
+        final bt = (b['drug_interactions'] ?? '').toString().toLowerCase();
+        final af = an.split(RegExp(r'[ /(]')).first.toLowerCase();
+        final bf = bn.split(RegExp(r'[ /(]')).first.toLowerCase();
+        if (at.contains(bf) || bt.contains(af)) continue;
+        out.add({
+          'a': an,
+          'b': bn,
+          'interacts': 0,
+          'explain': 'لا تداخل مُدرج بين هذين الدوائين في مصدر التطبيق. '
+              'هذا لا يعني أماناً مطلقاً — راجع المصدر عند الجرعات العالية '
+              'أو اختلال الكبد والكلى.',
+        });
+      }
+
+      out.shuffle();
+      return out.take(count).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<int> quizCount() async {
+    final db = await database;
+    try {
+      final r = await db.rawQuery('SELECT COUNT(*) c FROM quiz_questions');
+      return (r.first['c'] as int?) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// عدد السجلات الفعلي (للتحقق بعد التحديث).
+  Future<int> recordCount() async {
+    final db = await database;
+    final r = await db.rawQuery('SELECT COUNT(*) c FROM drugs');
+    return (r.first['c'] as int?) ?? 0;
   }
 
   // ── Admin CRUD ──────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/config/feature_flags.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -24,19 +25,41 @@ class AppDrawer extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 6),
                   child: _SectionLabel(s.clinicalTools),
                 ),
+                // Removed on iOS under guideline 1.4.1 — their routes are gone
+                // too, so leaving the tiles here would push onto nothing.
+                if (FeatureFlags.doseToolsOnThisPlatform) ...[
+                  _DrawerTile(
+                    icon: Icons.calculate_outlined,
+                    color: const Color(0xFF5C6BC0),
+                    title: s.doseCalc,
+                    subtitle: s.doseCalcSub,
+                    onTap: () { Navigator.pop(context); context.push('/calc'); },
+                  ),
+                  _DrawerTile(
+                    icon: Icons.monitor_heart_outlined,
+                    color: const Color(0xFF0097A7),
+                    title: s.crcl,
+                    subtitle: 'Cockcroft-Gault',
+                    onTap: () { Navigator.pop(context); context.push('/renal-calc'); },
+                  ),
+                ],
                 _DrawerTile(
-                  icon: Icons.calculate_outlined,
-                  color: const Color(0xFF5C6BC0),
-                  title: s.doseCalc,
-                  subtitle: s.doseCalcSub,
-                  onTap: () { Navigator.pop(context); context.push('/calc'); },
+                  icon: Icons.vaccines_outlined,
+                  color: AppColors.cOncology,
+                  title: s.isAr ? 'تخفيض جرعات الكيماوي' : 'Chemo Dose Adjustment',
+                  subtitle: s.isAr
+                      ? 'تعديل الجرعة حسب الكبد والكلى'
+                      : 'Hepatic & renal dose reduction',
+                  onTap: () { Navigator.pop(context); context.push('/chemo-dose'); },
                 ),
                 _DrawerTile(
-                  icon: Icons.monitor_heart_outlined,
-                  color: const Color(0xFF0097A7),
-                  title: s.crcl,
-                  subtitle: 'Cockcroft-Gault',
-                  onTap: () { Navigator.pop(context); context.push('/renal-calc'); },
+                  icon: Icons.water_drop_outlined,
+                  color: const Color(0xFF00838F),
+                  title: s.isAr ? 'حاسبة السوائل والتخفيف' : 'Fluids & Dilution',
+                  subtitle: s.isAr
+                      ? 'تخفيف · معدل تسريب · جرعة بالوزن'
+                      : 'Dilution · infusion rate · weight-based dose',
+                  onTap: () { Navigator.pop(context); context.push('/fluid-calc'); },
                 ),
                 _DrawerTile(
                   icon: Icons.science_outlined,
@@ -60,6 +83,42 @@ class AppDrawer extends StatelessWidget {
                   onTap: () { Navigator.pop(context); context.push('/pricing-calc'); },
                 ),
                 _DrawerTile(
+                  icon: Icons.ondemand_video_outlined,
+                  color: const Color(0xFFC62828),
+                  title: s.isAr ? 'فيديوهات تعليمية' : 'Training Videos',
+                  subtitle: s.isAr
+                      ? 'محتوى أسبوعي للصيادلة'
+                      : 'Weekly content for pharmacists',
+                  onTap: () { Navigator.pop(context); context.push('/videos'); },
+                ),
+                _DrawerTile(
+                  icon: Icons.medical_services_outlined,
+                  color: const Color(0xFF0F6B4F),
+                  title: s.isAr ? 'عيادتك اليوم' : 'Your Clinic Today',
+                  subtitle: s.isAr
+                      ? 'أسئلة · دواء اليوم · حالة الأسبوع · تحدّيات'
+                      : 'Quiz · drug of the day · weekly case · challenges',
+                  onTap: () { Navigator.pop(context); context.push('/clinic-today'); },
+                ),
+                _DrawerTile(
+                  icon: Icons.inventory_2_outlined,
+                  color: const Color(0xFF00695C),
+                  title: s.isAr ? 'توفّر الأدوية' : 'Drug Availability',
+                  subtitle: s.isAr
+                      ? 'وين أحصّل الدواء الناقص؟'
+                      : 'Where to find a scarce drug',
+                  onTap: () { Navigator.pop(context); context.push('/availability'); },
+                ),
+                _DrawerTile(
+                  icon: Icons.work_outline_rounded,
+                  color: const Color(0xFF2E7D32),
+                  title: s.isAr ? 'فرص عمل' : 'Pharmacy Jobs',
+                  subtitle: s.isAr
+                      ? 'وظائف الصيادلة في العراق'
+                      : 'Pharmacist vacancies in Iraq',
+                  onTap: () { Navigator.pop(context); context.push('/jobs'); },
+                ),
+                _DrawerTile(
                   icon: Icons.swap_horiz_rounded,
                   color: const Color(0xFF0097A7),
                   title: s.substitution,
@@ -78,6 +137,17 @@ class AppDrawer extends StatelessWidget {
                   title: s.priceGuide,
                   subtitle: s.priceGuideSubtitle,
                   onTap: () { Navigator.pop(context); context.push('/price-guide'); },
+                ),
+
+                // ── المصادر والمراجع ──────────────────────────────────
+                _DrawerTile(
+                  icon: Icons.menu_book_outlined,
+                  color: const Color(0xFF455A64),
+                  title: s.isAr ? 'المصادر والمراجع' : 'Sources & References',
+                  subtitle: s.isAr
+                      ? 'مراجع المعلومات الدوائية'
+                      : 'References for the drug information',
+                  onTap: () { Navigator.pop(context); context.push('/sources'); },
                 ),
               ],
             ),
@@ -126,33 +196,47 @@ class _DrawerHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Image.asset(
-            'assets/images/logo_white.png',
-            width: 52,
-            height: 52,
-            errorBuilder: (_, __, ___) => Container(
-              width: 52, height: 52,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.local_pharmacy_outlined,
-                  color: Colors.white, size: 28),
+          // شعار التطبيق داخل مربّع أبيض ناعم — يبقى محايداً فوق التدرّج
+          // الأخضر ولا يزاحم ألوان الواجهة.
+          Container(
+            width: 56,
+            height: 56,
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(17),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                  Icons.local_pharmacy_outlined,
+                  color: AppColors.primary,
+                  size: 26),
             ),
           ),
           const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Iraq Pharma Guide',
+              Text('دليل الأدوية العراقي',
                   style: GoogleFonts.ibmPlexSansArabic(
                       color: Colors.white,
-                      fontSize: 17,
+                      fontSize: 16.5,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 3),
-              Text('دليل الدواء العراقي',
+              Text('Iraq Pharma Guide',
                   style: GoogleFonts.ibmPlexSansArabic(
-                      color: Colors.white70, fontSize: 13)),
+                      color: Colors.white70,
+                      fontSize: 12,
+                      letterSpacing: 0.4)),
             ],
           ),
         ],
@@ -227,6 +311,40 @@ class _DrawerFooter extends StatelessWidget {
               Text('·', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
               _legalLink(context, s.disclaimer, '/legal/disclaimer'),
             ],
+          ),
+          const SizedBox(height: 10),
+          // ── إعداد ومراجعة المحتوى ───────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(children: [
+              Text(
+                'إعداد ومراجعة المحتوى الدوائي',
+                style: GoogleFonts.ibmPlexSansArabic(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 10.5),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'د. حميد عدنان حميد',
+                style: GoogleFonts.ibmPlexSansArabic(
+                    color: AppColors.primary,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                'صيدلاني سريري',
+                style: GoogleFonts.ibmPlexSansArabic(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 10),
+                textAlign: TextAlign.center,
+              ),
+            ]),
           ),
           const SizedBox(height: 8),
           // App name + version

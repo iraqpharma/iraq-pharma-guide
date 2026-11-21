@@ -297,15 +297,34 @@ class _SplashScreenState extends State<SplashScreen>
                       builder: (_, child) =>
                           Opacity(opacity: _textFade.value, child: child!),
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: Text(
-                          '© 2026 Iraq Pharma Guide',
-                          style: TextStyle(
-                            color: _deepBlue.withOpacity(0.30),
-                            fontSize: 11.5,
-                            letterSpacing: 0.4,
+                        padding: const EdgeInsets.only(bottom: 22),
+                        child: Column(children: [
+                          Text(
+                            'إعداد ومراجعة: د. حميد عدنان حميد',
+                            style: TextStyle(
+                              color: _teal.withOpacity(0.75),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'صيدلاني سريري',
+                            style: TextStyle(
+                              color: _deepBlue.withOpacity(0.38),
+                              fontSize: 10.5,
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          Text(
+                            '© 2026 Iraq Pharma Guide',
+                            style: TextStyle(
+                              color: _deepBlue.withOpacity(0.30),
+                              fontSize: 11.5,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ]),
                       ),
                     ),
                   ],

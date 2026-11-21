@@ -466,6 +466,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 if (_isSuperAdmin) ...[
                   const SizedBox(height: 12),
                   _buildCard(cs, children: [
+                    // مركز واحد لكل ما يحتاج موافقة أو متابعة إدارية.
+                    _buildNavTile(cs,
+                      icon: Icons.tune_rounded,
+                      color: const Color(0xFF00897B),
+                      title: 'إعدادات التطبيق',
+                      onTap: () =>
+                          context.push('/admin-pin?to=/admin/app-settings'),
+                    ),
+                    _divider(cs),
                     _buildNavTile(cs,
                       icon: Icons.bar_chart_rounded,
                       color: const Color(0xFF6366F1),

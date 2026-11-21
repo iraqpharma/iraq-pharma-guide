@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../legal/sources_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/drug_model.dart';
 import '../../providers/drug_provider.dart';
@@ -58,6 +59,7 @@ class _InteractionsScreenState extends ConsumerState<InteractionsScreen> {
                         interactions: interactions,
                       ),
           ),
+          const SourcesFooterLink(),
         ],
       ),
     );
