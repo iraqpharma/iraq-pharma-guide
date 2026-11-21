@@ -1,0 +1,68 @@
+workflows:
+  ios-testflight:
+    name: iOS — TestFlight only
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+
+    integrations:
+      app_store_connect: Iraq Pharma Guide
+
+    environment:
+      flutter: 3.41.8
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.iraqpharmaguide.iraqPharmaGuide"
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: release/3.0
+          include: true
+          source: true
+
+    scripts:
+      # شهادة التوزيع القديمة مفتاحها الخاص على جهاز ماك آخر، فلا يستطيع
+      # Codemagic استعمالها. هنا يُولَّد مفتاح خاص جديد، وبه تُنشأ شهادة توزيع
+      # وبروفايل App Store، ثم يُربطان بمشروع Xcode.
+      - name: Set up code signing
+        script: |
+          set -e
+          keychain initialize
+          openssl genrsa -out /tmp/cert_key.pem 2048
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/cert_key.pem \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Flutter packages get
+        script: flutter packages pub get
+
+      - name: Install CocoaPods dependencies
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: Flutter build ipa
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        # TestFlight فقط — لا إرسال لمراجعة App Store.
+        # بعد موافقة د. حميد نُحوّل submit_to_app_store إلى true.
+        submit_to_testflight: true
+        submit_to_app_store: false
+      email:
+        recipients:
+          - hameedalkubaisi96@gmail.com
+        notify:
+          success: true
+          failure: true
