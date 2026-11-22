@@ -43,6 +43,9 @@ class AppDrawer extends StatelessWidget {
                     onTap: () { Navigator.pop(context); context.push('/renal-calc'); },
                   ),
                 ],
+                // حاسبتا الكيمياوي والسوائل تحسبان جرعات: أندرويد فقط، مثل
+                // حاسبة الجرعات أعلاه (Apple 1.4.1)، ومساراهما محذوفان على iOS.
+                if (FeatureFlags.doseToolsOnThisPlatform)
                 _DrawerTile(
                   icon: Icons.vaccines_outlined,
                   color: AppColors.cOncology,
@@ -52,6 +55,7 @@ class AppDrawer extends StatelessWidget {
                       : 'Hepatic & renal dose reduction',
                   onTap: () { Navigator.pop(context); context.push('/chemo-dose'); },
                 ),
+                if (FeatureFlags.doseToolsOnThisPlatform)
                 _DrawerTile(
                   icon: Icons.water_drop_outlined,
                   color: const Color(0xFF00838F),

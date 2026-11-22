@@ -134,7 +134,8 @@ final appRouter = GoRouter(
     if (FeatureFlags.doseToolsOnThisPlatform)
       GoRoute(path: '/renal-calc',  builder: (_, __) => const RenalCalculatorScreen()),
     GoRoute(path: '/interactions',  builder: (_, __) => const InteractionsScreen()),
-    GoRoute(path: '/chemo-dose',    builder: (_, __) => const ChemoDoseScreen()),
+    if (FeatureFlags.doseToolsOnThisPlatform)
+      GoRoute(path: '/chemo-dose',  builder: (_, __) => const ChemoDoseScreen()),
     GoRoute(path: '/sources',       builder: (_, __) => const SourcesScreen()),
     GoRoute(path: '/notebook',      builder: (_, __) => const NotebookScreen()),
     GoRoute(path: '/price-guide',   builder: (_, __) => const CommercialPriceGuideScreen()),
@@ -163,7 +164,8 @@ final appRouter = GoRouter(
     GoRoute(path: '/availability', builder: (_, __) => const AvailabilityScreen()),
 
     // حاسبة السوائل والتخفيف
-    GoRoute(path: '/fluid-calc', builder: (_, __) => const FluidCalculatorScreen()),
+    if (FeatureFlags.doseToolsOnThisPlatform)
+      GoRoute(path: '/fluid-calc', builder: (_, __) => const FluidCalculatorScreen()),
 
     // أدوات سريرية إضافية
     GoRoute(path: '/customers',
