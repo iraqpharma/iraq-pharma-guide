@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -225,7 +226,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('محوّل الوحدات المختبرية',
+        title: const TText('محوّل الوحدات المختبرية',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: Column(children: [
@@ -236,7 +237,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
             onChanged: (_) => setState(() {}),
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'ابحث عن تحليل بالعربية أو الإنكليزية',
+              hintText: trS(context, 'ابحث عن تحليل بالعربية أو الإنكليزية'),
               hintStyle: const TextStyle(fontSize: 13),
               prefixIcon: const Icon(Icons.search_rounded, size: 20),
               isDense: true,
@@ -249,7 +250,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
         Expanded(
           child: list.isEmpty
               ? Center(
-                  child: Text('لا توجد نتائج',
+                  child: TText('لا توجد نتائج',
                       style: TextStyle(
                           fontSize: 13,
                           color: theme.colorScheme.onSurfaceVariant)),
@@ -260,7 +261,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
                     for (final g in groups.entries) ...[
                       Padding(
                         padding: const EdgeInsets.fromLTRB(4, 10, 4, 7),
-                        child: Text(g.key,
+                        child: TText(g.key,
                             style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -309,18 +310,18 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(a.name,
+                    TText(a.name,
                         style: const TextStyle(
                             fontSize: 13.5, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
-                    Text(a.nameAr,
+                    TText(a.nameAr,
                         style: TextStyle(
                             fontSize: 11.5,
                             color: theme.colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
-              Text('${a.convUnit}  ⇄  ${a.siUnit}',
+              TText('${a.convUnit}  ⇄  ${a.siUnit}',
                   style: TextStyle(
                       fontSize: 11,
                       color: theme.colorScheme.onSurfaceVariant)),
@@ -350,7 +351,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
         children: [
           Row(children: [
             Expanded(
-              child: Text('${a.name}  ·  ${a.nameAr}',
+              child: TText('${a.name}  ·  ${a.nameAr}',
                   style: const TextStyle(
                       fontSize: 13.5, fontWeight: FontWeight.bold)),
             ),
@@ -373,7 +374,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
                 style: const TextStyle(
                     fontSize: 15, fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
-                  labelText: from,
+                  labelText: trN(context, from),
                   labelStyle: const TextStyle(fontSize: 12),
                   isDense: true,
                   filled: true,
@@ -391,7 +392,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
               },
               icon: const Icon(Icons.swap_horiz_rounded,
                   size: 22, color: AppColors.primary),
-              tooltip: 'اعكس الاتجاه',
+              tooltip: trS(context, 'اعكس الاتجاه'),
             ),
             Expanded(
               child: Container(
@@ -407,12 +408,12 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
                       color: AppColors.primary.withOpacity(0.35)),
                 ),
                 child: Row(children: [
-                  Text(to,
+                  TText(to,
                       style: TextStyle(
                           fontSize: 11.5,
                           color: theme.colorScheme.onSurfaceVariant)),
                   const Spacer(),
-                  Text(out ?? '—',
+                  TText(out ?? '—',
                       style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -428,7 +429,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
                   size: 15, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 7),
               Expanded(
-                child: Text('المدى الطبيعي: ${a.normal} ${a.convUnit}',
+                child: TText('المدى الطبيعي: ${a.normal} ${a.convUnit}',
                     style: TextStyle(
                         fontSize: 11.5,
                         color: theme.colorScheme.onSurfaceVariant)),
@@ -437,7 +438,7 @@ class _LabUnitsScreenState extends State<LabUnitsScreen> {
           ],
           if (a.name == 'HbA1c') ...[
             const SizedBox(height: 8),
-            Text(
+            TText(
                 'يعتمد التحويل معادلة IFCC المعتمدة عالمياً بين النسبة '
                 'المئوية و ملمول/مول',
                 style: TextStyle(

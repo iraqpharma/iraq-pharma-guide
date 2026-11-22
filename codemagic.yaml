@@ -237,3 +237,109 @@ workflows:
         notify:
           success: true
           failure: true
+
+  android-release:
+    name: Android — Google Play (AAB موقّع)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      # مفتاح الرفع يُرفع من صاحب الحساب في Codemagic:
+      # Teams → Personal Account → Code signing identities → Android keystores
+      # باسم مرجعي iraq_pharma_upload. بدونه يفشل هذا المسار عمداً.
+      android_signing:
+        - iraq_pharma_upload
+      flutter: 3.41.8
+      xcode: latest
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: release/*
+          include: true
+          source: true
+
+    scripts:
+      # مفتاح التوقيع ليس في المستودع (وهذا صحيح، فهو سرّ). إن أُضيف
+      # في Codemagic تحت مجموعة keystore_reference يُستعمل، وإلا يرجع
+      # gradle تلقائياً إلى توقيع debug — وهو كافٍ تماماً لتثبيت النسخة
+      # على الهاتف والفحص، وغير صالح للرفع إلى Google Play.
+      # ملف google-services.json مستثنى من git (سطر 58 في .gitignore)
+      # فلا يصل إلى آلة البناء، و Gradle يفشل بدونه. يُحقن من متغيّر
+      # GOOGLE_SERVICES_JSON في Codemagic (محتوى الملف كما هو، أو base64).
+      - name: Restore google-services.json
+        script: |
+          F="$CM_BUILD_DIR/android/app/google-services.json"
+          if [ -f "$F" ]; then
+            echo "الملف موجود في المستودع"
+          elif [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            if echo "$GOOGLE_SERVICES_JSON" | head -c 1 | grep -q '{'; then
+              printf '%s' "$GOOGLE_SERVICES_JSON" > "$F"
+            else
+              echo "$GOOGLE_SERVICES_JSON" | base64 --decode > "$F"
+            fi
+            echo "أُنشئ من متغيّر البيئة"
+            python3 -c "import json,sys; d=json.load(open('$F')); print('package:', [c['client_info']['android_client_info']['package_name'] for c in d['client']])"
+          else
+            # لا ملف ولا متغيّر: يُبنى الملف من lib/firebase_options.dart
+            # الموجود في المستودع (المفتاح والمشروع أنفسهما)، مع معرّف تطبيق
+            # أندرويد المسجّل في Firebase للحزمة com.iraqpharmaguide.app.
+            python3 - "$F" "$CM_BUILD_DIR/lib/firebase_options.dart" <<'PY'
+          import re, json, sys
+          s = open(sys.argv[2], encoding='utf-8').read()
+          blk = re.search(r'android\s*=\s*FirebaseOptions\((.*?)\);', s, re.S).group(1)
+          g = lambda k: re.search(k + r":\s*'([^']+)'", blk).group(1)
+          d = {
+              "project_info": {"project_number": g('messagingSenderId'),
+                               "project_id": g('projectId'),
+                               "storage_bucket": g('storageBucket')},
+              "client": [{
+                  "client_info": {
+                      "mobilesdk_app_id": "1:1411929971:android:e9ae6f3d36702914449706",
+                      "android_client_info": {"package_name": "com.iraqpharmaguide.app"}},
+                  "oauth_client": [],
+                  "api_key": [{"current_key": g('apiKey')}],
+                  "services": {"appinvite_service": {"other_platform_oauth_client": []}}}],
+              "configuration_version": "1"}
+          json.dump(d, open(sys.argv[1], 'w'), indent=2)
+          print('وُلّد google-services.json للحزمة com.iraqpharmaguide.app')
+          PY
+          fi
+
+      - name: Set up release signing
+        script: |
+          if [ -z "$CM_KEYSTORE_PATH" ]; then
+            echo "لا يوجد keystore باسم iraq_pharma_upload — لا يُبنى إصدار المتجر بتوقيع debug"
+            exit 1
+          fi
+          cat > "$CM_BUILD_DIR/android/key.properties" <<KP
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          KP
+
+      - name: Flutter packages get
+        script: flutter packages pub get
+
+      - name: Flutter analyze
+        script: flutter analyze --no-fatal-warnings --no-fatal-infos
+        ignore_failure: true
+
+      # رقم البناء يزيد مع كل بناء على Codemagic فيبقى أعلى من أي رقم سبق
+      # رفعه إلى Google Play (آخر منشور 27).
+      - name: Build signed app bundle
+        script: flutter build appbundle --release --build-number=$((100 + PROJECT_BUILD_NUMBER))
+
+    artifacts:
+      - build/app/outputs/bundle/**/*.aab
+      - build/app/outputs/**/mapping.txt
+
+    publishing:
+      email:
+        recipients:
+          - hameedalkubaisi96@gmail.com
+        notify:
+          success: true
+          failure: true

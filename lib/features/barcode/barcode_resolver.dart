@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -151,7 +152,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
     if (!ok) {
       Haptics.error();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text((context.s.isAr ? 'تعذّر الإرسال. تحقّق من الاتصال وحاول مرّة أخرى' : 'Could not send. Check your connection and try again')),
+        content: TText((context.s.isAr ? 'تعذّر الإرسال. تحقّق من الاتصال وحاول مرّة أخرى' : 'Could not send. Check your connection and try again')),
       ));
       return;
     }
@@ -164,7 +165,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
       // الاقتراح لا يُعتمد قبل المراجعة، فلا نُظهر الاسم كأنه مؤكّد
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text((context.s.isAr ? 'وصل اقتراحك. سيُراجَع قبل اعتماده للجميع' : 'Suggestion received. It will be reviewed before it goes live')),
+        content: TText((context.s.isAr ? 'وصل اقتراحك. سيُراجَع قبل اعتماده للجميع' : 'Suggestion received. It will be reviewed before it goes live')),
       ));
     }
   }
@@ -216,11 +217,11 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text((context.s.isAr ? 'رقم غير معروف' : 'Unknown barcode'),
+                      TText((context.s.isAr ? 'رقم غير معروف' : 'Unknown barcode'),
                           style: TextStyle(
                               fontSize: 14.5, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 2),
-                      Text(widget.barcode,
+                      TText(widget.barcode,
                           style: TextStyle(
                               fontSize: 12,
                               letterSpacing: 0.5,
@@ -236,7 +237,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                   color: AppColors.primary.withOpacity(isDark ? 0.14 : 0.06),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: TText(
                     widget.isAdmin
                         ? 'الباركود رقم تسلسلي لا يحمل اسم الدواء. اربطه '
                             'بالدواء الصحيح فيصبح معروفاً لكل مستخدمي '
@@ -287,7 +288,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                           border: Border.all(
                               color: AppColors.primary.withOpacity(0.22)),
                         ),
-                        child: Text(h,
+                        child: TText(h,
                             style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -340,7 +341,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(context.s.cancel,
+                    child: TText(context.s.cancel,
                         style: const TextStyle(fontSize: 13.5)),
                   ),
                 ),
@@ -360,7 +361,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                                 ? Icons.link_rounded
                                 : Icons.send_rounded,
                             size: 18),
-                    label: Text(
+                    label: TText(
                         widget.isAdmin
                             ? (context.s.isAr ? 'اربط الرقم بهذا الدواء' : 'Link barcode to this drug')
                             : (context.s.isAr ? 'أرسل الاقتراح للمراجعة' : 'Send suggestion for review'),
@@ -414,13 +415,13 @@ class CameraPermissionDialog extends StatelessWidget {
                   color: AppColors.primary, size: 42),
             ),
             const SizedBox(height: 18),
-            Text(context.s.cameraPermission,
+            TText(context.s.cameraPermission,
                 style: GoogleFonts.cairo(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface)),
             const SizedBox(height: 9),
-            Text(context.s.cameraPermissionReason,
+            TText(context.s.cameraPermissionReason,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cairo(
                     fontSize: 13,
@@ -436,7 +437,7 @@ class CameraPermissionDialog extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(context.s.cancel,
+                  child: TText(context.s.cancel,
                       style: GoogleFonts.cairo(
                           fontWeight: FontWeight.w600, fontSize: 13.5)),
                 ),
@@ -453,7 +454,7 @@ class CameraPermissionDialog extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(context.s.allow_,
+                  child: TText(context.s.allow_,
                       style: GoogleFonts.cairo(
                           fontWeight: FontWeight.bold, fontSize: 13.5)),
                 ),

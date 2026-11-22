@@ -1,3 +1,4 @@
+import 't_text.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -271,7 +272,7 @@ const kIntros = <String, IntroContent>{
       IntroStep(Icons.link_rounded, 'الاسم يأتي من قاعدة ربط',
           'إن كان الرقم معروفاً ظهر الاسم فوراً وبُحث عنه'),
       IntroStep(Icons.volunteer_activism_outlined, 'وإن كان مجهولاً',
-          'تُسنِده إلى دوائه مرّة واحدة، فيصير معروفاً لكل صيادلة التطبيق'),
+          'تقترح اسمه مرّة واحدة، وبعد مراجعة الإدارة يصير معروفاً لكل صيادلة التطبيق'),
     ],
   ),
 };
@@ -312,13 +313,13 @@ class _IntroSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              Text(intro.title,
+              TText(intro.title,
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onSurface)),
               const SizedBox(height: 6),
-              Text(intro.tagline,
+              TText(intro.tagline,
                   style: TextStyle(
                       fontSize: 13,
                       height: 1.7,
@@ -344,13 +345,13 @@ class _IntroSheet extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(s.title,
+                            TText(s.title,
                                 style: TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.onSurface)),
                             const SizedBox(height: 3),
-                            Text(s.body,
+                            TText(s.body,
                                 style: TextStyle(
                                     fontSize: 12.5,
                                     height: 1.75,
@@ -375,14 +376,14 @@ class _IntroSheet extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: const Text('فهمت، لنبدأ',
+                  child: const TText('فهمت، لنبدأ',
                       style: TextStyle(
                           fontSize: 14.5, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 6),
               Center(
-                child: Text('لن تظهر هذه الشاشة مرّة أخرى',
+                child: TText('لن تظهر هذه الشاشة مرّة أخرى',
                     style: TextStyle(
                         fontSize: 11,
                         color: theme.colorScheme.onSurfaceVariant)),

@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import '../../core/l10n/app_strings.dart';
 import 'dart:async';
 import 'dart:math';
@@ -233,7 +234,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text((context.s.isAr ? 'الحاسبة السريعة' : 'Speed Calculator'),
+        title: TText((context.s.isAr ? 'الحاسبة السريعة' : 'Speed Calculator'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           if (_started)
@@ -250,7 +251,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                         .withOpacity(0.13),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('$_left ث',
+                  child: TText('$_left ث',
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -284,16 +285,16 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
               ),
             ),
             child: Column(children: [
-              Text('${_correct * 100 + _left * 5}',
+              TText('${_correct * 100 + _left * 5}',
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 38,
                       fontWeight: FontWeight.bold)),
-              Text((context.s.isAr ? 'نقطة' : 'points'),
+              TText((context.s.isAr ? 'نقطة' : 'points'),
                   style: TextStyle(
                       color: Colors.white.withOpacity(0.85), fontSize: 12)),
               const SizedBox(height: 10),
-              Text((context.s.isAr ? '$_correct إجابة صحيحة من $_total' : '$_correct correct out of $_total'),
+              TText((context.s.isAr ? '$_correct إجابة صحيحة من $_total' : '$_correct correct out of $_total'),
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -316,14 +317,14 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                 Row(children: [
                   Icon(Icons.bolt_rounded, size: 19, color: Color(0xFFD08A3E)),
                   SizedBox(width: 8),
-                  Text((context.s.isAr ? 'كيف تعمل' : 'How it works'),
+                  TText((context.s.isAr ? 'كيف تعمل' : 'How it works'),
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFD08A3E))),
                 ]),
                 const SizedBox(height: 10),
-                Text(
+                TText(
                     'عشرة حسابات صيدلانية في دقيقتين: جرعة بالوزن، حجم من '
                     'شراب، معدل تسريب، قطرات في الدقيقة، وتخفيف\n\n'
                     'النقاط = 100 لكل جواب صحيح + 5 لكل ثانية متبقّية'
@@ -351,11 +352,11 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                   size: 19, color: Color(0xFFD08A3E)),
               const SizedBox(width: 9),
               Expanded(
-                child: Text((context.s.isAr ? 'أفضل نتيجة لك' : 'Your best score'),
+                child: TText((context.s.isAr ? 'أفضل نتيجة لك' : 'Your best score'),
                     style:
                         TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
               ),
-              Text('$_best',
+              TText('$_best',
                   style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -367,7 +368,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
           child: FilledButton.icon(
             onPressed: _start,
             icon: const Icon(Icons.play_arrow_rounded, size: 21),
-            label: Text(_done ? (context.s.isAr ? 'أعد المحاولة' : 'Try again') : (context.s.isAr ? 'ابدأ' : 'Start'),
+            label: TText(_done ? (context.s.isAr ? 'أعد المحاولة' : 'Try again') : (context.s.isAr ? 'ابدأ' : 'Start'),
                 style: const TextStyle(
                     fontSize: 15.5, fontWeight: FontWeight.bold)),
             style: FilledButton.styleFrom(
@@ -379,7 +380,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
           ),
         ),
         const SizedBox(height: 18),
-        Text(
+        TText(
             (context.s.isAr ? 'نتيجتك تُنشر في لوحة المتصدّرين داخل «عيادتك اليوم»' : 'Your score is posted to the leaderboard in “Clinic Today”'),
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -399,11 +400,11 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
         Row(children: [
-          Text('${_index + 1} / $_total',
+          TText('${_index + 1} / $_total',
               style: TextStyle(
                   fontSize: 11.5, color: theme.colorScheme.onSurfaceVariant)),
           const Spacer(),
-          Text((context.s.isAr ? 'صحيح: $_correct' : 'Correct: $_correct'),
+          TText((context.s.isAr ? 'صحيح: $_correct' : 'Correct: $_correct'),
               style: const TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.bold,
@@ -424,7 +425,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: theme.dividerColor.withOpacity(0.35)),
           ),
-          child: Text(q.text,
+          child: TText(q.text,
               textAlign: TextAlign.center,
               style: const TextStyle(
                   fontSize: 16, height: 1.8, fontWeight: FontWeight.w600)),
@@ -474,7 +475,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
               ),
-              child: Text((context.s.isAr ? 'تحقّق' : 'Check'),
+              child: TText((context.s.isAr ? 'تحقّق' : 'Check'),
                   style:
                       TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ),
@@ -495,7 +496,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                       : AppColors.errorRed),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(q.explain,
+                child: TText(q.explain,
                     textDirection: TextDirection.ltr,
                     style: const TextStyle(fontSize: 13, height: 1.5)),
               ),

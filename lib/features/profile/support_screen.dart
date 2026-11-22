@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -47,7 +48,7 @@ class SupportScreen extends StatelessWidget {
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: Text(context.s.supportTitle,
+        title: TText(context.s.supportTitle,
             style: GoogleFonts.ibmPlexSansArabic(
                 fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
       ),
@@ -68,11 +69,11 @@ class SupportScreen extends StatelessWidget {
               const Icon(Icons.support_agent_rounded, color: Colors.white, size: 36),
               const SizedBox(width: 14),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(context.s.helpCenter,
+                TText(context.s.helpCenter,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 const SizedBox(height: 4),
-                Text(context.s.helpCenterSub,
+                TText(context.s.helpCenterSub,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 12, color: Colors.white.withOpacity(0.85))),
               ])),
@@ -104,7 +105,7 @@ class SupportScreen extends StatelessWidget {
   Widget _label(String text, IconData icon) => Builder(builder: (context) => Row(children: [
     Icon(icon, size: 18, color: AppColors.primary),
     const SizedBox(width: 8),
-    Text(text,
+    TText(text,
         style: GoogleFonts.ibmPlexSansArabic(
             fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
   ]));
@@ -141,7 +142,7 @@ class _FaqTileState extends State<_FaqTile> {
                 Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
                     color: AppColors.primary, size: 20),
                 const SizedBox(width: 10),
-                Expanded(child: Text(widget.q,
+                Expanded(child: TText(widget.q,
                     style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface))),
               ]),
@@ -149,7 +150,7 @@ class _FaqTileState extends State<_FaqTile> {
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.only(right: 30),
-                  child: Text(widget.a,
+                  child: TText(widget.a,
                       style: GoogleFonts.ibmPlexSansArabic(
                           fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6)),
                 ),
@@ -182,8 +183,8 @@ class _ContactCard extends StatelessWidget {
       ),
       const SizedBox(width: 14),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.ibmPlexSansArabic(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
-        Text(subtitle, style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        TText(title, style: GoogleFonts.ibmPlexSansArabic(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+        TText(subtitle, style: GoogleFonts.ibmPlexSansArabic(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ]),
     ]),
   );

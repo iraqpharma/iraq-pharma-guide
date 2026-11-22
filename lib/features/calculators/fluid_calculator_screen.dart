@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -22,7 +23,7 @@ class FluidCalculatorScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          title: const Text('حاسبة السوائل والتخفيف',
+          title: const TText('حاسبة السوائل والتخفيف',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5)),
           bottom: const TabBar(
             isScrollable: true,
@@ -92,11 +93,11 @@ class _Num extends StatelessWidget {
           ],
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           decoration: InputDecoration(
-            labelText: label,
-            hintText: hint,
+            labelText: trN(context, label),
+            hintText: trN(context, hint),
             hintStyle: const TextStyle(fontSize: 12),
             labelStyle: const TextStyle(fontSize: 13),
-            suffixText: unit,
+            suffixText: trN(context, unit),
             suffixStyle: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
@@ -152,7 +153,7 @@ class _Result extends StatelessWidget {
         Row(children: [
           Icon(Icons.calculate_rounded, size: 17, color: color),
           const SizedBox(width: 7),
-          Text(title,
+          TText(title,
               style: TextStyle(
                   fontSize: 13.5, fontWeight: FontWeight.bold, color: color)),
         ]),
@@ -164,11 +165,11 @@ class _Result extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(r[0],
+                  child: TText(r[0],
                       style: const TextStyle(fontSize: 12.5, height: 1.4)),
                 ),
                 const SizedBox(width: 8),
-                Text(r[1],
+                TText(r[1],
                     style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -178,7 +179,7 @@ class _Result extends StatelessWidget {
           ),
         if (note != null) ...[
           const SizedBox(height: 4),
-          Text(note!,
+          TText(note!,
               style: TextStyle(
                   fontSize: 11.5,
                   height: 1.6,
@@ -206,7 +207,7 @@ class _Disclaimer extends StatelessWidget {
               size: 17, color: AppColors.warningAmber),
           const SizedBox(width: 9),
           Expanded(
-            child: Text(
+            child: TText(
                 'الحاسبة أداة مساعدة، راجع نشرة المنتج وبروتوكول المستشفى '
                 'قبل التحضير، وتحقّق من الحساب مرّة ثانية مع زميل في '
                 'الأدوية عالية الخطورة',
@@ -253,7 +254,7 @@ class _DilutionTabState extends State<_DilutionTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
-        Text('من تركيز جاهز إلى تركيز مطلوب، تُحسب كمية العيار والمذيب',
+        TText('من تركيز جاهز إلى تركيز مطلوب، تُحسب كمية العيار والمذيب',
             style: TextStyle(
                 fontSize: 12.5,
                 height: 1.6,
@@ -338,7 +339,7 @@ class _RateTabState extends State<_RateTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
-        Text('من حجم الكيس ومدّة التسريب إلى معدل المضخة وعدد القطرات',
+        TText('من حجم الكيس ومدّة التسريب إلى معدل المضخة وعدد القطرات',
             style: TextStyle(
                 fontSize: 12.5,
                 height: 1.6,
@@ -358,7 +359,7 @@ class _RateTabState extends State<_RateTab> {
             onChanged: (_) => setState(() {})),
         const Padding(
           padding: EdgeInsets.only(bottom: 8, right: 2),
-          child: Text('معامل القطرة (مكتوب على علبة السِت)',
+          child: TText('معامل القطرة (مكتوب على علبة السِت)',
               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
         ),
         Wrap(
@@ -366,7 +367,7 @@ class _RateTabState extends State<_RateTab> {
           children: [
             for (final f in [10, 15, 20, 60])
               ChoiceChip(
-                label: Text(
+                label: TText(
                     f == 60 ? '60 (ميكرو)' : '$f gtt/mL',
                     style: const TextStyle(fontSize: 12)),
                 selected: _dropFactor == f,
@@ -445,7 +446,7 @@ class _WeightDoseTabState extends State<_WeightDoseTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
-        Text(
+        TText(
             'لأدوية التسريب المحسوبة بالوزن (نورإبينفرين، دوبامين'
             'ميدازولام…): من الجرعة المطلوبة إلى معدل المضخة',
             style: TextStyle(
@@ -471,7 +472,7 @@ class _WeightDoseTabState extends State<_WeightDoseTab> {
             children: [
               for (final u in ['mcg/kg/min', 'mcg/kg/hr', 'mg/kg/hr'])
                 ChoiceChip(
-                  label: Text(u, style: const TextStyle(fontSize: 11.5)),
+                  label: TText(u, style: const TextStyle(fontSize: 11.5)),
                   selected: _unit == u,
                   onSelected: (_) => setState(() => _unit = u),
                 ),
@@ -546,7 +547,7 @@ class _MaintenanceTabState extends State<_MaintenanceTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       children: [
-        Text('سوائل الصيانة بقاعدة Holliday-Segar (4-2-1)، مع حساب العَوَز '
+        TText('سوائل الصيانة بقاعدة Holliday-Segar (4-2-1)، مع حساب العَوَز '
             'عند وجود تجفاف',
             style: TextStyle(
                 fontSize: 12.5,
@@ -561,7 +562,7 @@ class _MaintenanceTabState extends State<_MaintenanceTab> {
             onChanged: (_) => setState(() {})),
         const Padding(
           padding: EdgeInsets.only(bottom: 8, right: 2),
-          child: Text('درجة التجفاف',
+          child: TText('درجة التجفاف',
               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
         ),
         Wrap(
@@ -569,7 +570,7 @@ class _MaintenanceTabState extends State<_MaintenanceTab> {
           children: [
             for (final p in [0, 3, 5, 10])
               ChoiceChip(
-                label: Text(p == 0 ? 'بلا تجفاف' : '$p٪',
+                label: TText(p == 0 ? 'بلا تجفاف' : '$p٪',
                     style: const TextStyle(fontSize: 12)),
                 selected: _dehydration == p,
                 onSelected: (_) => setState(() => _dehydration = p),

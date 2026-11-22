@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -158,7 +159,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('الصلاحية بعد الفتح',
+        title: const TText('الصلاحية بعد الفتح',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: ListView(
@@ -176,7 +177,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
                   size: 18, color: AppColors.primary),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(
+                child: TText(
                     'التاريخ المطبوع على العلبة يخصّ العبوة المغلقة. بعد '
                     'أول فتح تبدأ مدّة أقصر، وهذه هي',
                     style: TextStyle(
@@ -200,7 +201,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
                   size: 17, color: AppColors.warningAmber),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(
+                child: TText(
                     'هذه مدد عامة مرجعية. نشرة المنتج تسبقها دائماً، وأي '
                     'تغيّر في اللون أو الرائحة أو القوام يعني الرمي فوراً '
                     'مهما بقي من الوقت',
@@ -264,7 +265,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
                 ),
                 const SizedBox(width: 11),
                 Expanded(
-                  child: Text(it.form,
+                  child: TText(it.form,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.bold)),
                 ),
@@ -275,7 +276,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
                     color: it.color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Text(it.days,
+                  child: TText(it.days,
                       style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
@@ -290,7 +291,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(it.note,
+                  TText(it.note,
                       style: TextStyle(
                           fontSize: 12.5,
                           height: 1.8,
@@ -300,7 +301,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
                     OutlinedButton.icon(
                       onPressed: () => _pickDate(i),
                       icon: const Icon(Icons.event_outlined, size: 17),
-                      label: Text(
+                      label: TText(
                           _opened == null
                               ? 'متى فُتحت العبوة؟'
                               : 'فُتحت في '
@@ -330,7 +331,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            TText(
                                 left < 0
                                     ? 'انتهت صلاحيتها منذ ${-left} يوماً'
                                     : (left == 0
@@ -346,7 +347,7 @@ class _ShelfLifeScreenState extends State<ShelfLifeScreen> {
                                           : AppColors.successGreen),
                                 )),
                             const SizedBox(height: 3),
-                            Text(
+                            TText(
                                 'آخر يوم صالح: '
                                 '${expiry.year}/${expiry.month}/${expiry.day}',
                                 style: TextStyle(

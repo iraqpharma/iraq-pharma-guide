@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -65,11 +66,11 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('زبائني',
+        title: const TText('زبائني',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           IconButton(
-            tooltip: 'عن هذا القسم',
+            tooltip: trS(context, 'عن هذا القسم'),
             onPressed: () =>
                 SectionIntro.showNow(context, id: 'customers'),
             icon: const Icon(Icons.help_outline_rounded, size: 20),
@@ -83,7 +84,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
             onChanged: (v) => setState(() => _q = v),
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'ابحث باسم الزبون أو هاتفه أو دوائه',
+              hintText: trS(context, 'ابحث باسم الزبون أو هاتفه أو دوائه'),
               hintStyle: const TextStyle(fontSize: 12.5),
               prefixIcon: const Icon(Icons.search_rounded, size: 19),
               isDense: true,
@@ -116,7 +117,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       size: 18, color: AppColors.warningAmber),
                   const SizedBox(width: 9),
                   Expanded(
-                    child: Text(
+                    child: TText(
                         '${due.length} زبوناً حان أو قرب موعد إعادة صرفه',
                         style: TextStyle(
                             fontSize: 12.5,
@@ -147,7 +148,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         onPressed: () => _edit(null),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
-        label: const Text('زبون جديد',
+        label: const TText('زبون جديد',
             style: TextStyle(
                 color: Colors.white, fontWeight: FontWeight.bold)),
       ),
@@ -195,7 +196,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       color: accent.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(13),
                     ),
-                    child: Text(_initials(c.name),
+                    child: TText(_initials(c.name),
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -206,14 +207,14 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(c.name,
+                        TText(c.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.bold)),
                         const SizedBox(height: 3),
-                        Text(
+                        TText(
                             [
                               if (c.age != null) '${c.age} سنة',
                               if (c.condition.isNotEmpty) c.condition,
@@ -229,7 +230,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   ),
                   if (c.phone.trim().isNotEmpty)
                     IconButton(
-                      tooltip: 'اتّصل',
+                      tooltip: trS(context, 'اتّصل'),
                       onPressed: () => _call(c.phone),
                       icon: const Icon(Icons.phone_outlined,
                           size: 19, color: AppColors.primary),
@@ -249,7 +250,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           size: 15, color: AppColors.errorRed),
                       const SizedBox(width: 7),
                       Expanded(
-                        child: Text('حساسية: ${c.allergies}',
+                        child: TText('حساسية: ${c.allergies}',
                             style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
@@ -277,7 +278,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
+                            child: TText(
                                 m.dose.trim().isEmpty
                                     ? m.name
                                     : '${m.name}  —  ${m.dose}',
@@ -290,7 +291,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   if (c.meds.length > 3)
                     Padding(
                       padding: const EdgeInsets.only(right: 13, top: 2),
-                      child: Text('و${c.meds.length - 3} دواءً آخر',
+                      child: TText('و${c.meds.length - 3} دواءً آخر',
                           style: TextStyle(
                               fontSize: 11,
                               color: theme.colorScheme.onSurfaceVariant)),
@@ -313,7 +314,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           size: 14,
                           color: accent),
                       const SizedBox(width: 6),
-                      Text(
+                      TText(
                           left < 0
                               ? 'تأخّر ${-left} يوماً عن ${next!.name}'
                               : (left == 0
@@ -332,7 +333,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _visit(c),
                       icon: const Icon(Icons.how_to_reg_outlined, size: 16),
-                      label: const Text('سجّل زيارة وصرف',
+                      label: const TText('سجّل زيارة وصرف',
                           style: TextStyle(fontSize: 12)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
@@ -345,7 +346,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    tooltip: 'احذف البطاقة',
+                    tooltip: trS(context, 'احذف البطاقة'),
                     onPressed: () => _delete(c),
                     icon: const Icon(Icons.delete_outline_rounded,
                         size: 19, color: AppColors.errorRed),
@@ -402,13 +403,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           child: SafeArea(
             top: false,
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('ماذا صرفت له اليوم؟',
+              TText('ماذا صرفت له اليوم؟',
                   style: TextStyle(
                       fontSize: 15.5,
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onSurface)),
               const SizedBox(height: 4),
-              Text('ما تختاره يُحدّث تاريخ آخر صرف وموعد التذكير',
+              TText('ما تختاره يُحدّث تاريخ آخر صرف وموعد التذكير',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 11.5,
@@ -424,12 +425,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                         ? picked.add(m.name)
                         : picked.remove(m.name));
                   },
-                  title: Text(m.name,
+                  title: TText(m.name,
                       style: const TextStyle(
                           fontSize: 13.5, fontWeight: FontWeight.w600)),
                   subtitle: m.dose.trim().isEmpty
                       ? null
-                      : Text(m.dose,
+                      : TText(m.dose,
                           style: const TextStyle(fontSize: 11.5)),
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: EdgeInsets.zero,
@@ -444,7 +445,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('إلغاء',
+                    child: const TText('إلغاء',
                         style: TextStyle(fontSize: 13)),
                   ),
                 ),
@@ -461,7 +462,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('سجّل الزيارة',
+                    child: const TText('سجّل الزيارة',
                         style: TextStyle(
                             fontSize: 13.5, fontWeight: FontWeight.bold)),
                   ),
@@ -485,19 +486,19 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('حذف البطاقة', style: TextStyle(fontSize: 16)),
-        content: Text('ستُحذف بطاقة ${c.name} وكل أدويتها نهائياً',
+        title: const TText('حذف البطاقة', style: TextStyle(fontSize: 16)),
+        content: TText('ستُحذف بطاقة ${c.name} وكل أدويتها نهائياً',
             style: const TextStyle(fontSize: 13, height: 1.7)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('إلغاء')),
+              child: const TText('إلغاء')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.errorRed,
                 foregroundColor: Colors.white),
-            child: const Text('احذف'),
+            child: const TText('احذف'),
           ),
         ],
       ),
@@ -533,13 +534,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   size: 40, color: AppColors.primary),
             ),
             const SizedBox(height: 18),
-            Text(noneAtAll ? 'لا بطاقات بعد' : 'لا نتائج',
+            TText(noneAtAll ? 'لا بطاقات بعد' : 'لا نتائج',
                 style: TextStyle(
                     fontSize: 16.5,
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface)),
             const SizedBox(height: 9),
-            Text(
+            TText(
                 noneAtAll
                     ? 'سجّل زبونك المزمن الأول: اسمه وعلاجه وجرعته،\n'
                         'فيذكّرك التطبيق بموعده في كل زيارة'
@@ -595,7 +596,7 @@ class _CustomerEditorState extends State<_CustomerEditor> {
     if (n.length < 2) {
       Haptics.error();
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('اكتب اسم الزبون')));
+          const SnackBar(content: TText('اكتب اسم الزبون')));
       return;
     }
     final now = DateTime.now();
@@ -649,13 +650,13 @@ class _CustomerEditorState extends State<_CustomerEditor> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(widget.card == null ? 'زبون جديد' : 'تعديل البطاقة',
+        title: TText(widget.card == null ? 'زبون جديد' : 'تعديل البطاقة',
             style: const TextStyle(
                 fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           TextButton(
             onPressed: _save,
-            child: const Text('حفظ',
+            child: const TText('حفظ',
                 style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.bold)),
           ),
@@ -692,21 +693,21 @@ class _CustomerEditorState extends State<_CustomerEditor> {
             children: [
               Row(children: [
                 const Expanded(
-                  child: Text('أدويته',
+                  child: TText('أدويته',
                       style: TextStyle(
                           fontSize: 14, fontWeight: FontWeight.bold)),
                 ),
                 TextButton.icon(
                   onPressed: () => _addMed(),
                   icon: const Icon(Icons.add_rounded, size: 17),
-                  label: const Text('أضف دواء',
+                  label: const TText('أضف دواء',
                       style: TextStyle(fontSize: 12.5)),
                 ),
               ]),
               if (_meds.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text(
+                  child: TText(
                       'لم تُضف أدوية بعد. الدواء مع جرعته وعدد أيام العلبة '
                       'هو ما يجعل التذكير ممكناً',
                       style: TextStyle(
@@ -733,7 +734,7 @@ class _CustomerEditorState extends State<_CustomerEditor> {
                   size: 17, color: AppColors.successGreen),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(
+                child: TText(
                     'هذه البطاقة محفوظة على هاتفك وحده ولا تُرفع إلى أي '
                     'خادم. معلومات المرضى أمانة، ومكانها جهازك لا الإنترنت',
                     style: TextStyle(
@@ -763,18 +764,18 @@ class _CustomerEditorState extends State<_CustomerEditor> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(m.name,
+                TText(m.name,
                     style: const TextStyle(
                         fontSize: 13.5, fontWeight: FontWeight.bold)),
                 if (m.dose.trim().isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(m.dose,
+                  TText(m.dose,
                       style: TextStyle(
                           fontSize: 11.5,
                           color: theme.colorScheme.onSurfaceVariant)),
                 ],
                 const SizedBox(height: 2),
-                Text('العلبة تكفي ${m.packDays} يوماً',
+                TText('العلبة تكفي ${m.packDays} يوماً',
                     style: TextStyle(
                         fontSize: 11,
                         color: theme.colorScheme.onSurfaceVariant)),
@@ -806,9 +807,9 @@ class _CustomerEditorState extends State<_CustomerEditor> {
       keyboardType: keyboard,
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: trN(context, label),
         labelStyle: const TextStyle(fontSize: 12.5),
-        hintText: hint,
+        hintText: trN(context, hint),
         hintStyle: const TextStyle(fontSize: 11.5),
         isDense: true,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -890,7 +891,7 @@ class _MedSheetState extends State<_MedSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.med == null ? 'أضف دواء' : 'تعديل الدواء',
+              TText(widget.med == null ? 'أضف دواء' : 'تعديل الدواء',
                   style: const TextStyle(
                       fontSize: 15.5, fontWeight: FontWeight.bold)),
               const SizedBox(height: 14),
@@ -900,9 +901,9 @@ class _MedSheetState extends State<_MedSheet> {
                 onChanged: _suggest,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: 'اسم الدواء',
+                  labelText: trS(context, 'اسم الدواء'),
                   labelStyle: const TextStyle(fontSize: 12.5),
-                  hintText: 'اكتب حرفين ليظهر الاقتراح',
+                  hintText: trS(context, 'اكتب حرفين ليظهر الاقتراح'),
                   hintStyle: const TextStyle(fontSize: 11.5),
                   isDense: true,
                   border: OutlineInputBorder(
@@ -929,7 +930,7 @@ class _MedSheetState extends State<_MedSheet> {
                           border: Border.all(
                               color: AppColors.primary.withOpacity(0.22)),
                         ),
-                        child: Text(h,
+                        child: TText(h,
                             style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -943,8 +944,8 @@ class _MedSheetState extends State<_MedSheet> {
                 controller: _dose,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: 'الجرعة',
-                  hintText: 'قرص صباحاً ومساءً بعد الأكل',
+                  labelText: trS(context, 'الجرعة'),
+                  hintText: trS(context, 'قرص صباحاً ومساءً بعد الأكل'),
                   labelStyle: const TextStyle(fontSize: 12.5),
                   hintStyle: const TextStyle(fontSize: 11.5),
                   isDense: true,
@@ -957,8 +958,8 @@ class _MedSheetState extends State<_MedSheet> {
                 controller: _note,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: 'ملاحظة (اختياري)',
-                  hintText: 'لا يُؤخذ مع الحليب',
+                  labelText: trS(context, 'ملاحظة (اختياري)'),
+                  hintText: trS(context, 'لا يُؤخذ مع الحليب'),
                   labelStyle: const TextStyle(fontSize: 12.5),
                   hintStyle: const TextStyle(fontSize: 11.5),
                   isDense: true,
@@ -967,11 +968,11 @@ class _MedSheetState extends State<_MedSheet> {
                 ),
               ),
               const SizedBox(height: 15),
-              const Text('العلبة تكفي',
+              const TText('العلبة تكفي',
                   style:
                       TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text('على أساسه يُحسب موعد إعادة الصرف',
+              TText('على أساسه يُحسب موعد إعادة الصرف',
                   style: TextStyle(
                       fontSize: 11,
                       color: theme.colorScheme.onSurfaceVariant)),
@@ -979,7 +980,7 @@ class _MedSheetState extends State<_MedSheet> {
               Wrap(spacing: 7, runSpacing: 7, children: [
                 for (final d in [7, 14, 20, 28, 30, 60, 90])
                   ChoiceChip(
-                    label: Text('$d يوماً',
+                    label: TText('$d يوماً',
                         style: const TextStyle(fontSize: 12)),
                     selected: _packDays == d,
                     onSelected: (_) {
@@ -1017,7 +1018,7 @@ class _MedSheetState extends State<_MedSheet> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('إلغاء',
+                    child: const TText('إلغاء',
                         style: TextStyle(fontSize: 13)),
                   ),
                 ),
@@ -1051,7 +1052,7 @@ class _MedSheetState extends State<_MedSheet> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('حفظ الدواء',
+                    child: const TText('حفظ الدواء',
                         style: TextStyle(
                             fontSize: 13.5, fontWeight: FontWeight.bold)),
                   ),

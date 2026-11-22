@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -118,7 +119,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('جدول التلقيح العراقي',
+        title: const TText('جدول التلقيح العراقي',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: ListView(
@@ -134,11 +135,11 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('حوّل الجدول إلى تواريخ',
+                const TText('حوّل الجدول إلى تواريخ',
                     style: TextStyle(
                         fontSize: 13.5, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                Text(
+                TText(
                     'اختر تاريخ الميلاد لتظهر تواريخ كل زيارة، والزيارات '
                     'التي فاتت',
                     style: TextStyle(
@@ -151,7 +152,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _pick,
                       icon: const Icon(Icons.cake_outlined, size: 17),
-                      label: Text(
+                      label: TText(
                           _birth == null
                               ? 'تاريخ الميلاد'
                               : '${_birth!.year}/${_birth!.month}/${_birth!.day}',
@@ -170,13 +171,13 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                     IconButton(
                       onPressed: () => setState(() => _birth = null),
                       icon: const Icon(Icons.close_rounded, size: 18),
-                      tooltip: 'إلغاء',
+                      tooltip: trS(context, 'إلغاء'),
                     ),
                   ],
                 ]),
                 if (ageDays != null) ...[
                   const SizedBox(height: 9),
-                  Text(_ageText(ageDays),
+                  TText(_ageText(ageDays),
                       style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.bold,
@@ -200,7 +201,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                         size: 18, color: AppColors.primary),
                     const SizedBox(width: 9),
                     const Expanded(
-                      child: Text('لقاحات خارج الجدول الوطني',
+                      child: TText('لقاحات خارج الجدول الوطني',
                           style: TextStyle(
                               fontSize: 13.5, fontWeight: FontWeight.bold)),
                     ),
@@ -220,12 +221,12 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(p[0],
+                          TText(p[0],
                               style: const TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(height: 3),
-                          Text(p[1],
+                          TText(p[1],
                               style: TextStyle(
                                   fontSize: 11.5,
                                   height: 1.7,
@@ -251,7 +252,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                   size: 17, color: AppColors.warningAmber),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(
+                child: TText(
                     'جدول مرجعي للاسترشاد. بطاقة التلقيح الصادرة من مركز '
                     'الرعاية الصحية الأولية وتعليمات وزارة الصحة هي المرجع '
                     'الملزم، وقد تتغيّر اللقاحات وأعمارها بقرار وزاري',
@@ -332,7 +333,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
         children: [
           Row(children: [
             Expanded(
-              child: Text(v.age,
+              child: TText(v.age,
                   style: const TextStyle(
                       fontSize: 14, fontWeight: FontWeight.bold)),
             ),
@@ -344,7 +345,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                   color: stateColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: Text(state,
+                child: TText(state,
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -353,7 +354,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
           ]),
           if (due != null && v.days < 3650) ...[
             const SizedBox(height: 5),
-            Text('التاريخ: ${due.year}/${due.month}/${due.day}',
+            TText('التاريخ: ${due.year}/${due.month}/${due.day}',
                 style: TextStyle(
                     fontSize: 11.5, color: theme.colorScheme.onSurfaceVariant)),
           ],
@@ -373,7 +374,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                 ),
                 const SizedBox(width: 9),
                 Expanded(
-                  child: Text(vac,
+                  child: TText(vac,
                       style: const TextStyle(fontSize: 12.5, height: 1.5)),
                 ),
               ]),
@@ -388,7 +389,7 @@ class _VaccineScheduleScreenState extends State<VaccineScheduleScreen> {
                     : const Color(0xFFF6F8FA),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: Text(v.note,
+              child: TText(v.note,
                   style: TextStyle(
                       fontSize: 11.5,
                       height: 1.7,

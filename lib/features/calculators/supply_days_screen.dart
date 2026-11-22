@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -91,7 +92,7 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('كم يوماً تكفي العلبة؟',
+        title: const TText('كم يوماً تكفي العلبة؟',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: ListView(
@@ -102,7 +103,7 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('نوع الشكل الدوائي',
+                const TText('نوع الشكل الدوائي',
                     style:
                         TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
@@ -130,14 +131,14 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
                 ],
                 _field(_dose, _doseLabel),
                 const SizedBox(height: 14),
-                const Text('عدد المرّات في اليوم',
+                const TText('عدد المرّات في اليوم',
                     style:
                         TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 9),
                 Wrap(spacing: 8, children: [
                   for (final t in [1, 2, 3, 4, 6])
                     ChoiceChip(
-                      label: Text(
+                      label: TText(
                           t == 1
                               ? 'مرّة'
                               : (t == 2
@@ -182,7 +183,7 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
                     size: 19, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text('أكمل الحقول أعلاه ليظهر الناتج',
+                  child: TText('أكمل الحقول أعلاه ليظهر الناتج',
                       style: TextStyle(
                           fontSize: 12.5,
                           color: theme.colorScheme.onSurfaceVariant)),
@@ -205,7 +206,7 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
                   size: 17, color: AppColors.warningAmber),
               const SizedBox(width: 9),
               Expanded(
-                child: Text(
+                child: TText(
                     'القطرة محسوبة على أنّ كل 20 قطرة تساوي ملليلتراً واحداً، '
                     'وهو تقدير يتغيّر بحسب لزوجة المحلول وفوهة القنينة. '
                     'الشراب بعد التحضير له مدّة صلاحية قد تنتهي قبل أن ينفد',
@@ -225,7 +226,7 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
     final theme = Theme.of(context);
     final sel   = _mode == m;
     return ChoiceChip(
-      label: Text(label, style: const TextStyle(fontSize: 12)),
+      label: TText(label, style: const TextStyle(fontSize: 12)),
       selected: sel,
       onSelected: (_) {
         Haptics.select();
@@ -259,9 +260,9 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
       onChanged: (_) => setState(() {}),
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: trN(context, label),
         labelStyle: const TextStyle(fontSize: 12.5),
-        hintText: hint,
+        hintText: trN(context, hint),
         hintStyle: const TextStyle(fontSize: 11.5),
         isDense: true,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -319,7 +320,7 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
             const Icon(Icons.event_available_outlined,
                 size: 20, color: AppColors.primary),
             const SizedBox(width: 9),
-            Text('تكفي $days يوماً',
+            TText('تكفي $days يوماً',
                 style: const TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.bold,
@@ -344,7 +345,7 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
                     size: 16, color: AppColors.errorRed),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: TText(
                       'العبوة لا تكفي أسبوعاً. راجع حجم العبوة أو اصرف '
                       'أكثر من واحدة لتغطية مدّة العلاج',
                       style: TextStyle(
@@ -366,11 +367,11 @@ class _SupplyDaysScreenState extends State<SupplyDaysScreen> {
       padding: const EdgeInsets.only(bottom: 7),
       child: Row(children: [
         Expanded(
-          child: Text(k,
+          child: TText(k,
               style: TextStyle(
                   fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant)),
         ),
-        Text(v,
+        TText(v,
             style: const TextStyle(
                 fontSize: 13, fontWeight: FontWeight.bold)),
       ]),

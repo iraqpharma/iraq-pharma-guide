@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -83,14 +84,14 @@ class _JobFormScreenState extends State<JobFormScreen> {
         builder: (_) => AlertDialog(
           icon: const Icon(Icons.check_circle_outline,
               color: AppColors.successGreen, size: 42),
-          title: const Text('تم إرسال الإعلان'),
-          content: const Text(
+          title: const TText('تم إرسال الإعلان'),
+          content: const TText(
               'سيظهر إعلانك للصيادلة بعد مراجعته من الإدارة'
               'تجد حالته في «إعلاناتي»'),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('حسناً')),
+                child: const TText('حسناً')),
           ],
         ),
       );
@@ -101,7 +102,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.errorRed,
-          content: Text('تعذّر النشر: $e'),
+          content: TText('تعذّر النشر: $e'),
         ),
       );
     } finally {
@@ -113,7 +114,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: const Text('نشر فرصة عمل')),
+      appBar: AppBar(title: const TText('نشر فرصة عمل')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -126,7 +127,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
               label: 'اسم الصيدلية *',
               hint: 'مثال: صيدلية الشفاء',
               validator: (v) =>
-                  (v == null || v.trim().length < 2) ? 'أدخل اسم الصيدلية' : null,
+                  (v == null || v.trim().length < 2) ? trS(context, 'أدخل اسم الصيدلية') : null,
             ),
             _CityDropdown(value: _city, onChanged: (v) => setState(() => _city = v)),
             _Field(controller: _area, label: 'المنطقة', hint: 'مثال: الكرادة'),
@@ -143,7 +144,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
                 spacing: 8,
                 children: JobPost.workTypeLabels.entries
                     .map((e) => ChoiceChip(
-                          label: Text(e.value),
+                          label: TText(e.value),
                           selected: _workType == e.key,
                           onSelected: (_) => setState(() => _workType = e.key),
                         ))
@@ -175,7 +176,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
                   'وردية مسائية: 4 م، 11 م',
                 ]
                     .map((p) => ActionChip(
-                          label: Text(p, style: const TextStyle(fontSize: 11.5)),
+                          label: TText(p, style: const TextStyle(fontSize: 11.5)),
                           visualDensity: VisualDensity.compact,
                           onPressed: () => setState(() => _hours.text = p),
                         ))
@@ -192,8 +193,8 @@ class _JobFormScreenState extends State<JobFormScreen> {
               contentPadding: EdgeInsets.zero,
               value: _negotiable,
               onChanged: (v) => setState(() => _negotiable = v),
-              title: const Text('يُحدَّد عند المقابلة'),
-              subtitle: const Text('أوقف الخيار إن أردت ذكر مبلغ'),
+              title: const TText('يُحدَّد عند المقابلة'),
+              subtitle: const TText('أوقف الخيار إن أردت ذكر مبلغ'),
             ),
             if (!_negotiable) ...[
               Row(children: [
@@ -227,7 +228,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
                   spacing: 8,
                   children: JobPost.periodLabels.entries
                       .map((e) => ChoiceChip(
-                            label: Text(e.value),
+                            label: TText(e.value),
                             selected: _period == e.key,
                             onSelected: (_) => setState(() => _period = e.key),
                           ))
@@ -243,7 +244,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
                 spacing: 8,
                 children: JobPost.genderLabels.entries
                     .map((e) => ChoiceChip(
-                          label: Text(e.value),
+                          label: TText(e.value),
                           selected: _gender == e.key,
                           onSelected: (_) => setState(() => _gender = e.key),
                         ))
@@ -291,7 +292,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
                     size: 18, color: AppColors.warningAmber),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: TText(
                     'الإعلان لا يظهر للصيادلة إلا بعد مراجعته من الإدارة',
                     style: TextStyle(fontSize: 12.5),
                   ),
@@ -310,7 +311,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.send_rounded),
-                label: Text(_saving ? 'جارٍ الإرسال…' : 'إرسال الإعلان'),
+                label: TText(_saving ? 'جارٍ الإرسال…' : 'إرسال الإعلان'),
               ),
             ),
           ],
@@ -333,7 +334,7 @@ class _SectionTitle extends StatelessWidget {
         child: Row(children: [
           Icon(icon, size: 18, color: AppColors.primary),
           const SizedBox(width: 7),
-          Text(text,
+          TText(text,
               style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -374,8 +375,8 @@ class _Field extends StatelessWidget {
               digitsOnly ? [FilteringTextInputFormatter.digitsOnly] : null,
           validator: validator,
           decoration: InputDecoration(
-            labelText: label,
-            hintText: hint,
+            labelText: trN(context, label),
+            hintText: trN(context, hint),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12)),
             isDense: true,
@@ -395,7 +396,7 @@ class _Labeled extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label,
+          TText(label,
               style: TextStyle(
                   fontSize: 12.5,
                   color: Theme.of(context).colorScheme.onSurfaceVariant)),
@@ -416,7 +417,7 @@ class _CityDropdown extends StatelessWidget {
         child: DropdownButtonFormField<String>(
           initialValue: value,
           decoration: InputDecoration(
-            labelText: 'المحافظة *',
+            labelText: trS(context, 'المحافظة *'),
             border:
                 OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             isDense: true,
@@ -424,7 +425,7 @@ class _CityDropdown extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           ),
           items: JobsService.iraqCities
-              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+              .map((c) => DropdownMenuItem(value: c, child: TText(c)))
               .toList(),
           onChanged: (v) {
             if (v != null) onChanged(v);

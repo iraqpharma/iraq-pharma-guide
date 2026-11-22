@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -60,11 +61,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('توفّر الأدوية',
+        title: const TText('توفّر الأدوية',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           IconButton(
-            tooltip: 'إعلاناتي',
+            tooltip: trS(context, 'إعلاناتي'),
             icon: const Icon(Icons.inventory_2_outlined, size: 21),
             onPressed: () async {
               await Navigator.of(context).push(MaterialPageRoute(
@@ -88,7 +89,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded, size: 21),
-        label: const Text('أعلن عن توفّر دواء',
+        label: const TText('أعلن عن توفّر دواء',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
       ),
       body: Column(children: [
@@ -105,7 +106,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             onChanged: (v) => _query = v.trim(),
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'اكتب اسم الدواء الذي تبحث عنه…',
+              hintText: trS(context, 'اكتب اسم الدواء الذي تبحث عنه…'),
               hintStyle: const TextStyle(fontSize: 13),
               prefixIcon: const Icon(Icons.search_rounded, size: 20),
               suffixIcon: _searchCtrl.text.isEmpty
@@ -227,7 +228,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             if (icon != null)
               Icon(icon, size: 14, color: active ? Colors.white : color),
             if (icon != null) const SizedBox(width: 5),
-            Text('$label  $count',
+            TText('$label  $count',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: active ? FontWeight.bold : FontWeight.w600,
@@ -256,12 +257,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                   size: 34, color: AppColors.primary.withOpacity(0.55)),
             ),
             const SizedBox(height: 13),
-            Text(title,
+            TText(title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                     fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
-            Text(body,
+            TText(body,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 12.5,
@@ -336,7 +337,7 @@ class AvailabilityCard extends StatelessWidget {
                 children: [
                   Row(children: [
                     Expanded(
-                      child: Text(post.titleLine,
+                      child: TText(post.titleLine,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -353,7 +354,7 @@ class AvailabilityCard extends StatelessWidget {
                         size: 12.5, color: gov.color),
                     const SizedBox(width: 3),
                     Flexible(
-                      child: Text('${post.pharmacyName} · ${post.locationAr}',
+                      child: TText('${post.pharmacyName} · ${post.locationAr}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -388,7 +389,7 @@ class AvailabilityCard extends StatelessWidget {
 
           if (post.notes.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(post.notes,
+            TText(post.notes,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -405,14 +406,14 @@ class AvailabilityCard extends StatelessWidget {
                   ? Colors.white.withOpacity(0.06)
                   : const Color(0xFFF1F3F5)),
           Row(children: [
-            Text(post.agoAr,
+            TText(post.agoAr,
                 style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
             const Spacer(),
             if (post.contactWhatsapp.isNotEmpty)
               TextButton.icon(
                 onPressed: () => _whatsapp(post.contactWhatsapp),
                 icon: const Icon(Icons.chat_rounded, size: 16),
-                label: const Text('واتساب', style: TextStyle(fontSize: 12.5)),
+                label: const TText('واتساب', style: TextStyle(fontSize: 12.5)),
                 style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF25A366),
                     visualDensity: VisualDensity.compact),
@@ -420,7 +421,7 @@ class AvailabilityCard extends StatelessWidget {
             TextButton.icon(
               onPressed: () => _dial(post.contactPhone),
               icon: const Icon(Icons.phone_rounded, size: 16),
-              label: const Text('اتصال', style: TextStyle(fontSize: 12.5)),
+              label: const TText('اتصال', style: TextStyle(fontSize: 12.5)),
               style: TextButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   visualDensity: VisualDensity.compact),
@@ -449,7 +450,7 @@ class AvailabilityCard extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 12.5, color: c),
         const SizedBox(width: 4),
-        Text(text,
+        TText(text,
             style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -476,7 +477,7 @@ class AvailabilityCard extends StatelessWidget {
         color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(v[0] as String,
+      child: TText(v[0] as String,
           style: TextStyle(
               fontSize: 10.5, color: color, fontWeight: FontWeight.bold)),
     );
@@ -551,7 +552,7 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
       if (!mounted) return;
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('وصل إعلانك، يظهر بعد موافقة الإدارة'),
+        content: TText('وصل إعلانك، يظهر بعد موافقة الإدارة'),
         backgroundColor: AppColors.successGreen,
         behavior: SnackBarBehavior.floating,
       ));
@@ -577,11 +578,11 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('أعلن عن توفّر دواء',
+              const TText('أعلن عن توفّر دواء',
                   style:
                       TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text(
+              TText(
                   'يظهر إعلانك بعد موافقة الإدارة ويسري 30 يوماً'
                   'ويمكنك إغلاقه عند نفاد الكمية',
                   style: TextStyle(
@@ -613,7 +614,7 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
                 isExpanded: true,
                 decoration: _dec('المحافظة *', null),
                 items: JobsService.iraqCities
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .map((c) => DropdownMenuItem(value: c, child: TText(c)))
                     .toList(),
                 onChanged: (v) => setState(() => _city = v ?? 'بغداد'),
               ),
@@ -632,7 +633,7 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
 
               if (_error != null) ...[
                 const SizedBox(height: 6),
-                Text(_error!,
+                TText(_error!,
                     style: const TextStyle(
                         color: AppColors.errorRed, fontSize: 12)),
               ],
@@ -648,7 +649,7 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: Text(_sending ? 'جاري الإرسال…' : 'إرسال الإعلان',
+                  child: TText(_sending ? 'جاري الإرسال…' : 'إرسال الإعلان',
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
@@ -661,8 +662,8 @@ class _AvailabilityFormSheetState extends State<AvailabilityFormSheet> {
   }
 
   InputDecoration _dec(String label, String? hint) => InputDecoration(
-        labelText: label,
-        hintText: hint,
+        labelText: trN(context, label),
+        hintText: trN(context, hint),
         hintStyle: const TextStyle(fontSize: 12),
         labelStyle: const TextStyle(fontSize: 13),
         alignLabelWithHint: true,
@@ -721,7 +722,7 @@ class _MyAvailabilityScreenState extends State<MyAvailabilityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إعلانات التوفّر الخاصة بي')),
+      appBar: AppBar(title: const TText('إعلانات التوفّر الخاصة بي')),
       body: FutureBuilder<List<AvailabilityPost>>(
         future: _future,
         builder: (context, snap) {
@@ -733,7 +734,7 @@ class _MyAvailabilityScreenState extends State<MyAvailabilityScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(30),
-                child: Text('لم تنشر إعلاناً بعد',
+                child: TText('لم تنشر إعلاناً بعد',
                     style: TextStyle(
                         fontSize: 13,
                         color: Theme.of(context).colorScheme.onSurfaceVariant)),
@@ -748,7 +749,7 @@ class _MyAvailabilityScreenState extends State<MyAvailabilityScreen> {
                 if (p.status == 'rejected' && p.rejectReason.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10, right: 6),
-                    child: Text('سبب الرفض: ${p.rejectReason}',
+                    child: TText('سبب الرفض: ${p.rejectReason}',
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.errorRed)),
                   ),
@@ -763,7 +764,7 @@ class _MyAvailabilityScreenState extends State<MyAvailabilityScreen> {
                           _reload();
                         },
                         icon: const Icon(Icons.inventory_rounded, size: 16),
-                        label: const Text('نفدت الكمية، أغلق الإعلان',
+                        label: const TText('نفدت الكمية، أغلق الإعلان',
                             style: TextStyle(fontSize: 12.5)),
                       ),
                     ),

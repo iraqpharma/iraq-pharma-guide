@@ -1,3 +1,4 @@
+import '../../shared/widgets/t_text.dart';
 import '../../core/l10n/app_strings.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -91,7 +92,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
         backgroundColor: AppColors.cOncology,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text((context.s.isAr ? 'تخفيض جرعات الكيماوي' : 'Chemo Dose Adjustment'),
+        title: TText((context.s.isAr ? 'تخفيض جرعات الكيماوي' : 'Chemo Dose Adjustment'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: ListView(
@@ -113,8 +114,8 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               Expanded(
                 child: SegmentedButton<bool>(
                   segments: [
-                    ButtonSegment(value: false, label: Text((context.s.isAr ? 'ذكر' : 'Male'))),
-                    ButtonSegment(value: true, label: Text((context.s.isAr ? 'أنثى' : 'Female'))),
+                    ButtonSegment(value: false, label: TText((context.s.isAr ? 'ذكر' : 'Male'))),
+                    ButtonSegment(value: true, label: TText((context.s.isAr ? 'أنثى' : 'Female'))),
                   ],
                   selected: {_female},
                   onSelectionChanged: (v) =>
@@ -178,7 +179,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
                 for (var i = 0; i < chemoDrugs.length; i++)
                   DropdownMenuItem(
                     value: i,
-                    child: Text(
+                    child: TText(
                       '${chemoDrugs[i].name} — ${chemoDrugs[i].nameAr}',
                       style: const TextStyle(fontSize: 13.5),
                       overflow: TextOverflow.ellipsis,
@@ -188,7 +189,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               onChanged: (v) => setState(() => _drugIndex = v ?? 0),
             ),
             const SizedBox(height: 10),
-            Text((context.s.isAr ? 'الجرعة المرجعية: ${drug.standardDose}' : 'Reference dose: ${drug.standardDose}'),
+            TText((context.s.isAr ? 'الجرعة المرجعية: ${drug.standardDose}' : 'Reference dose: ${drug.standardDose}'),
                 style: TextStyle(
                     fontSize: 12.5, color: cs.onSurfaceVariant)),
           ]),
@@ -205,7 +206,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
           ],
 
           const SizedBox(height: 14),
-          Text((context.s.isAr ? 'المصدر: ${drug.source}' : 'Source: ${drug.source}'),
+          TText((context.s.isAr ? 'المصدر: ${drug.source}' : 'Source: ${drug.source}'),
               style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant)),
         ],
       ),
@@ -226,7 +227,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               color: Color(0xFF9A6207), size: 20),
           SizedBox(width: 10),
           Expanded(
-            child: Text(
+            child: TText(
               'أداة مساعدة للقرار. النتيجة لا تُغني عن بروتوكول المركز '
               'العلاجي ولا عن قرار الطبيب المعالج، ولا تشمل التعديل بسبب '
               'السمّية التراكمية أو التداخلات',
@@ -250,7 +251,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
           Row(children: [
             Icon(icon, size: 18, color: AppColors.cOncology),
             const SizedBox(width: 8),
-            Text(title,
+            TText(title,
                 style: const TextStyle(
                     fontSize: 14, fontWeight: FontWeight.bold)),
           ]),
@@ -269,7 +270,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
         onSubmitted: (_) => FocusScope.of(context).unfocus(),
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
-          labelText: label,
+          labelText: trN(context, label),
           labelStyle: const TextStyle(fontSize: 12),
           isDense: true,
           border: const OutlineInputBorder(),
@@ -285,15 +286,15 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
           borderRadius: BorderRadius.circular(13),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label,
+          TText(label,
               style: const TextStyle(fontSize: 11, color: Color(0xFF6B6B7B))),
           const SizedBox(height: 3),
-          Text(value,
+          TText(value,
               style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.cOncology)),
-          Text(note,
+          TText(note,
               style: const TextStyle(fontSize: 10, color: Color(0xFF8A8A99))),
         ]),
       );
@@ -336,12 +337,12 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               color: color,
               size: 22),
           const SizedBox(width: 9),
-          Text(a.hold ? (context.s.isAr ? 'يُمنع الإعطاء' : 'Do not give') : (context.s.isAr ? 'الجرعة الموصى بها: $pct٪' : 'Recommended dose: $pct%'),
+          TText(a.hold ? (context.s.isAr ? 'يُمنع الإعطاء' : 'Do not give') : (context.s.isAr ? 'الجرعة الموصى بها: $pct٪' : 'Recommended dose: $pct%'),
               style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         ]),
         const SizedBox(height: 10),
-        Text(a.reason,
+        TText(a.reason,
             style: const TextStyle(fontSize: 13.5, height: 1.7)),
         if (dose.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -353,10 +354,10 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(children: [
-              Text((context.s.isAr ? 'الجرعة المحسوبة' : 'Calculated dose'),
+              TText((context.s.isAr ? 'الجرعة المحسوبة' : 'Calculated dose'),
                   style: TextStyle(fontSize: 12.5)),
               const Spacer(),
-              Text(dose,
+              TText(dose,
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -364,7 +365,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
             ]),
           ),
           const SizedBox(height: 6),
-          Text('BSA ${bsa.toStringAsFixed(2)} m² × ${drug.standardDose} × $pct٪',
+          TText('BSA ${bsa.toStringAsFixed(2)} m² × ${drug.standardDose} × $pct٪',
               style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A99))),
         ],
       ]),
@@ -384,10 +385,10 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
         border: Border.all(color: AppColors.cOncology.withOpacity(0.35)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text((context.s.isAr ? 'معادلة Calvert' : 'Calvert formula'),
+        TText((context.s.isAr ? 'معادلة Calvert' : 'Calvert formula'),
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text((context.s.isAr ? 'الجرعة (mg) = AUC × (GFR + 25)' : 'Dose (mg) = AUC × (GFR + 25)'),
+        TText((context.s.isAr ? 'الجرعة (mg) = AUC × (GFR + 25)' : 'Dose (mg) = AUC × (GFR + 25)'),
             style: TextStyle(fontSize: 12.5, color: Color(0xFF6B6B7B))),
         const SizedBox(height: 13),
         SizedBox(
@@ -403,9 +404,9 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(children: [
-            Text((context.s.isAr ? 'الجرعة' : 'Dose'), style: TextStyle(fontSize: 13)),
+            TText((context.s.isAr ? 'الجرعة' : 'Dose'), style: TextStyle(fontSize: 13)),
             const Spacer(),
-            Text(dose > 0 ? '${dose.round()} mg' : '—',
+            TText(dose > 0 ? '${dose.round()} mg' : '—',
                 style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -413,7 +414,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
           ]),
         ),
         const SizedBox(height: 9),
-        const Text(
+        const TText(
           'يُستعمل GFR المحسوب بـ Cockcroft-Gault أعلاه. كثير من المراكز '
           'تضع سقفاً لـ GFR عند 125 mL/min لتفادي الجرعات المفرطة',
           style: TextStyle(fontSize: 11.5, height: 1.65, color: Color(0xFF6B6B7B)),
@@ -434,7 +435,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               color: AppColors.errorRed, size: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text,
+            child: TText(text,
                 style: const TextStyle(fontSize: 12.5, height: 1.65)),
           ),
         ]),
