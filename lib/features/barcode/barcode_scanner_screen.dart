@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 
@@ -150,7 +151,141 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen>
               ],
             ),
           ),
+
+          // ── 7. تعذّر تشغيل الكاميرا (إذن مرفوض أو عطل) ───────────────────
+          // بلا هذه اللوحة كانت الشاشة تبقى سوداء دون أي تفسير.
+          ValueListenableBuilder<MobileScannerState>(
+            valueListenable: _ctrl,
+            builder: (context, st, _) {
+              final err = st.error;
+              if (err == null) return const SizedBox.shrink();
+              return _CameraErrorPanel(
+                denied: err.errorCode ==
+                    MobileScannerErrorCode.permissionDenied,
+                onRetry: () async {
+                  try {
+                    await _ctrl.stop();
+                  } catch (_) {/* لم تكن تعمل */}
+                  try {
+                    await _ctrl.start();
+                  } catch (_) {/* تبقى اللوحة ظاهرة */}
+                },
+                onClose: () => Navigator.of(context).maybePop(),
+              );
+            },
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _CameraErrorPanel extends StatelessWidget {
+  final bool denied;
+  final VoidCallback onRetry;
+  final VoidCallback onClose;
+  const _CameraErrorPanel({
+    required this.denied,
+    required this.onRetry,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ar = context.s.isAr;
+    return Container(
+      color: Colors.black,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(28),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                  denied
+                      ? Icons.no_photography_outlined
+                      : Icons.videocam_off_outlined,
+                  color: Colors.white70,
+                  size: 54),
+              const SizedBox(height: 16),
+              Text(
+                denied
+                    ? (ar ? 'الكاميرا غير مسموحة' : 'Camera access is off')
+                    : (ar ? 'تعذّر تشغيل الكاميرا' : 'Could not start the camera'),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                denied
+                    ? (ar
+                        ? 'افتح إعدادات الجهاز وفعّل الكاميرا لهذا التطبيق ثم ارجع واضغط «حاول مجدداً»'
+                        : 'Open device settings, turn on Camera for this app, then come back and tap “Try again”')
+                    : (ar
+                        ? 'أغلق أي تطبيق آخر يستعمل الكاميرا ثم حاول مجدداً'
+                        : 'Close any other app using the camera, then try again'),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                    color: Colors.white70, fontSize: 13, height: 1.7),
+              ),
+              const SizedBox(height: 22),
+              if (denied)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: openAppSettings,
+                    icon: const Icon(Icons.settings_outlined, size: 18),
+                    label: Text(ar ? 'فتح الإعدادات' : 'Open settings',
+                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 10),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onClose,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white38),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(ar ? 'رجوع' : 'Back',
+                        style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onRetry,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white38),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(ar ? 'حاول مجدداً' : 'Try again',
+                        style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
       ),
     );
   }

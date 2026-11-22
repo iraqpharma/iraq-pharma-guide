@@ -620,7 +620,7 @@ class _AdBanner extends StatelessWidget {
             Align(
               alignment: AlignmentDirectional.topEnd,
               child: Text(
-                'إعلان',
+                (context.s.isAr ? 'إعلان' : 'Ad'),
                 style: GoogleFonts.cairo(
                     fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
@@ -634,7 +634,7 @@ class _AdBanner extends StatelessWidget {
                       size: 28),
                   const SizedBox(height: 4),
                   Text(
-                    'مساحة إعلانية',
+                    (context.s.isAr ? 'مساحة إعلانية' : 'Ad space'),
                     style: GoogleFonts.cairo(
                       fontSize: 15,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -763,22 +763,22 @@ class _NewInV3Section extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <List<dynamic>>[
       [
-        'عيادتك اليوم',
-        'خمسة أسئلة سريرية',
+        (context.s.isAr ? 'عيادتك اليوم' : 'Clinic Today'),
+        (context.s.isAr ? 'خمسة أسئلة سريرية' : 'Five clinical questions'),
         Icons.medical_services_outlined,
         const Color(0xFF0F6B4F),
         '/clinic-today',
       ],
       [
-        'فرص عمل',
-        'وظائف الصيادلة',
+        (context.s.isAr ? 'فرص عمل' : 'Jobs'),
+        (context.s.isAr ? 'وظائف الصيادلة' : 'Pharmacist jobs'),
         Icons.work_outline_rounded,
         const Color(0xFF2E7D32),
         '/jobs',
       ],
       [
-        'فيديوهات',
-        'محتوى تعليمي',
+        (context.s.isAr ? 'فيديوهات' : 'Videos'),
+        (context.s.isAr ? 'محتوى تعليمي' : 'Educational content'),
         Icons.ondemand_video_outlined,
         const Color(0xFFC62828),
         '/videos',
@@ -798,7 +798,7 @@ class _NewInV3Section extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 9),
-          Text('استكشف',
+          Text((context.s.isAr ? 'استكشف' : 'Explore'),
               style: GoogleFonts.cairo(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1352,17 +1352,19 @@ class _ToolsBody extends StatelessWidget {
       ],
       // بطاقات الزبائن أعلى الشبكة: القسم الذي يُعيد الصيدلاني كل يوم
       _NavToolItem(s.customers,       s.customersSub,    Icons.badge_outlined,        const Color(0xFF2F6FB8), '/customers'),
-      _NavToolItem(s.pricingCalc,     s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+      // الباحث عن البدائل قبل حاسبة التسعير: يُستعمل أكثر منها على الطاولة.
       _NavToolItem(s.substitution,    s.substitutionSub, Icons.swap_horiz_rounded,    const Color(0xFF0097A7), '/substitution'),
+      _NavToolItem(s.pricingCalc,     s.pricingCalcSub,  Icons.price_change_outlined, const Color(0xFF6A1B9A), '/pricing-calc'),
+      // تخفيض جرعات الكيمياوي جدول مرجعي (كبد/كلى) لا حاسبة جرعة، وهو ظاهر
+      // في القائمة الجانبية على المنصّتين أصلاً، فيظهر هنا كذلك.
+      _NavToolItem(s.chemoDose,       s.chemoDoseSub,    Icons.bloodtype_outlined,    const Color(0xFFB0306A), '/chemo-dose'),
       // أدوات مرجعية لا تحسب جرعة
       _NavToolItem(s.shelfLife,       s.shelfLifeSub,       Icons.event_busy_outlined,       const Color(0xFF3C7FB0), '/shelf-life'),
       _NavToolItem(s.supplyDays,      s.supplyDaysSub,      Icons.inventory_2_outlined,      const Color(0xFF2E8B82), '/supply-days'),
       _NavToolItem(s.labUnits,        s.labUnitsSub,        Icons.biotech_outlined,          const Color(0xFF7A4EA8), '/lab-units'),
       _NavToolItem(s.vaccineSchedule, s.vaccineScheduleSub, Icons.vaccines_outlined,         const Color(0xFF2E8F63), '/vaccine-schedule'),
-      if (FeatureFlags.doseToolsOnThisPlatform) ...[
-        _NavToolItem(s.chemoDose,     s.chemoDoseSub,       Icons.bloodtype_outlined,        const Color(0xFFB0306A), '/chemo-dose'),
+      if (FeatureFlags.doseToolsOnThisPlatform)
         _NavToolItem(s.fluidCalc,     s.fluidCalcSub,       Icons.water_drop_outlined,       const Color(0xFF3E8F9C), '/fluid-calc'),
-      ],
     ];
   }
 

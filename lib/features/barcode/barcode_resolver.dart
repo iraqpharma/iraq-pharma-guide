@@ -1,6 +1,9 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
@@ -18,10 +21,23 @@ import '../../services/haptics_service.dart';
 class BarcodeResolver {
   BarcodeResolver._();
 
-  /// يطلب إذن الكاميرا بعد شرح السبب، ثم يفتح القارئ ويرجع الرقم.
+  /// يشرح سبب الكاميرا مرّة واحدة ثم يفتح القارئ ويرجع الرقم.
+  ///
+  /// إذن الكاميرا يطلبه القارئ نفسه (mobile_scanner) عند تشغيله لا
+  /// permission_handler: على iOS يرجع الأخير «مرفوض نهائياً» دون أن يسأل
+  /// النظام أصلاً ما لم يُفعَّل ماكرو PERMISSION_CAMERA في Podfile، فكانت
+  /// الكاميرا لا تفتح ولا يظهر مفتاحها في إعدادات الجهاز. وإن رُفض الإذن
+  /// فعلاً تعرض شاشة القارئ السبب وزر فتح الإعدادات.
   static Future<String?> scan(BuildContext context) async {
-    final status = await Permission.camera.status;
-    if (!status.isGranted) {
+    final prefs = await SharedPreferences.getInstance();
+    var explained = prefs.getBool(_kCameraExplained) ?? false;
+    if (!explained && Platform.isAndroid) {
+      // على أندرويد الحالة موثوقة: من منح الإذن سابقاً لا يحتاج الشرح.
+      try {
+        explained = await Permission.camera.isGranted;
+      } catch (_) {/* نكمل بالشرح */}
+    }
+    if (!explained) {
       if (!context.mounted) return null;
       final allow = await showDialog<bool>(
         context: context,
@@ -29,27 +45,15 @@ class BarcodeResolver {
         builder: (_) => const CameraPermissionDialog(),
       );
       if (allow != true) return null;
-      final res = await Permission.camera.request();
-      if (!res.isGranted) {
-        if (res.isPermanentlyDenied && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(context.s.allowCameraSettings,
-                style: GoogleFonts.cairo()),
-            backgroundColor: AppColors.errorRed,
-            action: SnackBarAction(
-                label: context.s.settingsTitle,
-                textColor: Colors.white,
-                onPressed: openAppSettings),
-          ));
-        }
-        return null;
-      }
+      await prefs.setBool(_kCameraExplained, true);
     }
     if (!context.mounted) return null;
     return Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
     );
   }
+
+  static const _kCameraExplained = 'camera_rationale_seen';
 
   /// يقرأ ثم يحوّل إلى اسم. يرجع null إن أُلغي أو لم يُسنَد.
   static Future<String?> scanAndResolve(BuildContext context) async {
@@ -146,8 +150,8 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
 
     if (!ok) {
       Haptics.error();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('تعذّر الإرسال. تحقّق من الاتصال وحاول مرّة أخرى'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text((context.s.isAr ? 'تعذّر الإرسال. تحقّق من الاتصال وحاول مرّة أخرى' : 'Could not send. Check your connection and try again')),
       ));
       return;
     }
@@ -159,8 +163,8 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
     } else {
       // الاقتراح لا يُعتمد قبل المراجعة، فلا نُظهر الاسم كأنه مؤكّد
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('وصل اقتراحك. سيُراجَع قبل اعتماده للجميع'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text((context.s.isAr ? 'وصل اقتراحك. سيُراجَع قبل اعتماده للجميع' : 'Suggestion received. It will be reviewed before it goes live')),
       ));
     }
   }
@@ -212,7 +216,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('رقم غير معروف',
+                      Text((context.s.isAr ? 'رقم غير معروف' : 'Unknown barcode'),
                           style: TextStyle(
                               fontSize: 14.5, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 2),
@@ -252,9 +256,9 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                 onChanged: _suggest,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: 'اسم الدواء بالإنكليزية',
+                  labelText: (context.s.isAr ? 'اسم الدواء بالإنكليزية' : 'Drug name in English'),
                   labelStyle: const TextStyle(fontSize: 12.5),
-                  hintText: 'اكتب حرفين ليظهر الاقتراح',
+                  hintText: (context.s.isAr ? 'اكتب حرفين ليظهر الاقتراح' : 'Type two letters for suggestions'),
                   hintStyle: const TextStyle(fontSize: 12),
                   isDense: true,
                   prefixIcon: const Icon(Icons.medication_outlined, size: 19),
@@ -299,7 +303,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                     controller: _strength,
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
-                      labelText: 'التركيز',
+                      labelText: (context.s.isAr ? 'التركيز' : 'Strength'),
                       labelStyle: const TextStyle(fontSize: 12.5),
                       hintText: '500 mg',
                       hintStyle: const TextStyle(fontSize: 12),
@@ -315,7 +319,7 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                     controller: _form,
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
-                      labelText: 'الشكل',
+                      labelText: (context.s.isAr ? 'الشكل' : 'Form'),
                       labelStyle: const TextStyle(fontSize: 12.5),
                       hintText: 'Tablet',
                       hintStyle: const TextStyle(fontSize: 12),
@@ -358,8 +362,8 @@ class _LinkBarcodeSheetState extends State<_LinkBarcodeSheet> {
                             size: 18),
                     label: Text(
                         widget.isAdmin
-                            ? 'اربط الرقم بهذا الدواء'
-                            : 'أرسل الاقتراح للمراجعة',
+                            ? (context.s.isAr ? 'اربط الرقم بهذا الدواء' : 'Link barcode to this drug')
+                            : (context.s.isAr ? 'أرسل الاقتراح للمراجعة' : 'Send suggestion for review'),
                         style: const TextStyle(
                             fontSize: 13.5, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(

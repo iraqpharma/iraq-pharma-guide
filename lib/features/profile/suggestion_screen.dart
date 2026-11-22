@@ -38,7 +38,10 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     // لأن الإذن غير مطلوب ولا مُعلَن، فيظهر التنبيه الأحمر ولا يختفي،
     // ولا يظهر أي إذن في إعدادات الجهاز لأن النظام لم يُسأل أصلاً.
     // الكاميرا وحدها تحتاج إذناً، ويُطلب هنا قبل فتحها.
-    if (source == ImageSource.camera) {
+    // على iOS يطلب image_picker إذن الكاميرا بنفسه؛ permission_handler هناك
+    // يرجع «مرفوض نهائياً» دون سؤال النظام (ماكرو PERMISSION_CAMERA غير
+    // مفعّل)، فكان التقاط صورة من الكاميرا مستحيلاً.
+    if (source == ImageSource.camera && Platform.isAndroid) {
       final status = await Permission.camera.request();
       if (!mounted) return;
       if (!status.isGranted) {

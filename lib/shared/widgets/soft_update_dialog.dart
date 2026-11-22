@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/config/store_links.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
-
-const _playStoreUrl =
-    'https://play.google.com/store/apps/details?id=com.iraqpharma.guide';
-const _appStoreUrl =
-    'https://apps.apple.com/app/id0000000000'; // استبدل بالرابط الفعلي
 
 class SoftUpdateDialog {
   SoftUpdateDialog._();
@@ -16,6 +11,7 @@ class SoftUpdateDialog {
     BuildContext context, {
     required String updateMessage,
     required String latestVersion,
+    String storeUrl = '',
   }) {
     return showDialog(
       context: context,
@@ -23,6 +19,7 @@ class SoftUpdateDialog {
       builder: (_) => _SoftUpdateWidget(
         updateMessage: updateMessage,
         latestVersion: latestVersion,
+        storeUrl: storeUrl,
       ),
     );
   }
@@ -31,16 +28,15 @@ class SoftUpdateDialog {
 class _SoftUpdateWidget extends StatelessWidget {
   final String updateMessage;
   final String latestVersion;
+  final String storeUrl;
 
   const _SoftUpdateWidget({
     required this.updateMessage,
     required this.latestVersion,
+    this.storeUrl = '',
   });
 
-  Future<void> _openStore() async {
-    final uri = Uri.parse(_playStoreUrl);
-    if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
+  Future<void> _openStore() => StoreLinks.open(override: storeUrl);
 
   @override
   Widget build(BuildContext context) {

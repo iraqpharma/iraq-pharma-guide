@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -74,7 +75,7 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('حالة الأسبوع',
+        title: Text((context.s.isAr ? 'حالة الأسبوع' : 'Case of the Week'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: _loading
@@ -83,7 +84,7 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(28),
-                    child: Text('لا توجد حالة متاحة حالياً',
+                    child: Text((context.s.isAr ? 'لا توجد حالة متاحة حالياً' : 'No case available right now'),
                         style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant)),
                   ),
@@ -114,7 +115,7 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
                             const Icon(Icons.assignment_ind_rounded,
                                 size: 16, color: Color(0xFF7A4EA8)),
                             const SizedBox(width: 7),
-                            const Text('الحالة',
+                            Text((context.s.isAr ? 'الحالة' : 'The case'),
                                 style: TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.bold,
@@ -140,10 +141,10 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
                     const SizedBox(height: 16),
                     Text(
                         _chosen == null
-                            ? 'اختر قرارك:'
+                            ? (context.s.isAr ? 'اختر قرارك:' : 'Choose your decision:')
                             : (_chosen == _answer
-                                ? 'قرار صحيح'
-                                : 'القرار الصحيح مُعلَّم بالأخضر'),
+                                ? (context.s.isAr ? 'قرار صحيح' : 'Correct decision')
+                                : (context.s.isAr ? 'القرار الصحيح مُعلَّم بالأخضر' : 'The correct decision is marked in green')),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -172,11 +173,11 @@ class _WeeklyCaseScreenState extends State<WeeklyCaseScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Row(children: [
+                            Row(children: [
                               Icon(Icons.lightbulb_outline_rounded,
                                   size: 16, color: AppColors.primary),
                               SizedBox(width: 7),
-                              Text('الشرح',
+                              Text((context.s.isAr ? 'الشرح' : 'Explanation'),
                                   style: TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.bold,

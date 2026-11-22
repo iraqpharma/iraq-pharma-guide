@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,7 +50,7 @@ class _VideosScreenState extends State<VideosScreen> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذّر فتح الفيديو')),
+        SnackBar(content: Text((context.s.isAr ? 'تعذّر فتح الفيديو' : 'Could not open the video'))),
       );
     }
   }
@@ -58,7 +59,7 @@ class _VideosScreenState extends State<VideosScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('فيديوهات تعليمية'),
+        title: Text((context.s.isAr ? 'فيديوهات تعليمية' : 'Educational Videos')),
         actions: [
           IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
         ],
@@ -85,13 +86,13 @@ class _VideosScreenState extends State<VideosScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError) {
-            return _msg(Icons.wifi_off_rounded, 'تعذّر تحميل الفيديوهات',
-                'تأكّد من الاتصال بالإنترنت');
+            return _msg(Icons.wifi_off_rounded, (context.s.isAr ? 'تعذّر تحميل الفيديوهات' : 'Could not load videos'),
+                (context.s.isAr ? 'تأكّد من الاتصال بالإنترنت' : 'Check your internet connection'));
           }
           final vids = snap.data ?? const <TrainingVideo>[];
           if (vids.isEmpty) {
-            return _msg(Icons.ondemand_video_outlined, 'لا توجد فيديوهات بعد',
-                'سيُضاف محتوى تعليمي أسبوعياً');
+            return _msg(Icons.ondemand_video_outlined, (context.s.isAr ? 'لا توجد فيديوهات بعد' : 'No videos yet'),
+                (context.s.isAr ? 'سيُضاف محتوى تعليمي أسبوعياً' : 'Educational content is added weekly'));
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),
@@ -253,7 +254,7 @@ class _VideoCardState extends State<_VideoCard> {
                     color: AppColors.errorRed,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('جديد هذا الأسبوع',
+                  child: Text((context.s.isAr ? 'جديد هذا الأسبوع' : 'New this week'),
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -306,8 +307,8 @@ class _VideoCardState extends State<_VideoCard> {
                 icon: const Icon(Icons.open_in_new_rounded, size: 15),
                 label: Text(
                     video.source.label.isEmpty
-                        ? 'فتح الفيديو'
-                        : 'فتح في ${video.source.label}',
+                        ? (context.s.isAr ? 'فتح الفيديو' : 'Open video')
+                        : (context.s.isAr ? 'فتح في ${video.source.label}' : 'Open in ${video.source.label}'),
                     style: const TextStyle(fontSize: 12)),
               ),
             ),

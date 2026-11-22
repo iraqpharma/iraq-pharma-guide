@@ -1,7 +1,9 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/config/store_links.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
 import '../../services/rating_service.dart';
@@ -46,13 +48,17 @@ class _RatingModalWidgetState extends State<_RatingModalWidget> {
 
     bool redirected = false;
     if (_rating >= _kStoreThreshold) {
-      final uri = Uri.parse(widget.config.ratingLink);
-      try {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          redirected = true;
-        }
-      } catch (_) {}
+      // رابط السيرفر إن وُجد، وإلا صفحة التطبيق في متجر هذا الجهاز (على
+      // الآيفون تُفتح مباشرة على كتابة التقييم). بلا canLaunchUrl: يرجع
+      // false على أندرويد 11+ لروابط https فلا يُفتح المتجر أبداً.
+      final link = widget.config.ratingLink.trim();
+      redirected = await StoreLinks.open(
+        override: link.isNotEmpty
+            ? link
+            : (Platform.isIOS
+                ? '${StoreLinks.appStore}?action=write-review'
+                : null),
+      );
     }
 
     await RatingService.instance.submitRating(

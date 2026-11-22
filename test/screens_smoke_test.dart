@@ -24,7 +24,7 @@ final _paths = <String>[
   '/quick-filter/pregnancy', '/quick-filter/cold', '/quick-filter/renal', '/quick-filter/drops',
   '/drug/1', '/settings', '/calc', '/renal-calc', '/interactions', '/chemo-dose',
   '/sources', '/notebook', '/price-guide', '/notifications', '/pricing-calc',
-  '/substitution', '/otc', '/jobs', '/jobs/new', '/jobs/mine',
+  '/substitution', '/otc', '/jobs', '/jobs/new', '/jobs/mine', '/jobs/review',
   '/clinic-today', '/clinic-today/quiz', '/clinic-today/drug', '/clinic-today/case',
   '/clinic-today/interactions', '/clinic-today/speed', '/availability', '/fluid-calc',
   '/customers', '/shelf-life', '/supply-days', '/lab-units', '/vaccine-schedule',

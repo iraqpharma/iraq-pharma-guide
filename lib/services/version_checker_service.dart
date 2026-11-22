@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,6 +10,8 @@ class VersionCheckResult {
   final String latestVersion;
   final String currentVersion;
   final String updateMessage;
+  /// رابط المتجر من السيرفر لهذه المنصّة (فارغ = الرابط المبني في التطبيق).
+  final String storeUrl;
 
   const VersionCheckResult({
     required this.forceUpdate,
@@ -16,6 +20,7 @@ class VersionCheckResult {
     required this.latestVersion,
     required this.currentVersion,
     required this.updateMessage,
+    this.storeUrl = '',
   });
 
   factory VersionCheckResult.passthrough() => const VersionCheckResult(
@@ -39,18 +44,34 @@ class VersionCheckerService {
       final info = await PackageInfo.fromPlatform();
       final current = info.version;
 
+      // select('*') لا قائمة أعمدة: الأعمدة الخاصة بكل منصّة اختيارية، فإن
+      // لم تكن موجودة في الجدول يبقى الاستعلام سليماً ونرجع للأعمدة العامة.
+      // المهلة تمنع تعليق شاشة البداية على اتصال ضعيف.
       final row = await _client
           .from('app_config')
-          .select('min_version, is_force_update, latest_version, update_message, show_update_dialog')
+          .select()
           .limit(1)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 6));
 
       if (row == null) return VersionCheckResult.passthrough();
 
-      final minVersion       = row['min_version']        as String? ?? '0.0.0';
+      // قيمة المنصّة إن وُجدت (min_version_ios / min_version_android …)،
+      // وإلا القيمة العامة. بهذا يُفرض التحديث على منصّة نزل تحديثها في
+      // متجرها دون أن يُقفل التطبيق على المنصّة الأخرى.
+      final p = Platform.isIOS ? 'ios' : 'android';
+      String str(String key, String fallback) {
+        final specific = (row['${key}_$p'] as String?)?.trim() ?? '';
+        if (specific.isNotEmpty) return specific;
+        final general = (row[key] as String?)?.trim() ?? '';
+        return general.isNotEmpty ? general : fallback;
+      }
+
+      final minVersion       = str('min_version', '0.0.0');
+      final latestVersion    = str('latest_version', '0.0.0');
+      final updateMessage    = str('update_message', '');
+      final storeUrl         = str('store_url', '');
       final isForceUpdate    = row['is_force_update']    as bool?   ?? false;
-      final latestVersion    = row['latest_version']     as String? ?? '0.0.0';
-      final updateMessage    = row['update_message']     as String? ?? '';
       final showUpdateDialog = row['show_update_dialog'] as bool?   ?? false;
 
       final forceUpdate = isForceUpdate && _isLower(current, minVersion);
@@ -67,6 +88,7 @@ class VersionCheckerService {
         latestVersion:    latestVersion,
         currentVersion:   current,
         updateMessage:    updateMessage,
+        storeUrl:         storeUrl,
       );
     } catch (_) {
       return VersionCheckResult.passthrough();

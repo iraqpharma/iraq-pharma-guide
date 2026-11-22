@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -92,7 +93,7 @@ class _LeaderboardState extends State<Leaderboard> {
         Row(children: [
           const Icon(Icons.emoji_events_rounded, size: 19, color: _gold),
           const SizedBox(width: 8),
-          const Text('لوحة المتصدّرين',
+          Text((context.s.isAr ? 'لوحة المتصدّرين' : 'Leaderboard'),
               style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold)),
           const Spacer(),
           IconButton(
@@ -105,11 +106,11 @@ class _LeaderboardState extends State<Leaderboard> {
         ]),
         const SizedBox(height: 9),
         Row(children: [
-          _tab('اليوم', _Period.day),
+          _tab((context.s.isAr ? 'اليوم' : 'Today'), _Period.day),
           const SizedBox(width: 6),
-          _tab('الأسبوع', _Period.week),
+          _tab((context.s.isAr ? 'الأسبوع' : 'Week'), _Period.week),
           const SizedBox(width: 6),
-          _tab('الشهر', _Period.month),
+          _tab((context.s.isAr ? 'الشهر' : 'Month'), _Period.month),
         ]),
         const SizedBox(height: 10),
         FutureBuilder<List<Map<String, dynamic>>>(
@@ -136,8 +137,9 @@ class _LeaderboardState extends State<Leaderboard> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                        'لا نتائج في هذه المدّة، كن أول المتصدّرين من '
-                        'الحاسبة السريعة',
+                        context.s.isAr
+                        ? 'لا نتائج في هذه المدّة، كن أول المتصدّرين من الحاسبة السريعة'
+                        : 'No scores in this period yet. Be the first from the Speed Calculator',
                         style: TextStyle(
                             fontSize: 12,
                             height: 1.6,
@@ -235,7 +237,7 @@ class _LeaderboardState extends State<Leaderboard> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(name.isEmpty ? 'صيدلاني' : name,
+          child: Text(name.isEmpty ? (context.s.isAr ? 'صيدلاني' : 'Pharmacist') : name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(

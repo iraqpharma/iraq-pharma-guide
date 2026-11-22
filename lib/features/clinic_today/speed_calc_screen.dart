@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -232,7 +233,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('الحاسبة السريعة',
+        title: Text((context.s.isAr ? 'الحاسبة السريعة' : 'Speed Calculator'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           if (_started)
@@ -288,11 +289,11 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                       color: Colors.white,
                       fontSize: 38,
                       fontWeight: FontWeight.bold)),
-              Text('نقطة',
+              Text((context.s.isAr ? 'نقطة' : 'points'),
                   style: TextStyle(
                       color: Colors.white.withOpacity(0.85), fontSize: 12)),
               const SizedBox(height: 10),
-              Text('$_correct إجابة صحيحة من $_total',
+              Text((context.s.isAr ? '$_correct إجابة صحيحة من $_total' : '$_correct correct out of $_total'),
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -312,10 +313,10 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(children: [
+                Row(children: [
                   Icon(Icons.bolt_rounded, size: 19, color: Color(0xFFD08A3E)),
                   SizedBox(width: 8),
-                  Text('كيف تعمل',
+                  Text((context.s.isAr ? 'كيف تعمل' : 'How it works'),
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -349,8 +350,8 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
               const Icon(Icons.emoji_events_rounded,
                   size: 19, color: Color(0xFFD08A3E)),
               const SizedBox(width: 9),
-              const Expanded(
-                child: Text('أفضل نتيجة لك',
+              Expanded(
+                child: Text((context.s.isAr ? 'أفضل نتيجة لك' : 'Your best score'),
                     style:
                         TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
               ),
@@ -366,7 +367,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
           child: FilledButton.icon(
             onPressed: _start,
             icon: const Icon(Icons.play_arrow_rounded, size: 21),
-            label: Text(_done ? 'أعد المحاولة' : 'ابدأ',
+            label: Text(_done ? (context.s.isAr ? 'أعد المحاولة' : 'Try again') : (context.s.isAr ? 'ابدأ' : 'Start'),
                 style: const TextStyle(
                     fontSize: 15.5, fontWeight: FontWeight.bold)),
             style: FilledButton.styleFrom(
@@ -379,7 +380,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
         ),
         const SizedBox(height: 18),
         Text(
-            'نتيجتك تُنشر في لوحة المتصدّرين داخل «عيادتك اليوم»',
+            (context.s.isAr ? 'نتيجتك تُنشر في لوحة المتصدّرين داخل «عيادتك اليوم»' : 'Your score is posted to the leaderboard in “Clinic Today”'),
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 11.5,
@@ -402,7 +403,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
               style: TextStyle(
                   fontSize: 11.5, color: theme.colorScheme.onSurfaceVariant)),
           const Spacer(),
-          Text('صحيح: $_correct',
+          Text((context.s.isAr ? 'صحيح: $_correct' : 'Correct: $_correct'),
               style: const TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.bold,
@@ -473,7 +474,7 @@ class _SpeedCalcScreenState extends State<SpeedCalcScreen> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text('تحقّق',
+              child: Text((context.s.isAr ? 'تحقّق' : 'Check'),
                   style:
                       TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ),

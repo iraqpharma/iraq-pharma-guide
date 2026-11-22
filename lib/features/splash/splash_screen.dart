@@ -128,7 +128,9 @@ class _SplashScreenState extends State<SplashScreen>
     if (versionResult.forceUpdate) {
       await ForceUpdateDialog.show(context,
           currentVersion: versionResult.currentVersion,
-          minVersion:     versionResult.minVersion);
+          minVersion:     versionResult.minVersion,
+          message:        versionResult.updateMessage,
+          storeUrl:       versionResult.storeUrl);
       return _init();
     }
 
@@ -170,7 +172,8 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) {
         await SoftUpdateDialog.show(context,
             updateMessage: versionResult.updateMessage,
-            latestVersion: versionResult.latestVersion);
+            latestVersion: versionResult.latestVersion,
+            storeUrl:      versionResult.storeUrl);
       }
     }
   }

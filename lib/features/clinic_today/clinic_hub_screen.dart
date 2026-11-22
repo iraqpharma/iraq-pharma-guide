@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,9 @@ class ClinicTodayHubScreen extends StatefulWidget {
 }
 
 class _ClinicTodayHubScreenState extends State<ClinicTodayHubScreen> {
+  /// يتغيّر بعد كل جولة في الحاسبة السريعة فتُعاد قراءة لوحة المتصدّرين؛
+  /// كانت اللوحة تبقى على ما قرأته أول مرّة فلا تظهر النتيجة الجديدة.
+  int _lbTick = 0;
   int _streak = 0;
   int _best   = 0;
   String? _lastPlayed;
@@ -54,7 +58,7 @@ class _ClinicTodayHubScreenState extends State<ClinicTodayHubScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('عيادتك اليوم',
+        title: Text((context.s.isAr ? 'عيادتك اليوم' : 'Your Clinic Today'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: RefreshIndicator(
@@ -82,9 +86,9 @@ class _ClinicTodayHubScreenState extends State<ClinicTodayHubScreen> {
                   child: _SquareCard(
                     icon: Icons.medication_liquid_rounded,
                     color: const Color(0xFF3A72B8),
-                    title: 'دواء اليوم',
-                    subtitle: 'دواء واحد وما تقوله للمريض عنه',
-                    tag: 'يومي',
+                    title: (context.s.isAr ? 'دواء اليوم' : 'Drug of the Day'),
+                    subtitle: (context.s.isAr ? 'دواء واحد وما تقوله للمريض عنه' : 'One drug and what to tell the patient'),
+                    tag: (context.s.isAr ? 'يومي' : 'Daily'),
                     onTap: () => context.push('/clinic-today/drug'),
                   ),
                 ),
@@ -93,9 +97,9 @@ class _ClinicTodayHubScreenState extends State<ClinicTodayHubScreen> {
                   child: _SquareCard(
                     icon: Icons.assignment_ind_rounded,
                     color: const Color(0xFF7A4EA8),
-                    title: 'حالة الأسبوع',
-                    subtitle: 'حالة سريرية وقرارك فيها',
-                    tag: 'أسبوعي',
+                    title: (context.s.isAr ? 'حالة الأسبوع' : 'Case of the Week'),
+                    subtitle: (context.s.isAr ? 'حالة سريرية وقرارك فيها' : 'A clinical case and your decision'),
+                    tag: (context.s.isAr ? 'أسبوعي' : 'Weekly'),
                     onTap: () => context.push('/clinic-today/case'),
                   ),
                 ),
@@ -107,30 +111,27 @@ class _ClinicTodayHubScreenState extends State<ClinicTodayHubScreen> {
             _WideCard(
               icon: Icons.merge_type_rounded,
               color: const Color(0xFFC2454B),
-              title: 'تحدّي التداخلات',
-              subtitle: 'ثمانية أزواج أدوية: أيّها بينه تداخل مُعتبَر؟',
+              title: (context.s.isAr ? 'تحدّي التداخلات' : 'Interaction Challenge'),
+              subtitle: (context.s.isAr ? 'ثمانية أزواج أدوية: أيّها بينه تداخل مُعتبَر؟' : 'Eight drug pairs: which ones truly interact?'),
               onTap: () => context.push('/clinic-today/interactions'),
             ),
             const SizedBox(height: 10),
             _WideCard(
               icon: Icons.bolt_rounded,
               color: const Color(0xFFD08A3E),
-              title: 'الحاسبة السريعة',
-              subtitle: 'عشر حسابات صيدلانية في دقيقتين، ونتيجتك تدخل اللوحة',
+              title: (context.s.isAr ? 'الحاسبة السريعة' : 'Speed Calculator'),
+              subtitle: (context.s.isAr ? 'عشر حسابات صيدلانية في دقيقتين، ونتيجتك تدخل اللوحة' : 'Ten pharmacy calculations in two minutes, and your score joins the board'),
               onTap: () async {
                 await context.push('/clinic-today/speed');
-                setState(() {});
+                if (mounted) setState(() => _lbTick++);
               },
             ),
-
-            const SizedBox(height: 18),
-            const _HowItWorks(),
 
             // ── لوحة المتصدّرين في الختام ──────────────────────────────
             // مكانها هنا لا في الأعلى: الصيدلاني يفتح القسم ليلعب لا
             // ليرى ترتيبه، والترتيب مكافأة بعد اللعب لا عائق قبله.
             const SizedBox(height: 18),
-            const Leaderboard(),
+            Leaderboard(key: ValueKey(_lbTick)),
           ],
         ),
       ),
@@ -199,7 +200,7 @@ class _HeroCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('أسئلة اليوم',
+                      Text((context.s.isAr ? 'أسئلة اليوم' : 'Today\'s Questions'),
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 19,
@@ -207,8 +208,8 @@ class _HeroCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                           doneToday
-                              ? 'أنهيتها، عد غداً لأسئلة جديدة'
-                              : 'خمسة أسئلة سريرية تحفظ سِلسِلتك',
+                              ? (context.s.isAr ? 'أنهيتها، عد غداً لأسئلة جديدة' : 'Done. Come back tomorrow for new questions')
+                              : (context.s.isAr ? 'خمسة أسئلة سريرية تحفظ سِلسِلتك' : 'Five clinical questions to keep your streak'),
                           style: TextStyle(
                               color: Colors.white.withOpacity(0.88),
                               fontSize: 12.5)),
@@ -222,7 +223,7 @@ class _HeroCard extends StatelessWidget {
                     color: Colors.white.withOpacity(doneToday ? 0.22 : 0.95),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(doneToday ? 'تمّت' : 'ابدأ',
+                  child: Text(doneToday ? (context.s.isAr ? 'تمّت' : 'Done') : (context.s.isAr ? 'ابدأ' : 'Start'),
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -234,14 +235,14 @@ class _HeroCard extends StatelessWidget {
               const SizedBox(height: 16),
               Row(children: [
                 _stat(Icons.local_fire_department_rounded, '$streak',
-                    streak == 1 ? 'يوم متتابع' : 'أيام متتابعة'),
+                    streak == 1 ? (context.s.isAr ? 'يوم متتابع' : 'day streak') : (context.s.isAr ? 'أيام متتابعة' : 'day streak')),
                 Container(
                   width: 1,
                   height: 30,
                   margin: const EdgeInsets.symmetric(horizontal: 14),
                   color: Colors.white.withOpacity(0.22),
                 ),
-                _stat(Icons.workspace_premium_rounded, '$best', 'أطول سِلسِلة'),
+                _stat(Icons.workspace_premium_rounded, '$best', (context.s.isAr ? 'أطول سِلسِلة' : 'Longest streak')),
               ]),
             ],
           ),
@@ -463,103 +464,4 @@ class _WideCard extends StatelessWidget {
       ),
     );
   }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// آلية اختيار المحتوى — مكتوبة للمستخدم لا مخفيّة عنه
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _HowItWorks extends StatefulWidget {
-  const _HowItWorks();
-
-  @override
-  State<_HowItWorks> createState() => _HowItWorksState();
-}
-
-class _HowItWorksState extends State<_HowItWorks> {
-  bool _open = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-      ),
-      child: Column(children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => setState(() => _open = !_open),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-            child: Row(children: [
-              const Icon(Icons.help_outline_rounded,
-                  size: 17, color: AppColors.primary),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text('كيف يُختار محتوى هذه الأقسام؟',
-                    style: TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.bold)),
-              ),
-              Icon(
-                  _open
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  size: 20,
-                  color: AppColors.primary),
-            ]),
-          ),
-        ),
-        if (_open)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _line('أسئلة اليوم',
-                    'خمسة أسئلة من بنك فيه 352 سؤالاً، تُختار بمفتاح مشتقّ '
-                    'من تاريخ اليوم فيراها كل المستخدمين متطابقة وتتغيّر '
-                    'عند منتصف الليل، ولا تتكرّر مجموعة اليوم إلا بعد أن '
-                    'يدور البنك كاملاً. ترتيب الخيارات مخلوط فلا يكون '
-                    'موقع الإجابة الصحيحة ثابتاً', cs),
-                _line('دواء اليوم',
-                    'دواء واحد من الأدوية المتوفّرة محلياً التي لها نصيحة '
-                    'صيدلانية مكتوبة، يُختار بالتاريخ أيضاً فهو نفسه '
-                    'للجميع ويتبدّل كل يوم', cs),
-                _line('حالة الأسبوع',
-                    'حالة من عشرين حالة سريرية، تتبدّل كل أسبوع لا كل يوم '
-                    'لأنها تحتاج تفكيراً أطول', cs),
-                _line('تحدّي التداخلات',
-                    'ثمانية أزواج تُبنى لحظياً من بيانات التداخلات في '
-                    'التطبيق: نصفها أزواج بينها تداخل مذكور فعلاً، ونصفها '
-                    'أزواج من أقسام مختلفة لا تداخل بينها. تختلف الأزواج '
-                    'في كل محاولة', cs),
-                _line('الحاسبة السريعة',
-                    'الأرقام تُولَّد عشوائياً في كل محاولة فلا تُحفظ '
-                    'الأجوبة، والنقاط = 100 لكل إجابة صحيحة + 5 لكل ثانية '
-                    'متبقّية', cs),
-              ],
-            ),
-          ),
-      ]),
-    );
-  }
-
-  Widget _line(String title, String body, ColorScheme cs) => Padding(
-        padding: const EdgeInsets.only(bottom: 11),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 2),
-            Text(body,
-                style: TextStyle(
-                    fontSize: 11.5, height: 1.75, color: cs.onSurfaceVariant)),
-          ],
-        ),
-      );
 }

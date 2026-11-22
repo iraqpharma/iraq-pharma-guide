@@ -6,6 +6,11 @@ const _kLastShownKey = 'rating_last_shown_ms';
 const _kRatedKey     = 'rating_completed';
 // Show again after 7 days if user dismissed without rating
 const _kCooldownDays = 7;
+const _kFirstSeenKey = 'rating_first_seen_ms';
+const _kSessionsKey  = 'rating_sessions';
+// لا يُسأل مستخدم عن رأيه قبل أن يجرّب التطبيق فعلاً.
+const _kMinDaysSinceInstall = 3;
+const _kMinSessions         = 5;
 // Minimum rating to redirect to store
 const _kStoreThreshold = 4.0;
 
@@ -25,6 +30,23 @@ class RatingService {
   /// Returns [RatingConfig] if the modal should be shown, null otherwise.
   Future<RatingConfig?> shouldShow() async {
     try {
+      // العدّ قبل سؤال السيرفر: يُحسب الاستعمال حتى والنافذة معطّلة، فإذا
+      // فُعّلت لاحقاً لا ينتظر المستخدم القديم أياماً إضافية.
+      final prefs = await SharedPreferences.getInstance();
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final firstSeen = prefs.getInt(_kFirstSeenKey) ?? 0;
+      if (firstSeen == 0) await prefs.setInt(_kFirstSeenKey, nowMs);
+      final sessions = (prefs.getInt(_kSessionsKey) ?? 0) + 1;
+      await prefs.setInt(_kSessionsKey, sessions);
+      // كانت النافذة تظهر بعد 5 ثوانٍ من أول فتح للتطبيق، أي قبل أن يرى
+      // المستخدم شيئاً يقيّمه. الآن بعد 3 أيام و5 مرّات فتح على الأقل.
+      final daysInstalled = firstSeen == 0
+          ? 0
+          : Duration(milliseconds: nowMs - firstSeen).inDays;
+      if (daysInstalled < _kMinDaysSinceInstall || sessions < _kMinSessions) {
+        return null;
+      }
+
       // 1. Detect platform
       final platform = Platform.isIOS ? 'ios' : 'android';
 
@@ -40,7 +62,6 @@ class RatingService {
       if (row == null) return null;
 
       // 2. Check local cooldown
-      final prefs = await SharedPreferences.getInstance();
       final alreadyRated = prefs.getBool(_kRatedKey) ?? false;
       if (alreadyRated) return null;
 

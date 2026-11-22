@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -47,7 +48,7 @@ class _DrugOfDayScreenState extends State<DrugOfDayScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('دواء اليوم',
+        title: Text((context.s.isAr ? 'دواء اليوم' : 'Drug of the Day'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: _loading
@@ -56,7 +57,7 @@ class _DrugOfDayScreenState extends State<DrugOfDayScreen> {
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(28),
-                    child: Text('تعذّر اختيار دواء اليوم',
+                    child: Text((context.s.isAr ? 'تعذّر اختيار دواء اليوم' : 'Could not pick the drug of the day'),
                         style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant)),
                   ),
@@ -82,7 +83,7 @@ class _DrugOfDayScreenState extends State<DrugOfDayScreen> {
                             const Icon(Icons.auto_awesome_rounded,
                                 color: Colors.white70, size: 15),
                             const SizedBox(width: 6),
-                            Text('اختيار اليوم',
+                            Text((context.s.isAr ? 'اختيار اليوم' : 'Today\'s pick'),
                                 style: TextStyle(
                                     color: Colors.white.withOpacity(0.85),
                                     fontSize: 11.5,
@@ -128,26 +129,26 @@ class _DrugOfDayScreenState extends State<DrugOfDayScreen> {
                     // ── النصيحة الصيدلانية — جوهر النشاط ────────────────
                     if (_s('counseling_note_ar').isNotEmpty)
                       _block(
-                        'ما تقوله للمريض',
+                        (context.s.isAr ? 'ما تقوله للمريض' : 'What to tell the patient'),
                         Icons.record_voice_over_rounded,
                         AppColors.primary,
                         _s('counseling_note_ar'),
                       ),
 
                     if (_s('indications_ar').isNotEmpty)
-                      _block('الاستعمالات', Icons.check_circle_outline_rounded,
+                      _block((context.s.isAr ? 'الاستعمالات' : 'Indications'), Icons.check_circle_outline_rounded,
                           const Color(0xFF2E8F63), _s('indications_ar')),
 
                     if (_s('adult_dosage_ar').isNotEmpty)
-                      _block('جرعة البالغين', Icons.straighten_rounded,
+                      _block((context.s.isAr ? 'جرعة البالغين' : 'Adult dose'), Icons.straighten_rounded,
                           const Color(0xFF3F93A8), _s('adult_dosage_ar')),
 
                     if (_s('side_effects_ar').isNotEmpty)
-                      _block('الأعراض الجانبية', Icons.warning_amber_rounded,
+                      _block((context.s.isAr ? 'الأعراض الجانبية' : 'Side effects'), Icons.warning_amber_rounded,
                           AppColors.warningAmber, _s('side_effects_ar')),
 
                     if (_s('iraq_market_note_ar').isNotEmpty)
-                      _block('في السوق العراقية', Icons.store_rounded,
+                      _block((context.s.isAr ? 'في السوق العراقية' : 'In the Iraqi market'), Icons.store_rounded,
                           const Color(0xFF9A6B4F), _s('iraq_market_note_ar')),
 
                     const SizedBox(height: 6),
@@ -157,7 +158,7 @@ class _DrugOfDayScreenState extends State<DrugOfDayScreen> {
                         onPressed: () =>
                             context.push('/drug/${_d!['id']}'),
                         icon: const Icon(Icons.menu_book_rounded, size: 18),
-                        label: const Text('المونوغراف الكامل',
+                        label: Text((context.s.isAr ? 'المونوغراف الكامل' : 'Full monograph'),
                             style: TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.bold)),

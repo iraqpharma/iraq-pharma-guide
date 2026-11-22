@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -74,17 +75,17 @@ class _InteractionChallengeScreenState
 
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تحدّي التداخلات')),
+        appBar: AppBar(title: Text((context.s.isAr ? 'تحدّي التداخلات' : 'Interaction Challenge'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     if (_pairs.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تحدّي التداخلات')),
+        appBar: AppBar(title: Text((context.s.isAr ? 'تحدّي التداخلات' : 'Interaction Challenge'))),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(28),
-            child: Text('تعذّر توليد الأزواج، أعد المحاولة',
+            child: Text((context.s.isAr ? 'تعذّر توليد الأزواج، أعد المحاولة' : 'Could not build the pairs, try again'),
                 style:
                     TextStyle(color: theme.colorScheme.onSurfaceVariant)),
           ),
@@ -97,7 +98,7 @@ class _InteractionChallengeScreenState
       final pct = (_score / _pairs.length * 100).round();
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(title: const Text('تحدّي التداخلات')),
+        appBar: AppBar(title: Text((context.s.isAr ? 'تحدّي التداخلات' : 'Interaction Challenge'))),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(28),
@@ -122,13 +123,13 @@ class _InteractionChallengeScreenState
                             : AppColors.warningAmber)),
               ),
               const SizedBox(height: 16),
-              Text('$_score من ${_pairs.length}',
+              Text((context.s.isAr ? '$_score من ${_pairs.length}' : '$_score of ${_pairs.length}'),
                   style: const TextStyle(
                       fontSize: 17, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text(
                   pct >= 70
-                      ? 'معرفتك بالتداخلات قوية، واصل'
+                      ? (context.s.isAr ? 'معرفتك بالتداخلات قوية، واصل' : 'Your interaction knowledge is strong, keep going')
                       : 'التداخلات أكثر ما يُغفل في الصيدلية. أعد المحاولة '
                           'بأزواج جديدة',
                   textAlign: TextAlign.center,
@@ -140,7 +141,7 @@ class _InteractionChallengeScreenState
               FilledButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('أزواج جديدة'),
+                label: Text((context.s.isAr ? 'أزواج جديدة' : 'New pairs')),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding:
@@ -162,7 +163,7 @@ class _InteractionChallengeScreenState
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('تحدّي التداخلات',
+        title: Text((context.s.isAr ? 'تحدّي التداخلات' : 'Interaction Challenge'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(3),
@@ -177,7 +178,7 @@ class _InteractionChallengeScreenState
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
         children: [
-          Text('${_index + 1} من ${_pairs.length}',
+          Text((context.s.isAr ? '${_index + 1} من ${_pairs.length}' : '${_index + 1} of ${_pairs.length}'),
               style: TextStyle(
                   fontSize: 11.5, color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 14),
@@ -203,11 +204,11 @@ class _InteractionChallengeScreenState
           ]),
 
           const SizedBox(height: 20),
-          const Text('هل يوجد تداخل دوائي مُعتبَر بين هذين الدوائين؟',
+          Text((context.s.isAr ? 'هل يوجد تداخل دوائي مُعتبَر بين هذين الدوائين؟' : 'Is there a clinically significant interaction between these two drugs?'),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          Text('تداخل يستدعي تنبيه الطبيب أو تعديل الجرعة أو المراقبة',
+          Text((context.s.isAr ? 'تداخل يستدعي تنبيه الطبيب أو تعديل الجرعة أو المراقبة' : 'One that calls for alerting the prescriber, adjusting the dose or monitoring'),
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 11.5,
@@ -218,12 +219,12 @@ class _InteractionChallengeScreenState
           Row(children: [
             Expanded(
               child: _answerBtn(
-                  'نعم، يوجد تداخل', Icons.warning_amber_rounded, 1, truth),
+                  (context.s.isAr ? 'نعم، يوجد تداخل' : 'Yes, they interact'), Icons.warning_amber_rounded, 1, truth),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _answerBtn(
-                  'لا تداخل مُعتبَر', Icons.check_circle_outline_rounded, 0,
+                  (context.s.isAr ? 'لا تداخل مُعتبَر' : 'No significant interaction'), Icons.check_circle_outline_rounded, 0,
                   truth),
             ),
           ]),
@@ -241,11 +242,11 @@ class _InteractionChallengeScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(children: [
+                  Row(children: [
                     Icon(Icons.info_outline_rounded,
                         size: 16, color: AppColors.primary),
                     SizedBox(width: 7),
-                    Text('التفسير',
+                    Text((context.s.isAr ? 'التفسير' : 'Explanation'),
                         style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
@@ -269,7 +270,7 @@ class _InteractionChallengeScreenState
                       borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(
-                    _index + 1 >= _pairs.length ? 'النتيجة' : 'التالي',
+                    _index + 1 >= _pairs.length ? (context.s.isAr ? 'النتيجة' : 'Result') : (context.s.isAr ? 'التالي' : 'Next'),
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.bold)),
               ),

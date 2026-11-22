@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/config/store_links.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/l10n/app_strings.dart';
-
-// Replace with your actual Play Store URL when published
-const _playStoreUrl =
-    'https://play.google.com/store/apps/details?id=com.iraqpharma.guide';
 
 /// Non-dismissible force-update dialog.
 /// Call [ForceUpdateDialog.show] from your splash/init flow.
@@ -14,13 +10,18 @@ class ForceUpdateDialog {
   ForceUpdateDialog._();
 
   static Future<void> show(BuildContext context,
-      {required String currentVersion, required String minVersion}) {
+      {required String currentVersion,
+      required String minVersion,
+      String message = '',
+      String storeUrl = ''}) {
     return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => _ForceUpdateDialogWidget(
         currentVersion: currentVersion,
         minVersion: minVersion,
+        message: message,
+        storeUrl: storeUrl,
       ),
     );
   }
@@ -29,8 +30,13 @@ class ForceUpdateDialog {
 class _ForceUpdateDialogWidget extends StatefulWidget {
   final String currentVersion;
   final String minVersion;
+  final String message;
+  final String storeUrl;
   const _ForceUpdateDialogWidget(
-      {required this.currentVersion, required this.minVersion});
+      {required this.currentVersion,
+      required this.minVersion,
+      this.message = '',
+      this.storeUrl = ''});
 
   @override
   State<_ForceUpdateDialogWidget> createState() =>
@@ -56,12 +62,7 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
 
   Future<void> _openStore() async {
     setState(() => _launching = true);
-    final uri = Uri.parse(_playStoreUrl);
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {}
+    await StoreLinks.open(override: widget.storeUrl);
     if (mounted) setState(() => _launching = false);
   }
 
@@ -111,8 +112,12 @@ class _ForceUpdateDialogWidgetState extends State<_ForceUpdateDialogWidget>
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
               child: Column(children: [
+                // نص الإعلان يأتي من السيرفر (update_message) فيُكتب ما يشوّق
+                // المستخدم للتحديث دون إصدار جديد؛ وإن خلا فالنص الافتراضي.
                 Text(
-                  s.updateAvailableBody,
+                  widget.message.trim().isNotEmpty
+                      ? widget.message.trim()
+                      : s.updateAvailableBody,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.ibmPlexSansArabic(
                       fontSize: 15, height: 1.7, color: AppColors.textPrimary),

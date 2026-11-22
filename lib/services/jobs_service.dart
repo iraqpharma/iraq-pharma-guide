@@ -139,22 +139,66 @@ class JobsService {
     await _db.from('job_posts').insert(post.toInsertMap(uid));
   }
 
+  /// كل الإعلانات بكل حالاتها — للمدراء فقط (RLS يُرجع لغيرهم إعلاناتهم
+  /// والمنشور فقط).
+  Future<List<JobPost>> listAllForAdmin() async {
+    final rows = await _db
+        .from('job_posts')
+        .select()
+        .order('created_at', ascending: false)
+        .limit(500);
+    return (rows as List)
+        .map((e) => JobPost.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// قاعدة البيانات لا ترمي خطأً حين تمنع RLS التعديل، بل تُعدّل صفر صفوف.
+  /// نطلب الصف المعدَّل ونتحقّق منه حتى لا يُقال «تمّ» ولم يتمّ شيء.
+  void _ensureChanged(dynamic rows) {
+    if (rows is List && rows.isEmpty) {
+      throw Exception('لم يُنفَّذ: لا صلاحية أو الإعلان غير موجود');
+    }
+  }
+
+  /// نشر الإعلان (أو إعادة نشره). المدّة تبدأ من لحظة النشر لا من لحظة
+  /// الإرسال، فلا تضيع أيام الانتظار من مدّة ظهوره.
   Future<void> approve(int id) async {
-    await _db.from('job_posts').update({
+    final now = DateTime.now().toUtc();
+    final rows = await _db.from('job_posts').update({
       'status': 'approved',
-      'reviewed_at': DateTime.now().toUtc().toIso8601String(),
+      'reviewed_at': now.toIso8601String(),
       'reviewed_by': _db.auth.currentUser?.email ?? '',
       'reject_reason': '',
-    }).eq('id', id);
+      'expires_at': now.add(const Duration(days: 30)).toIso8601String(),
+    }).eq('id', id).select('id');
+    _ensureChanged(rows);
+  }
+
+  /// إخفاء إعلان منشور دون حذفه — يمكن إعادة نشره لاحقاً.
+  Future<void> hide(int id) async {
+    final rows = await _db.from('job_posts').update({
+      'status': 'closed',
+      'reviewed_at': DateTime.now().toUtc().toIso8601String(),
+      'reviewed_by': _db.auth.currentUser?.email ?? '',
+    }).eq('id', id).select('id');
+    _ensureChanged(rows);
+  }
+
+  /// حذف نهائي لا رجعة فيه (تُحذف معه الإعجابات والبلاغات).
+  Future<void> deletePermanently(int id) async {
+    final rows =
+        await _db.from('job_posts').delete().eq('id', id).select('id');
+    _ensureChanged(rows);
   }
 
   Future<void> reject(int id, String reason) async {
-    await _db.from('job_posts').update({
+    final rows = await _db.from('job_posts').update({
       'status': 'rejected',
       'reject_reason': reason,
       'reviewed_at': DateTime.now().toUtc().toIso8601String(),
       'reviewed_by': _db.auth.currentUser?.email ?? '',
-    }).eq('id', id);
+    }).eq('id', id).select('id');
+    _ensureChanged(rows);
   }
 
   /// يُغلقه صاحبه عند شغل الوظيفة.

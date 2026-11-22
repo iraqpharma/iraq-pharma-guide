@@ -43,9 +43,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Card(
             child: Column(children: [
               SwitchListTile(
-                title: const Text('الاهتزاز اللمسي'),
-                subtitle: const Text(
-                    'نبضة خفيفة عند الإجابة والاختيار وقراءة الباركود',
+                title: Text((context.s.isAr ? 'الاهتزاز اللمسي' : 'Haptic feedback')),
+                subtitle: Text(
+                    (context.s.isAr ? 'نبضة خفيفة عند الإجابة والاختيار وقراءة الباركود' : 'A light pulse on answers, selections and barcode scans'),
                     style: TextStyle(fontSize: 12)),
                 secondary: const Icon(Icons.vibration_rounded),
                 value: Haptics.hapticsOn,
@@ -57,9 +57,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const Divider(height: 1),
               SwitchListTile(
-                title: const Text('أصوات التفاعل'),
-                subtitle: const Text(
-                    'نقرة عند الإجابة الصحيحة وتنبيه عند الخاطئة',
+                title: Text((context.s.isAr ? 'أصوات التفاعل' : 'Interaction sounds')),
+                subtitle: Text(
+                    (context.s.isAr ? 'نقرة عند الإجابة الصحيحة وتنبيه عند الخاطئة' : 'A click for correct answers and an alert for wrong ones'),
                     style: TextStyle(fontSize: 12)),
                 secondary: const Icon(Icons.volume_up_outlined),
                 value: Haptics.soundsOn,
@@ -122,14 +122,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.school_outlined),
-              title: const Text('أعِد شرح الأقسام'),
-              subtitle: const Text('تظهر شاشة التعريف مرّة أخرى عند فتح كل قسم',
+              title: Text((context.s.isAr ? 'أعِد شرح الأقسام' : 'Replay section guides')),
+              subtitle: Text((context.s.isAr ? 'تظهر شاشة التعريف مرّة أخرى عند فتح كل قسم' : 'Show the intro again when each section opens'),
                   style: TextStyle(fontSize: 12)),
               onTap: () async {
                 await SectionIntro.resetAll();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('سيظهر شرح كل قسم عند فتحه مجدّداً')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text((context.s.isAr ? 'سيظهر شرح كل قسم عند فتحه مجدّداً' : 'Each section guide will show again when opened'))));
               },
             ),
           ),
@@ -142,7 +142,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               trailing: IconButton(
                 icon: Icon(Icons.admin_panel_settings_outlined,
                     color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
-                tooltip: 'إعدادات التطبيق',
+                tooltip: (context.s.isAr ? 'إعدادات التطبيق' : 'App settings'),
                 onPressed: () =>
                     context.push('/admin-pin?to=/admin/app-settings'),
               ),

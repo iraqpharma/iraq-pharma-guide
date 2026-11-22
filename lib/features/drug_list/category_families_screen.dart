@@ -75,7 +75,7 @@ class _CategoryFamiliesScreenState
               onSubmitted: (_) => FocusScope.of(context).unfocus(),
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'ابحث عن دواء في $title…',
+                hintText: (context.s.isAr ? 'ابحث عن دواء في $title…' : 'Search for a drug in $title…'),
                 hintStyle: const TextStyle(color: Colors.white70, fontSize: 13),
                 prefixIcon: const Icon(Icons.search, color: Colors.white70),
                 suffixIcon: _q.isEmpty
@@ -122,7 +122,7 @@ class _CategoryFamiliesScreenState
 
                 if (list.isEmpty) {
                   return Center(
-                    child: Text('لا توجد عوائل في هذا القسم',
+                    child: Text((context.s.isAr ? 'لا توجد عوائل في هذا القسم' : 'No families in this category'),
                         style: TextStyle(
                             color: Theme.of(context)
                                 .colorScheme
@@ -191,7 +191,7 @@ class _AllDrugsTile extends StatelessWidget {
               Icon(icon, color: color, size: 22),
               const SizedBox(width: 12),
               Expanded(
-                child: Text('كل أدوية القسم',
+                child: Text((context.s.isAr ? 'كل أدوية القسم' : 'All drugs in this category'),
                     style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
@@ -277,7 +277,7 @@ class _FamilyTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Row(children: [
-                        Text('${family.total} دواء',
+                        Text((context.s.isAr ? '${family.total} دواء' : '${family.total} drugs'),
                             style: TextStyle(
                                 fontSize: 11.5,
                                 color: cs.onSurfaceVariant)),
@@ -291,7 +291,7 @@ class _FamilyTile extends StatelessWidget {
                               borderRadius: BorderRadius.circular(7),
                             ),
                             child: Text(
-                              '${family.available} متوفّر محلياً',
+                              (context.s.isAr ? '${family.available} متوفّر محلياً' : '${family.available} available locally'),
                               style: const TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
@@ -377,7 +377,7 @@ class _DrugSearchResults extends ConsumerWidget {
                 Icon(Icons.search_off_rounded,
                     size: 52, color: Colors.grey.shade300),
                 const SizedBox(height: 10),
-                Text('لا يوجد دواء بهذا الاسم في هذا القسم',
+                Text((context.s.isAr ? 'لا يوجد دواء بهذا الاسم في هذا القسم' : 'No drug with this name in this category'),
                     style: TextStyle(
                         fontSize: 13,
                         color: Theme.of(context).colorScheme.onSurfaceVariant)),
@@ -392,7 +392,7 @@ class _DrugSearchResults extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
               color: color.withOpacity(0.08),
-              child: Text('${hits.length} نتيجة',
+              child: Text((context.s.isAr ? '${hits.length} نتيجة' : '${hits.length} results'),
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

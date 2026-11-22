@@ -48,7 +48,7 @@
 	<key>GIDClientID</key>
 	<string>1411929971-rkqcg54gjgotljig5e9jmiqm5340scsq.apps.googleusercontent.com</string>
 	<key>NSCameraUsageDescription</key>
-	<string>يستخدم التطبيق الكاميرا للسماح لك بالتقاط صور وإرفاقها بملاحظاتك الشخصية داخل التطبيق.</string>
+	<string>يستخدم التطبيق الكاميرا لمسح باركود علبة الدواء والبحث عنه، ولالتقاط صورة ترفقها بملاحظاتك أو اقتراحاتك داخل التطبيق.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>يحتاج التطبيق الوصول لمكتبة الصور للسماح لك باختيار وإرفاق صور بملاحظاتك الشخصية داخل التطبيق.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

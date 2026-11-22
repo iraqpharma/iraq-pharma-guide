@@ -154,8 +154,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
             _AdminTile(
               icon: Icons.work_rounded,
               color: const Color(0xFF3A72B8),
-              title: 'إعلانات فرص العمل',
-              subtitle: 'مراجعة إعلانات الوظائف قبل نشرها',
+              title: 'إدارة إعلانات فرص العمل',
+              subtitle: 'الطلبات الجديدة والمنشورة: موافقة، رفض، إخفاء، حذف',
               badge: _jobsPending,
               onTap: () async {
                 await context.push('/jobs/review');

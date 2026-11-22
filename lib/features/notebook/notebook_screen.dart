@@ -99,12 +99,12 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('التقط صورة الآن'),
+            title: Text((context.s.isAr ? 'التقط صورة الآن' : 'Take a photo')),
             onTap: () => Navigator.pop(context, ImageSource.camera),
           ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('اختر من المعرض'),
+            title: Text((context.s.isAr ? 'اختر من المعرض' : 'Choose from gallery')),
             onTap: () => Navigator.pop(context, ImageSource.gallery),
           ),
         ]),
@@ -247,7 +247,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   String _lineOf(NoteEntry e) {
     final name = e.text.trim().isEmpty
-        ? (e.barcode != null ? 'باركود ${e.barcode}' : 'بلا اسم')
+        ? (e.barcode != null ? 'باركود ${e.barcode}' : (context.s.isAr ? 'بلا اسم' : 'Unnamed'))
         : e.text.trim();
     return e.note.trim().isEmpty ? name : '$name  —  ${e.note.trim()}';
   }
@@ -750,10 +750,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   String _ago(DateTime dt) {
     final d = DateTime.now().difference(dt);
-    if (d.inMinutes < 1) return 'الآن';
-    if (d.inMinutes < 60) return 'قبل ${d.inMinutes} دقيقة';
-    if (d.inHours < 24) return 'قبل ${d.inHours} ساعة';
-    if (d.inDays < 30) return 'قبل ${d.inDays} يوماً';
+    if (d.inMinutes < 1) return (context.s.isAr ? 'الآن' : 'Now');
+    if (d.inMinutes < 60) return (context.s.isAr ? 'قبل ${d.inMinutes} دقيقة' : '${d.inMinutes} min ago');
+    if (d.inHours < 24) return (context.s.isAr ? 'قبل ${d.inHours} ساعة' : '${d.inHours} h ago');
+    if (d.inDays < 30) return (context.s.isAr ? 'قبل ${d.inDays} يوماً' : '${d.inDays} d ago');
     return '${dt.year}/${dt.month}/${dt.day}';
   }
 }

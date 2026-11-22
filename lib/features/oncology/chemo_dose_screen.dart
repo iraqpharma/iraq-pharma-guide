@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -90,7 +91,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
         backgroundColor: AppColors.cOncology,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('تخفيض جرعات الكيماوي',
+        title: Text((context.s.isAr ? 'تخفيض جرعات الكيماوي' : 'Chemo Dose Adjustment'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: ListView(
@@ -99,21 +100,21 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
           _notice(cs),
           const SizedBox(height: 14),
 
-          _card(cs, 'المريض', Icons.person_outline, [
+          _card(cs, (context.s.isAr ? 'المريض' : 'Patient'), Icons.person_outline, [
             Row(children: [
-              Expanded(child: _field(_height, 'الطول (سم)')),
+              Expanded(child: _field(_height, (context.s.isAr ? 'الطول (سم)' : 'Height (cm)'))),
               const SizedBox(width: 10),
-              Expanded(child: _field(_weight, 'الوزن (كغم)')),
+              Expanded(child: _field(_weight, (context.s.isAr ? 'الوزن (كغم)' : 'Weight (kg)'))),
             ]),
             const SizedBox(height: 10),
             Row(children: [
-              Expanded(child: _field(_age, 'العمر (سنة)')),
-              const SizedBox(width: 10),
+              Expanded(child: _field(_age, (context.s.isAr ? 'العمر (سنة)' : 'Age (years)'))),
+              SizedBox(width: 10),
               Expanded(
                 child: SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('ذكر')),
-                    ButtonSegment(value: true, label: Text('أنثى')),
+                  segments: [
+                    ButtonSegment(value: false, label: Text((context.s.isAr ? 'ذكر' : 'Male'))),
+                    ButtonSegment(value: true, label: Text((context.s.isAr ? 'أنثى' : 'Female'))),
                   ],
                   selected: {_female},
                   onSelectionChanged: (v) =>
@@ -128,13 +129,13 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
             const SizedBox(height: 12),
             Row(children: [
               Expanded(
-                child: _result('مساحة سطح الجسم',
+                child: _result((context.s.isAr ? 'مساحة سطح الجسم' : 'Body surface area'),
                     _bsa > 0 ? '${_bsa.toStringAsFixed(2)} m²' : '—',
                     'Mosteller'),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _result('تصفية الكرياتينين',
+                child: _result((context.s.isAr ? 'تصفية الكرياتينين' : 'Creatinine clearance'),
                     _crCl > 0 ? '${_crCl.toStringAsFixed(0)} mL/min' : '—',
                     'Cockcroft-Gault'),
               ),
@@ -142,28 +143,28 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
           ]),
 
           const SizedBox(height: 12),
-          _card(cs, 'المختبرات', Icons.science_outlined, [
+          _card(cs, (context.s.isAr ? 'المختبرات' : 'Labs'), Icons.science_outlined, [
             Row(children: [
-              Expanded(child: _field(_scr, 'الكرياتينين (mg/dL)')),
+              Expanded(child: _field(_scr, (context.s.isAr ? 'الكرياتينين (mg/dL)' : 'Creatinine (mg/dL)'))),
               const SizedBox(width: 10),
-              Expanded(child: _field(_bili, 'البيليروبين (mg/dL)')),
+              Expanded(child: _field(_bili, (context.s.isAr ? 'البيليروبين (mg/dL)' : 'Bilirubin (mg/dL)'))),
             ]),
             const SizedBox(height: 10),
             Row(children: [
-              Expanded(child: _field(_ast, 'AST/ALT (× الحد الأعلى)')),
+              Expanded(child: _field(_ast, (context.s.isAr ? 'AST/ALT (× الحد الأعلى)' : 'AST/ALT (× ULN)'))),
               const SizedBox(width: 10),
-              Expanded(child: _field(_alp, 'ALP (× الحد الأعلى)')),
+              Expanded(child: _field(_alp, (context.s.isAr ? 'ALP (× الحد الأعلى)' : 'ALP (× ULN)'))),
             ]),
             const SizedBox(height: 10),
             Row(children: [
-              Expanded(child: _field(_anc, 'العدلات (×10⁹/L)')),
+              Expanded(child: _field(_anc, (context.s.isAr ? 'العدلات (×10⁹/L)' : 'Neutrophils (×10⁹/L)'))),
               const SizedBox(width: 10),
-              Expanded(child: _field(_plt, 'الصفيحات (×10⁹/L)')),
+              Expanded(child: _field(_plt, (context.s.isAr ? 'الصفيحات (×10⁹/L)' : 'Platelets (×10⁹/L)'))),
             ]),
           ]),
 
           const SizedBox(height: 12),
-          _card(cs, 'الدواء', Icons.medication_outlined, [
+          _card(cs, (context.s.isAr ? 'الدواء' : 'Drug'), Icons.medication_outlined, [
             DropdownButtonFormField<int>(
               initialValue: _drugIndex,
               isExpanded: true,
@@ -187,7 +188,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               onChanged: (v) => setState(() => _drugIndex = v ?? 0),
             ),
             const SizedBox(height: 10),
-            Text('الجرعة المرجعية: ${drug.standardDose}',
+            Text((context.s.isAr ? 'الجرعة المرجعية: ${drug.standardDose}' : 'Reference dose: ${drug.standardDose}'),
                 style: TextStyle(
                     fontSize: 12.5, color: cs.onSurfaceVariant)),
           ]),
@@ -204,7 +205,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
           ],
 
           const SizedBox(height: 14),
-          Text('المصدر: ${drug.source}',
+          Text((context.s.isAr ? 'المصدر: ${drug.source}' : 'Source: ${drug.source}'),
               style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant)),
         ],
       ),
@@ -335,7 +336,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               color: color,
               size: 22),
           const SizedBox(width: 9),
-          Text(a.hold ? 'يُمنع الإعطاء' : 'الجرعة الموصى بها: $pct٪',
+          Text(a.hold ? (context.s.isAr ? 'يُمنع الإعطاء' : 'Do not give') : (context.s.isAr ? 'الجرعة الموصى بها: $pct٪' : 'Recommended dose: $pct%'),
               style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         ]),
@@ -352,7 +353,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(children: [
-              const Text('الجرعة المحسوبة',
+              Text((context.s.isAr ? 'الجرعة المحسوبة' : 'Calculated dose'),
                   style: TextStyle(fontSize: 12.5)),
               const Spacer(),
               Text(dose,
@@ -383,15 +384,15 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
         border: Border.all(color: AppColors.cOncology.withOpacity(0.35)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('معادلة Calvert',
+        Text((context.s.isAr ? 'معادلة Calvert' : 'Calvert formula'),
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        const Text('الجرعة (mg) = AUC × (GFR + 25)',
+        Text((context.s.isAr ? 'الجرعة (mg) = AUC × (GFR + 25)' : 'Dose (mg) = AUC × (GFR + 25)'),
             style: TextStyle(fontSize: 12.5, color: Color(0xFF6B6B7B))),
         const SizedBox(height: 13),
         SizedBox(
           width: 150,
-          child: _field(_auc, 'AUC المستهدف'),
+          child: _field(_auc, (context.s.isAr ? 'AUC المستهدف' : 'Target AUC')),
         ),
         const SizedBox(height: 14),
         Container(
@@ -402,7 +403,7 @@ class _ChemoDoseScreenState extends State<ChemoDoseScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(children: [
-            const Text('الجرعة', style: TextStyle(fontSize: 13)),
+            Text((context.s.isAr ? 'الجرعة' : 'Dose'), style: TextStyle(fontSize: 13)),
             const Spacer(),
             Text(dose > 0 ? '${dose.round()} mg' : '—',
                 style: const TextStyle(

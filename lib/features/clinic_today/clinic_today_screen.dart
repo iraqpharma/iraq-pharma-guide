@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -124,7 +125,7 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('أسئلة اليوم',
+        title: Text((context.s.isAr ? 'أسئلة اليوم' : 'Today\'s Questions'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           if (_streak > 0)
@@ -193,7 +194,7 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            Text('السؤال ${_index + 1} من ${_questions.length}',
+            Text((context.s.isAr ? 'السؤال ${_index + 1} من ${_questions.length}' : 'Question ${_index + 1} of ${_questions.length}'),
                 style: TextStyle(
                     fontSize: 12.5,
                     color: theme.colorScheme.onSurfaceVariant)),
@@ -246,7 +247,7 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
                                 ? AppColors.successGreen
                                 : AppColors.errorRed),
                         const SizedBox(width: 7),
-                        Text(_chosen == answer ? 'إجابة صحيحة' : 'إجابة خاطئة',
+                        Text(_chosen == answer ? (context.s.isAr ? 'إجابة صحيحة' : 'Correct') : (context.s.isAr ? 'إجابة خاطئة' : 'Incorrect'),
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: _chosen == answer
@@ -277,7 +278,7 @@ class _ClinicTodayScreenState extends State<ClinicTodayScreen> {
                         borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Text(
-                    _index + 1 >= _questions.length ? 'إنهاء' : 'السؤال التالي',
+                    _index + 1 >= _questions.length ? (context.s.isAr ? 'إنهاء' : 'Finish') : (context.s.isAr ? 'السؤال التالي' : 'Next question'),
                     style: const TextStyle(
                         fontSize: 15, height: 1.6, fontWeight: FontWeight.bold),
                   ),
@@ -390,14 +391,14 @@ class _Result extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Text(good ? 'أحسنت!' : 'راجع ما فاتك',
+          Text(good ? (context.s.isAr ? 'أحسنت!' : 'Well done!') : (context.s.isAr ? 'راجع ما فاتك' : 'Review what you missed'),
               style: const TextStyle(
                   fontSize: 19, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(
             good
-                ? 'عُد غداً لخمسة أسئلة جديدة'
-                : 'اقرأ الشروح أعلاه، وعُد غداً لأسئلة جديدة',
+                ? (context.s.isAr ? 'عُد غداً لخمسة أسئلة جديدة' : 'Come back tomorrow for five new questions')
+                : (context.s.isAr ? 'اقرأ الشروح أعلاه، وعُد غداً لأسئلة جديدة' : 'Read the explanations above and come back tomorrow'),
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 13.5,
@@ -405,9 +406,9 @@ class _Result extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            _Stat(Icons.local_fire_department, '$streak', 'سلسلة الأيام'),
+            _Stat(Icons.local_fire_department, '$streak', (context.s.isAr ? 'سلسلة الأيام' : 'Day streak')),
             const SizedBox(width: 26),
-            _Stat(Icons.emoji_events_outlined, '$best', 'أفضل سلسلة'),
+            _Stat(Icons.emoji_events_outlined, '$best', (context.s.isAr ? 'أفضل سلسلة' : 'Best streak')),
           ]),
         ]),
       ),
@@ -439,16 +440,16 @@ class _NoQuestions extends StatelessWidget {
   const _NoQuestions();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
         child: Padding(
           padding: EdgeInsets.all(32),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Icon(Icons.quiz_outlined, size: 56, color: Colors.grey),
             SizedBox(height: 12),
-            Text('لا توجد أسئلة في هذه النسخة',
+            Text((context.s.isAr ? 'لا توجد أسئلة في هذه النسخة' : 'No questions in this version'),
                 style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 6),
-            Text('حدّث التطبيق للحصول على بنك الأسئلة',
+            Text((context.s.isAr ? 'حدّث التطبيق للحصول على بنك الأسئلة' : 'Update the app to get the question bank'),
                 textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
           ]),
         ),

@@ -1,3 +1,4 @@
+import '../../core/l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -90,7 +91,7 @@ class _JobsScreenState extends State<JobsScreen> {
       appBar: AppBar(
         // لا نلمس لون الهيدر: ثيم التطبيق يضعه أخضر بكتابة بيضاء. تغييره
         // إلى لون الخلفية كان يجعل العنوان وزر الرجوع أبيضَ على أبيض.
-        title: const Text('فرص عمل للصيادلة',
+        title: Text((context.s.isAr ? 'فرص عمل للصيادلة' : 'Pharmacist Jobs'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           if (_isAdmin)
@@ -100,7 +101,7 @@ class _JobsScreenState extends State<JobsScreen> {
                 alignment: Alignment.center,
                 children: [
                   IconButton(
-                    tooltip: 'مراجعة الإعلانات',
+                    tooltip: (context.s.isAr ? 'إدارة الإعلانات' : 'Manage ads'),
                     icon: const Icon(Icons.fact_check_outlined, size: 22),
                     onPressed: () async {
                       await context.push('/jobs/review');
@@ -130,7 +131,7 @@ class _JobsScreenState extends State<JobsScreen> {
               ),
             ),
           IconButton(
-            tooltip: 'إعلاناتي',
+            tooltip: (context.s.isAr ? 'إعلاناتي' : 'My ads'),
             icon: const Icon(Icons.badge_outlined, size: 22),
             onPressed: () => context.push('/jobs/mine'),
           ),
@@ -145,7 +146,7 @@ class _JobsScreenState extends State<JobsScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded, size: 21),
-        label: const Text('أضف إعلاناً',
+        label: Text((context.s.isAr ? 'أضف إعلاناً' : 'Post a job'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ),
       body: RefreshIndicator(
@@ -200,8 +201,8 @@ class _JobsScreenState extends State<JobsScreen> {
                   return SliverToBoxAdapter(
                     child: _Empty(
                       icon: Icons.wifi_off_rounded,
-                      title: 'تعذّر تحميل الإعلانات',
-                      body: 'تأكّد من الاتصال بالإنترنت ثم أعد المحاولة',
+                      title: (context.s.isAr ? 'تعذّر تحميل الإعلانات' : 'Could not load jobs'),
+                      body: (context.s.isAr ? 'تأكّد من الاتصال بالإنترنت ثم أعد المحاولة' : 'Check your internet connection and try again'),
                       onRetry: () => _reload(withCounts: true),
                     ),
                   );
@@ -215,11 +216,11 @@ class _JobsScreenState extends State<JobsScreen> {
                           ? Icons.filter_alt_off_rounded
                           : Icons.work_outline_rounded,
                       title: filtered
-                          ? 'لا توجد نتائج'
-                          : 'لا توجد إعلانات حالياً',
+                          ? (context.s.isAr ? 'لا توجد نتائج' : 'No results')
+                          : (context.s.isAr ? 'لا توجد إعلانات حالياً' : 'No jobs right now'),
                       body: filtered
-                          ? 'جرّب محافظة أخرى أو ألغِ الفلاتر'
-                          : 'كن أول من ينشر فرصة عمل',
+                          ? (context.s.isAr ? 'جرّب محافظة أخرى أو ألغِ الفلاتر' : 'Try another governorate or clear the filters')
+                          : (context.s.isAr ? 'كن أول من ينشر فرصة عمل' : 'Be the first to post a job'),
                       onRetry: filtered
                           ? () {
                               setState(() {
@@ -229,7 +230,7 @@ class _JobsScreenState extends State<JobsScreen> {
                               _reload();
                             }
                           : null,
-                      retryLabel: filtered ? 'إلغاء الفلاتر' : null,
+                      retryLabel: filtered ? (context.s.isAr ? 'إلغاء الفلاتر' : 'Clear filters') : null,
                     ),
                   );
                 }
@@ -310,10 +311,10 @@ class _GovBoard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Text('المحافظات',
+            Text((context.s.isAr ? 'المحافظات' : 'Governorates'),
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             const SizedBox(width: 8),
-            Text('$total وظيفة',
+            Text((context.s.isAr ? '$total وظيفة' : '$total jobs'),
                 style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant)),
             const Spacer(),
             TextButton(
@@ -323,7 +324,7 @@ class _GovBoard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
               child: Row(children: [
-                Text(expanded ? 'إخفاء' : 'كل المحافظات',
+                Text(expanded ? (context.s.isAr ? 'إخفاء' : 'Hide') : (context.s.isAr ? 'كل المحافظات' : 'All governorates'),
                     style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w600)),
                 Icon(expanded
@@ -343,7 +344,7 @@ class _GovBoard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _GovTile(
-                  label: 'الكل',
+                  label: (context.s.isAr ? 'الكل' : 'All'),
                   icon: Icons.public_rounded,
                   color: AppColors.primary,
                   count: total,
@@ -374,7 +375,7 @@ class _GovBoard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
               children: [
                 _GovTile(
-                  label: 'الكل',
+                  label: (context.s.isAr ? 'الكل' : 'All'),
                   icon: Icons.public_rounded,
                   color: AppColors.primary,
                   count: total,
@@ -498,7 +499,7 @@ class _GovTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                      count == 0 ? 'لا يوجد' : '$count وظيفة',
+                      count == 0 ? (context.s.isAr ? 'لا يوجد' : 'None') : (context.s.isAr ? '$count وظيفة' : '$count jobs'),
                       style: TextStyle(
                         fontSize: 10,
                         height: 1.2,
@@ -535,7 +536,7 @@ class _WorkTypeFilter extends StatelessWidget {
         runSpacing: 7,
         children: [
           _FilterPill(
-            label: 'كل الأنواع',
+            label: (context.s.isAr ? 'كل الأنواع' : 'All types'),
             icon: Icons.tune_rounded,
             color: AppColors.primary,
             active: value.isEmpty,
@@ -692,8 +693,8 @@ class _JobCardState extends State<JobCard> {
         _liked = !_liked;
         _likes += _liked ? 1 : -1;
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('سجّل الدخول لتتمكّن من الإعجاب'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text((context.s.isAr ? 'سجّل الدخول لتتمكّن من الإعجاب' : 'Sign in to like ads')),
         behavior: SnackBarBehavior.floating,
       ));
     } finally {
@@ -940,7 +941,7 @@ class _JobCardState extends State<JobCard> {
                       if (job.contactWhatsapp.isNotEmpty)
                         _FooterAction(
                           icon: Icons.chat_rounded,
-                          label: 'واتساب',
+                          label: (context.s.isAr ? 'واتساب' : 'WhatsApp'),
                           color: const Color(0xFF25A366),
                           onTap: () {
                             JobsService.instance.bumpContact(job.id);
@@ -950,7 +951,7 @@ class _JobCardState extends State<JobCard> {
                       const SizedBox(width: 2),
                       _FooterAction(
                         icon: Icons.phone_rounded,
-                        label: 'اتصال',
+                        label: (context.s.isAr ? 'اتصال' : 'Call'),
                         color: AppColors.primary,
                         onTap: () {
                           JobsService.instance.bumpContact(job.id);
@@ -1110,11 +1111,11 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final map = <String, List<dynamic>>{
-      'pending': ['بانتظار المراجعة', AppColors.warningAmber],
-      'approved': ['منشور', AppColors.successGreen],
-      'rejected': ['مرفوض', AppColors.errorRed],
-      'closed': ['مغلق', Colors.grey],
-      'expired': ['منتهٍ', Colors.grey],
+      'pending': [(context.s.isAr ? 'بانتظار المراجعة' : 'Pending review'), AppColors.warningAmber],
+      'approved': [(context.s.isAr ? 'منشور' : 'Published'), AppColors.successGreen],
+      'rejected': [(context.s.isAr ? 'مرفوض' : 'Rejected'), AppColors.errorRed],
+      'closed': [(context.s.isAr ? 'مخفي / مغلق' : 'Hidden / closed'), Colors.grey],
+      'expired': [(context.s.isAr ? 'منتهٍ' : 'Expired'), Colors.grey],
     };
     final v = map[status] ?? ['—', Colors.grey];
     final color = v[1] as Color;
@@ -1177,7 +1178,7 @@ class _Empty extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 17),
-                label: Text(retryLabel ?? 'إعادة المحاولة',
+                label: Text(retryLabel ?? (context.s.isAr ? 'إعادة المحاولة' : 'Try again'),
                     style: const TextStyle(
                         fontSize: 13.5, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
@@ -1211,7 +1212,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إعلاناتي')),
+      appBar: AppBar(title: Text((context.s.isAr ? 'إعلاناتي' : 'My ads'))),
       body: FutureBuilder<List<JobPost>>(
         future: _future,
         builder: (context, snap) {
@@ -1220,10 +1221,10 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
           }
           final jobs = snap.data ?? const <JobPost>[];
           if (jobs.isEmpty) {
-            return const _Empty(
+            return _Empty(
               icon: Icons.inbox_outlined,
-              title: 'لم تنشر إعلاناً بعد',
-              body: 'إعلاناتك تظهر هنا مع حالة كل واحد منها',
+              title: (context.s.isAr ? 'لم تنشر إعلاناً بعد' : 'You have not posted a job yet'),
+              body: (context.s.isAr ? 'إعلاناتك تظهر هنا مع حالة كل واحد منها' : 'Your ads appear here with their status'),
             );
           }
           return ListView(
@@ -1239,24 +1240,24 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                       _MiniStat(
                           icon: Icons.visibility_outlined,
                           value: j.views,
-                          label: 'مشاهدة'),
+                          label: (context.s.isAr ? 'مشاهدة' : 'views')),
                       const SizedBox(width: 8),
                       _MiniStat(
                           icon: Icons.phone_in_talk_outlined,
                           value: j.contactClicks,
-                          label: 'محاولة تواصل'),
+                          label: (context.s.isAr ? 'محاولة تواصل' : 'contacts')),
                       const SizedBox(width: 8),
                       _MiniStat(
                           icon: Icons.favorite_border_rounded,
                           value: j.likes,
-                          label: 'إعجاب',
+                          label: (context.s.isAr ? 'إعجاب' : 'likes'),
                           color: const Color(0xFFD1476B)),
                     ]),
                   ),
                 if (j.status == 'rejected' && j.rejectReason.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12, right: 6),
-                    child: Text('سبب الرفض: ${j.rejectReason}',
+                    child: Text((context.s.isAr ? 'سبب الرفض: ${j.rejectReason}' : 'Rejection reason: ${j.rejectReason}'),
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.errorRed)),
                   ),
