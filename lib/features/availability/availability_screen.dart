@@ -1,3 +1,4 @@
+import '../../shared/widgets/report_listing.dart';
 import '../../shared/widgets/t_text.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -409,6 +410,15 @@ class AvailabilityCard extends StatelessWidget {
             TText(post.agoAr,
                 style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
             const Spacer(),
+            if (!showStatus)
+              IconButton(
+                tooltip: trS(context, 'إبلاغ عن الإعلان'),
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.flag_outlined,
+                    size: 18, color: cs.onSurfaceVariant),
+                onPressed: () => ReportListing.show(context,
+                    kind: 'availability', id: post.id),
+              ),
             if (post.contactWhatsapp.isNotEmpty)
               TextButton.icon(
                 onPressed: () => _whatsapp(post.contactWhatsapp),

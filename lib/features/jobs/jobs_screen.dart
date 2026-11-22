@@ -1,3 +1,4 @@
+import '../../shared/widgets/report_listing.dart';
 import '../../core/l10n/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -934,10 +935,32 @@ class _JobCardState extends State<JobCard> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text(job.agoAr,
-                          style: TextStyle(
-                              fontSize: 11, color: cs.onSurfaceVariant)),
-                      const Spacer(),
+                      // Flexible: على الشاشات الضيقة يُختصر التاريخ بدل أن يدفع
+                      // أزرار التواصل خارج البطاقة.
+                      Expanded(
+                        child: Text(job.agoAr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 11, color: cs.onSurfaceVariant)),
+                      ),
+                      // إبلاغ عن الإعلان — يظهر للقرّاء لا في شاشات الإدارة.
+                      if (!showStatus)
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => ReportListing.show(context,
+                              kind: 'job', id: job.id),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Tooltip(
+                              message: context.s.isAr
+                                  ? 'إبلاغ عن الإعلان'
+                                  : 'Report listing',
+                              child: Icon(Icons.flag_outlined,
+                                  size: 17, color: cs.onSurfaceVariant),
+                            ),
+                          ),
+                        ),
                       if (job.contactWhatsapp.isNotEmpty)
                         _FooterAction(
                           icon: Icons.chat_rounded,
