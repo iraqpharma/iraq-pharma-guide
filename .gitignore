@@ -75,3 +75,6 @@ BARCODES_LOG.txt
 test_output.txt
 screens_report.txt
 test_output2.txt
+
+# Claude Code private notes
+CLAUDE.local.md
